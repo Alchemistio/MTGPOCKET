@@ -58,19 +58,16 @@ export class PregameCoordinator {
 
     // Build against a local copy so a failed final setup cannot partially mutate the room.
     let next = this.currentState;
-    const instancesByCard = new Map<string, string[]>();
-    for (const entry of deck.cards) {
-      const definition = this.cardIndex[entry.cardId];
-      if (!definition) return { accepted: false, code: "INVALID_DECK", issues: [{ code: "UNKNOWN_CARD", cardId: entry.cardId, message: "Carte absente du catalogue serveur." }] };
-      const ids: string[] = [];
-      for (let copy = 0; copy < entry.quantity; copy += 1) {
-        const instanceId = `${playerId}:${entry.cardId}:${copy}`;
+    const quantities = new Map<string, number>();
+    for (const entry of deck.cards) quantities.set(entry.cardId, (quantities.get(entry.cardId) ?? 0) + entry.quantity);
+    for (const [cardId, quantity] of quantities) {
+      const definition = this.cardIndex[cardId];
+      if (!definition) return { accepted: false, code: "INVALID_DECK", issues: [{ code: "UNKNOWN_CARD", cardId, message: "Carte absente du catalogue serveur." }] };
+      for (let copy = 0; copy < quantity; copy += 1) {
         next = addCardInstance(next, {
-          instance_id: instanceId, card_id: definition.providerId, owner_id: playerId, zone: "library"
+          instance_id: `${playerId}:${cardId}:${copy}`, card_id: definition.providerId, owner_id: playerId, zone: "library"
         });
-        ids.push(instanceId);
       }
-      instancesByCard.set(entry.cardId, ids);
     }
 
     const nextDecks = new Map(this.submittedDecks);
@@ -80,12 +77,10 @@ export class PregameCoordinator {
       for (const player of this.players) {
         const submitted = nextDecks.get(player.id);
         if (!submitted) throw new Error("MISSING_PLAYER_DECK");
-        const playerInstances = new Map<string, string[]>();
-        for (const entry of submitted.cards) {
-          playerInstances.set(entry.cardId, Array.from({ length: entry.quantity }, (_, copy) => `${player.id}:${entry.cardId}:${copy}`));
-        }
         commandersByPlayer[player.id] = submitted.commanderIds.map(cardId => {
-          const instance = playerInstances.get(cardId)?.[0];
+          const instance = submitted.cards.some(entry => entry.cardId === cardId && entry.quantity > 0)
+            ? `${player.id}:${cardId}:0`
+            : undefined;
           if (!instance) throw new Error("COMMANDER_INSTANCE_MISSING");
           return instance;
         });
@@ -101,7 +96,7 @@ export class PregameCoordinator {
   }
 
   declareMulligan(playerId: string, action: "keep" | "mulligan"): MulliganProgress {
-    if (!this.currentState.deckSetupComplete) throw new Error("DECKS_NOT_READY");
+    if (this.submittedDecks.size !== this.players.length) throw new Error("DECKS_NOT_READY");
     const player = this.currentState.players.find(item => item.id === playerId);
     if (!player) throw new Error("UNKNOWN_PLAYER");
     if (player.hasKeptHand || player.pendingBottomCount > 0) throw new Error("PLAYER_NOT_READY_TO_DECLARE");
