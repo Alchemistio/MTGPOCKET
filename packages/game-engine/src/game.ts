@@ -48,7 +48,7 @@ export function passPriority(state: GameState, playerId: PlayerId): PassPriority
     const top = state.stack[state.stack.length - 1];
     if (!top) throw new Error("Objet de pile introuvable.");
     return {
-      state: { ...state, revision: state.revision + 1, priorityPlayerId: null, consecutivePasses: [], awaitingResolutionId: top.id },
+      state: { ...state, revision: state.revision + 1, priorityPlayerId: null, consecutivePasses: [], awaitingResolutionId: top.id, priorityWindowClosed: false },
       outcome: "resolution-required", stackItemId: top.id
     };
   }
