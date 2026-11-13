@@ -68,5 +68,6 @@ export function completeStackResolution(state: GameState, stackItemId: string): 
 
 export function advanceAfterAllPass(state: GameState): GameState {
   if (state.awaitingResolutionId !== null || state.stack.length > 0) throw new EngineError("RESOLUTION_REQUIRED", "La pile doit être vide avant de continuer.");
-  return nextTurnStep(state);
+  if (!state.priorityWindowClosed) throw new EngineError("NOT_PRIORITY_PLAYER", "La fenêtre de priorité n'a pas été fermée par tous les joueurs.");
+  return { ...nextTurnStep(state), priorityWindowClosed: false };
 }
