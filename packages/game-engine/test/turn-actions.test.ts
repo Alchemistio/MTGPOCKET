@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addCardInstance, advanceAfterAllPass, advanceAutomaticStep, createGame,
+  addCardInstance, advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards,
   passPriority, type GameState
 } from "../src/index.js";
 
@@ -62,4 +62,21 @@ describe("turn-based actions", () => {
     expect(cleanup.cards.perm?.damage_marked).toBe(0);
     expect(cleanup.players[0]?.manaPool).toEqual({});
   });
+  it("requires the active player to discard to maximum hand size before the next turn", () => {
+    let game = createGame("cleanup-discard", players);
+    for (let i = 0; i < 8; i += 1) {
+      game = addCardInstance(game, { instance_id: `hand-${i}`, card_id: `card-${i}`, owner_id: "p1", zone: "hand" });
+    }
+    game = { ...game, phase: "ending", step: "end", priorityPlayerId: "p1" };
+    const cleanup = advanceAfterAllPass(passAll(game));
+    expect(cleanup.pendingDiscardPlayerId).toBe("p1");
+    expect(cleanup.pendingDiscardCount).toBe(1);
+    expect(() => advanceAutomaticStep(cleanup)).toThrowError();
+    const discarded = discardCards(cleanup, "p1", ["hand-0"]);
+    expect(discarded.players[0]?.graveyard).toContain("hand-0");
+    const nextTurn = advanceAutomaticStep(discarded);
+    expect(nextTurn.step).toBe("untap");
+    expect(nextTurn.activePlayerId).toBe("p2");
+  });
+
 });
