@@ -13,7 +13,9 @@
     "expo": "~58.0.0",
     "react": "19.3.0",
     "react-native": "0.88.0",
-    "@commander-pocket/game-engine": "workspace:*"
+    "@commander-pocket/game-engine": "workspace:*",
+    "expo-sqlite": "~58.0.17",
+    "@commander-pocket/card-data": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",
