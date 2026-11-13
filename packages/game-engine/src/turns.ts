@@ -1,4 +1,6 @@
 import { EngineError, type GameState, type Phase, type Step } from "./model.js";
+import { drawCards } from "./library.js";
+import { applyStateBasedActions } from "./players.js";
 
 function nextLivingPlayerAfterSeat(state: GameState, seat: number) {
   const alive = state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat);
@@ -26,10 +28,29 @@ export function nextTurnStep(state: GameState): GameState {
   const index = TURN_SEQUENCE.findIndex(x => x.phase === state.phase && x.step === state.step);
   if (index < 0) throw new Error("État de tour incohérent.");
   const next = TURN_SEQUENCE[index + 1];
-  if (next) return {
-    ...state, revision: state.revision + 1, phase: next.phase, step: next.step,
-    priorityPlayerId: next.grantsPriority ? (state.activePlayerId ?? nextLivingPlayerAfterSeat(state, state.activePlayerSeat)?.id ?? null) : null, consecutivePasses: [], priorityWindowClosed: false
-  };
+  if (next) {
+    let nextState: GameState = {
+      ...state,
+      revision: state.revision + 1,
+      phase: next.phase,
+      step: next.step,
+      priorityPlayerId: next.grantsPriority ? (state.activePlayerId ?? nextLivingPlayerAfterSeat(state, state.activePlayerSeat)?.id ?? null) : null,
+      consecutivePasses: [],
+      priorityWindowClosed: false,
+      players: state.players.map(player => ({ ...player, manaPool: {} }))
+    };
+    if (next.step === "draw" && nextState.deckSetupComplete && nextState.activePlayerId !== null) {
+      nextState = drawCards(nextState, nextState.activePlayerId, 1).state;
+      nextState = applyStateBasedActions(nextState);
+    }
+    if (next.step === "cleanup") {
+      const cards = Object.fromEntries(Object.entries(nextState.cards).map(([id, card]) => [
+        id, card.zone === "battlefield" ? { ...card, damage_marked: 0 } : card
+      ]));
+      nextState = { ...nextState, revision: nextState.revision + 1, cards };
+    }
+    return nextState;
+  }
   const nextPlayer = nextLivingPlayerAfterSeat(state, state.activePlayerSeat);
   if (!nextPlayer) throw new Error("Aucun joueur actif.");
   return {
@@ -53,5 +74,15 @@ export function advanceAutomaticStep(state: GameState): GameState {
   if (state.step !== "untap" && state.step !== "cleanup") {
     throw new EngineError("NOT_PRIORITY_PLAYER", "Cette étape ne peut pas avancer automatiquement.");
   }
-  return nextTurnStep(state);
+  let current = state;
+  if (state.step === "untap" && state.deckSetupComplete && state.activePlayerId !== null) {
+    const active = state.players.find(player => player.id === state.activePlayerId);
+    const cards = { ...state.cards };
+    for (const instanceId of active?.battlefield ?? []) {
+      const card = cards[instanceId];
+      if (card && card.controller_id === state.activePlayerId) cards[instanceId] = { ...card, is_tapped: false };
+    }
+    current = { ...state, revision: state.revision + 1, cards };
+  }
+  return nextTurnStep(current);
 }
