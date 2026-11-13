@@ -20,7 +20,7 @@ export function createGame(id: string, players: readonly PlayerSetup[]): GameSta
   if (!first) throw new Error("Premier joueur introuvable.");
   return {
     id, revision: 0, players: seats.map(makePlayer), cards: {}, activePlayerId: first.id,
-    activePlayerSeat: first.seat, result: null, turnNumber: 1, phase: "beginning", step: "untap", priorityPlayerId: null,
+    activePlayerSeat: first.seat, result: null, deckSetupComplete: false, turnNumber: 1, phase: "beginning", step: "untap", priorityPlayerId: null,
     consecutivePasses: [], stack: [], awaitingResolutionId: null, priorityWindowClosed: false, status: "active"
   };
 }
