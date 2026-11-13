@@ -114,6 +114,7 @@ function CardLookupModal({ visible, onClose, repository, storageWarning }: {
             <Text style={styles.searchButtonText}>CHERCHER</Text>
           </Pressable>
         </View>
+        {!repository ? <Text style={styles.lookupSubtitle}>Initialisation du catalogue local…</Text> : null}
         {storageWarning ? <Text style={styles.storageWarning}>{storageWarning}</Text> : null}
         {error ? <Text style={styles.searchError}>{error}</Text> : null}
         {loading ? <ActivityIndicator color="#9dd9bb" /> : null}
