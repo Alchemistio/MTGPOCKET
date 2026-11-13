@@ -33,6 +33,8 @@ export interface GameView {
   awaitingResolutionId: string | null;
   pendingDiscardPlayerId: string | null;
   pendingDiscardCount: number;
+  pendingCommanderChoiceCount: number;
+  pendingCommanderChoices: readonly { instanceId: string; fromZone: "graveyard" | "exile" }[];
   players: readonly PlayerGameView[];
   visibleCards: Readonly<Record<string, RuntimeCardState>>;
 }
@@ -76,6 +78,8 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     awaitingResolutionId: state.awaitingResolutionId,
     pendingDiscardPlayerId: state.pendingDiscardPlayerId,
     pendingDiscardCount: state.pendingDiscardCount,
+    pendingCommanderChoiceCount: state.pendingCommanderChoices.length,
+    pendingCommanderChoices: state.pendingCommanderChoices.filter(choice => choice.ownerId === viewerId).map(({ instanceId, fromZone }) => ({ instanceId, fromZone })),
     players, visibleCards
   };
 }

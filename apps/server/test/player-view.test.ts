@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCardInstance, createGame } from "@commander-pocket/game-engine";
+import { addCardInstance, applyStateBasedActions, createGame, moveCardToZone } from "@commander-pocket/game-engine";
 import { toPlayerView } from "../src/player-view.js";
 
 const players = [
@@ -20,5 +20,16 @@ describe("toPlayerView", () => {
     expect(view.visibleCards["alice-hand"]?.card_id).toBe("secret-a");
     expect(view.visibleCards["bob-hand"]).toBeUndefined();
     expect(view.visibleCards["bob-library"]).toBeUndefined();
+  });
+  it("shows a pending commander-return choice only to its owner", () => {
+    let game = createGame("commander-choice-view", players);
+    game = addCardInstance(game, { instance_id: "cmd1", card_id: "commander", owner_id: "p1", zone: "command", is_commander: true });
+    game = moveCardToZone(game, "cmd1", "graveyard");
+    game = applyStateBasedActions(game);
+    const ownerView = toPlayerView(game, "p1");
+    const opponentView = toPlayerView(game, "p2");
+    expect(ownerView.pendingCommanderChoices).toEqual([{ instanceId: "cmd1", fromZone: "graveyard" }]);
+    expect(opponentView.pendingCommanderChoices).toEqual([]);
+    expect(opponentView.pendingCommanderChoiceCount).toBe(1);
   });
 });

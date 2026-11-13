@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GameRoom } from "../src/game-room.js";
+import { addCardInstance, applyStateBasedActions, createGame, moveCardToZone } from "@commander-pocket/game-engine";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -35,5 +36,25 @@ describe("GameRoom", () => {
     expect(first).toEqual(retry);
     const stale = room.apply(command("p2", revision, "stale"));
     expect(stale).toMatchObject({ accepted: false, code: "STALE_REVISION" });
+  });
+  it("resolves a commander-return choice only when submitted by its owner", () => {
+    let state = createGame("room-1", players);
+    state = addCardInstance(state, { instance_id: "cmd1", card_id: "commander", owner_id: "p1", zone: "command", is_commander: true });
+    state = moveCardToZone(state, "cmd1", "exile");
+    state = applyStateBasedActions(state);
+    const room = new GameRoom("room-1", players, state);
+    const rejected = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "wrong-owner",
+      playerId: "p2", expectedRevision: state.revision,
+      type: "resolve-commander-return", payload: { instanceId: "cmd1", choice: "command" }
+    });
+    expect(rejected).toMatchObject({ accepted: false, code: "NOT_COMMANDER_OWNER" });
+    const accepted = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "owner-choice",
+      playerId: "p1", expectedRevision: state.revision,
+      type: "resolve-commander-return", payload: { instanceId: "cmd1", choice: "command" }
+    });
+    expect(accepted).toMatchObject({ accepted: true, outcome: "decision-resolved" });
+    expect(room.state.cards.cmd1?.zone).toBe("command");
   });
 });
