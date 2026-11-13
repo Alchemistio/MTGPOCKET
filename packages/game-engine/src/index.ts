@@ -5,3 +5,4 @@ export * from "./cards.js";
 export * from "./commander.js";
 export * from "./library.js";
 export * from "./players.js";
+export * from "./pregame.js";
