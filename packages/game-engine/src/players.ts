@@ -115,6 +115,8 @@ function eliminatePlayers(state: GameState, leavingIds: ReadonlySet<PlayerId>): 
     priorityPlayerId: result ? null : nextPriority,
     consecutivePasses: state.consecutivePasses.filter(id => !leavingIds.has(id)),
     awaitingResolutionId: null,
+    pendingDiscardPlayerId: state.pendingDiscardPlayerId !== null && leavingIds.has(state.pendingDiscardPlayerId) ? null : state.pendingDiscardPlayerId,
+    pendingDiscardCount: state.pendingDiscardPlayerId !== null && leavingIds.has(state.pendingDiscardPlayerId) ? 0 : state.pendingDiscardCount,
     priorityWindowClosed: false,
     status: result ? "finished" : state.status,
     result
