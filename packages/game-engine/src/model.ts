@@ -29,6 +29,7 @@ export interface PlayerState {
   name: string;
   seat: number;
   life: number;
+  maxHandSize: number;
   hand: InstanceId[];
   library: InstanceId[];
   graveyard: InstanceId[];
@@ -62,6 +63,8 @@ export interface GameState {
   activePlayerSeat: number;
   result: { type: "win"; winnerId: PlayerId } | { type: "draw" } | null;
   deckSetupComplete: boolean;
+  pendingDiscardPlayerId: PlayerId | null;
+  pendingDiscardCount: number;
   turnNumber: number;
   phase: Phase;
   step: Step;
