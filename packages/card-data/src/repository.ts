@@ -27,7 +27,7 @@ export class ScryfallRepository {
   async getCardById(id: string): Promise<CardDefinition> {
     return this.cached(`card:id:${id}`, async () => {
       const card = normalizeScryfallCard(await this.client.getCardById(id));
-      this.cache.set(`card:id:${card.providerId}`, { value: card, expiresAt: this.now() + this.ttlMs });
+      this.rememberCard(card);
       return card;
     });
   }
@@ -35,7 +35,7 @@ export class ScryfallRepository {
   async getNamedCard(name: string, mode: "exact" | "fuzzy" = "exact"): Promise<CardDefinition> {
     return this.cached(`card:name:${mode}:${name.toLocaleLowerCase("en-US")}`, async () => {
       const card = normalizeScryfallCard(await this.client.getNamedCard(name, mode));
-      this.cache.set(`card:id:${card.providerId}`, { value: card, expiresAt: this.now() + this.ttlMs });
+      this.rememberCard(card);
       return card;
     });
   }
@@ -44,11 +44,21 @@ export class ScryfallRepository {
     return this.cached(`search:${query}:${page}`, async () => {
       const result = await this.client.searchCards(query, page);
       return {
-        data: result.data.map(normalizeScryfallCard),
+        data: result.data.map(raw => {
+          const card = normalizeScryfallCard(raw);
+          this.rememberCard(card);
+          return card;
+        }),
         has_more: result.has_more,
         ...(result.next_page ? { next_page: result.next_page } : {})
       };
     }, this.searchTtlMs);
+  }
+
+  private rememberCard(card: CardDefinition): void {
+    const entry = { value: card, expiresAt: this.now() + this.ttlMs };
+    this.cache.set(`card:id:${card.providerId}`, entry);
+    this.cache.set(`card:name:exact:${card.name.toLocaleLowerCase("en-US")}`, entry);
   }
 
   invalidateAll(): void {
