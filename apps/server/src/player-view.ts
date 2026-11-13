@@ -22,6 +22,8 @@ export interface GameView {
   id: string;
   revision: number;
   activePlayerId: string | null;
+  activePlayerSeat: number;
+  result: GameState["result"];
   turnNumber: number;
   phase: GameState["phase"];
   step: GameState["step"];
@@ -64,6 +66,7 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
   );
   return {
     id: state.id, revision: state.revision, activePlayerId: state.activePlayerId,
+    activePlayerSeat: state.activePlayerSeat, result: state.result,
     turnNumber: state.turnNumber, phase: state.phase, step: state.step,
     priorityPlayerId: state.priorityPlayerId, stack: [...state.stack],
     awaitingResolutionId: state.awaitingResolutionId, players, visibleCards
