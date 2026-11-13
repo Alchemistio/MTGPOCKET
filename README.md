@@ -26,6 +26,10 @@ corepack enable
 pnpm install
 pnpm typecheck
 pnpm test
+
+# Lancer le prototype mobile ou le serveur LAN
+pnpm dev:mobile
+pnpm dev:server
 ```
 
 ## Documentation
