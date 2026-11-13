@@ -4,6 +4,9 @@ on:
     branches: [main, "feat/**"]
   pull_request:
     branches: [main]
+concurrency:
+  group: commander-pocket-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   validate:
     runs-on: ubuntu-latest
