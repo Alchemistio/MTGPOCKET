@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceAfterAllPass, advanceAutomaticStep, createGame, passPriority, type GameState } from "../src/index.js";
+import { advanceAfterAllPass, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, passPriority, type GameState } from "../src/index.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -41,5 +41,31 @@ describe("priority", () => {
   it("rejects a pass from a player without priority", () => {
     const game: GameState = { ...createGame("g1", players), priorityPlayerId: "p1" };
     expect(() => passPriority(game, "p2")).toThrowError();
+  });
+});
+
+describe("multiplayer elimination", () => {
+  it("continues the turn without an active player and passes priority clockwise", () => {
+    let game = advanceAutomaticStep(createGame("elimination", players));
+    game = changeLife(game, "p1", -40);
+    game = applyStateBasedActions(game);
+    expect(game.activePlayerId).toBeNull();
+    expect(game.priorityPlayerId).toBe("p2");
+    expect(game.players[0]?.isEliminated).toBe(true);
+    const a = passPriority(game, "p2");
+    const b = passPriority(a.state, "p3");
+    const c = passPriority(b.state, "p4");
+    expect(c.outcome).toBe("step-advance");
+    const next = advanceAfterAllPass(c.state);
+    expect(next.step).toBe("draw");
+    expect(next.priorityPlayerId).toBe("p2");
+  });
+
+  it("ends in a draw when all remaining players lose simultaneously", () => {
+    let game = createGame("draw", players);
+    for (const player of players) game = changeLife(game, player.id, -40);
+    game = applyStateBasedActions(game);
+    expect(game.status).toBe("finished");
+    expect(game.result).toEqual({ type: "draw" });
   });
 });
