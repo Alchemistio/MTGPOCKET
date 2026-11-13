@@ -65,11 +65,11 @@ export class GameRoom {
       }
       this.currentState = nextState;
       const accepted: RoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
-      this.commandResults.set(command.commandId, accepted);
+      this.commandResults.set(cacheKey, accepted);
       return accepted;
     } catch (error) {
       const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
-      return this.reject(command.commandId, code);
+      return this.reject(cacheKey, code);
     }
   }
 
