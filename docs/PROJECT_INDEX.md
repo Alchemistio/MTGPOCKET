@@ -9,7 +9,7 @@
 | Comprendre le produit | [PRODUCT_SPEC](PRODUCT_SPEC.md) | Périmètre fonctionnel, plateformes, UX et critères |
 | Comprendre les modules | [ARCHITECTURE](ARCHITECTURE.md) | Langages, frontières, autorité, persistance |
 | Savoir ce que le moteur sait faire | [RULES_SCOPE](RULES_SCOPE.md) | Règles couvertes, CR, lacunes et méthode |
-| Savoir ce qui vient ensuite | [ROADMAP](ROADMAP.md) | Jalons, dépendances et Definition of Done |
+| Savoir ce qui vient ensuite | [ROADMAP](ROADMAP.md) | Jalons, dépendances et Definition of Done |\n| Suivre les tâches concrètes | [GitHub Issues](https://github.com/Alchemistio/MTGPOCKET/issues) | Backlog M1, règles, réseau LAN et données offline |
 | Comprendre les fournisseurs | [DATA_SOURCES](DATA_SOURCES.md) | Scryfall, MTGJSON, Scrydex et politique d'intégration |
 | Retrouver les docs techniques | [references/README](references/README.md) | Fiches locales, sources officielles, dates et licences |
 | Comprendre une décision | [DECISIONS](DECISIONS.md) | ADRs et raisons des choix |
@@ -35,5 +35,5 @@
 - Fondation : présente ; CI du PR #1 observée verte sur le commit contrôlé.
 - Moteur : premier périmètre de règles et scénarios testés ; non exhaustif.
 - Mobile : plateau, recherche Scryfall/cache et formulaire de salle LAN.
-- Réseau : création/join et passage de priorité seulement ; pas encore une partie complète.
+- Réseau : création/join et passage de priorité seulement ; pas encore une partie complète.\n- Règles Commander : retours 903.9a/b modélisés par choix explicites ; 903.9c reste à faire.\n- Backlog : [#2 partie bout en bout](https://github.com/Alchemistio/MTGPOCKET/issues/2), [#3 règles/SBA](https://github.com/Alchemistio/MTGPOCKET/issues/3), [#4 LAN](https://github.com/Alchemistio/MTGPOCKET/issues/4), [#5 index offline](https://github.com/Alchemistio/MTGPOCKET/issues/5).
 - Prochain jalon : connecter un deck réel et toutes les commandes nécessaires à un tour complet, puis journaliser/rejouer la partie.

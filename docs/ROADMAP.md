@@ -9,7 +9,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Index documentaire, fiches de référence, ADR et journal.
 **Sortie :** installation, typecheck et tests CI reproductibles.
 
-## M1 — Partie locale jouable — en cours
+## M1 — Partie locale jouable — en cours ([issue #2](https://github.com/Alchemistio/MTGPOCKET/issues/2))
 - [x] Setup Commander : commandants en zone de commandement, 40 PV, mélange et main initiale.
 - [x] Mulligan de Londres multijoueur, premier mulligan gratuit et sélection des cartes à remettre.
 - [x] Phases/étapes, passes de priorité, pile générique et handlers injectés.
@@ -21,7 +21,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Journal d'événements et rejeu déterministe.
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.
 
-## M2 — Fidélité du moteur
+## M2 — Fidélité du moteur ([issue #3](https://github.com/Alchemistio/MTGPOCKET/issues/3))
 - [ ] SBA générales complètes et vérifiées aux checkpoints.
 - [ ] Retour/remplacement du commandant (CR 704.6d, 903.9).
 - [ ] Capacités statiques, activées et déclenchées.
@@ -40,7 +40,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Tests VoiceOver/TalkBack, tailles de texte et appareils 5,5–6,7 pouces.
 **Sortie :** flux complet de partie jouable et utilisable sur iOS/Android.
 
-## M4 — Réseau local — socle
+## M4 — Réseau local — socle ([issue #4](https://github.com/Alchemistio/MTGPOCKET/issues/4))
 - [x] Serveur/client WebSocket, créer/rejoindre, jetons et vues privées.
 - [x] Révisions et idempotence de commandes.
 - [ ] Commandes de jeu complètes, validation serveur et synchronisation de toutes les zones.
@@ -49,7 +49,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Tests quatre appareils, perte Wi-Fi, hôte quittant, paquets invalides.
 **Sortie :** quatre appareils peuvent terminer une partie sans divergence.
 
-## M5 — Données et offline
+## M5 — Données et offline ([issue #5](https://github.com/Alchemistio/MTGPOCKET/issues/5))
 - [x] Client Scryfall typé et cache.
 - [x] Store SQLite mobile.
 - [x] Importateur MTGJSON streaming et checksum.
