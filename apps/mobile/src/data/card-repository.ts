@@ -8,7 +8,7 @@ export async function createMobileCardRepository(): Promise<ScryfallRepository> 
     new ScryfallClient(),
     6 * 60 * 60 * 1000,
     Date.now,
-    15 * 60 * 1000,
+    24 * 60 * 60 * 1000,
     store
   );
 }
