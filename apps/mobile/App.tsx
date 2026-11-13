@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import {
   advanceAfterAllPass, advanceAutomaticStep, createGame, passPriority,
-  type GameState, type PlayerState
+  type GameState
 } from "@commander-pocket/game-engine";
 import {
   ScryfallClient, ScryfallRepository, type CardDefinition
@@ -196,15 +196,17 @@ export default function App() {
         libraryCount: player.library.length, commanderCastCount: player.commanderCastCount,
         manaPool: player.manaPool, isEliminated: player.isEliminated
       }));
-  const priorityPlayerId = roomView?.priorityPlayerId ?? game.priorityPlayerId;
+  const priorityPlayerId = roomView ? roomView.priorityPlayerId : game.priorityPlayerId;
   const turnNumber = roomView?.turnNumber ?? game.turnNumber;
   const phase = roomView?.phase ?? game.phase;
   const step = roomView?.step ?? game.step;
   const stackCount = roomView?.stack.length ?? game.stack.length;
-  const awaitingResolutionId = roomView?.awaitingResolutionId ?? game.awaitingResolutionId;
+  const awaitingResolutionId = roomView ? roomView.awaitingResolutionId : game.awaitingResolutionId;
   const priorityPlayer = displayPlayers.find(player => player.id === priorityPlayerId);
+  const viewerHandCount = displayPlayers.find(player => player.id === (roomSession?.playerId ?? "p1"))?.handCount ?? 0;
 
-  useEffect(() => roomClient.onEvent(event => {
+  useEffect(() => {
+    const unsubscribe = roomClient.onEvent(event => {
     if (event.type === "game-view") setRoomView(event.view as MobileGameView);
     if (event.type === "command-rejected" || event.type === "room-error" || event.type === "protocol-error") {
       setNetworkMessage(event.code);
@@ -214,7 +216,9 @@ export default function App() {
       setRoomSession(null);
       setNetworkMessage("Connexion réseau fermée.");
     }
-  }), [roomClient]);
+    });
+    return () => { unsubscribe(); roomClient.disconnect(); };
+  }, [roomClient]);
 
   useEffect(() => {
     let cancelled = false;
@@ -272,7 +276,7 @@ export default function App() {
       <View style={styles.bottomBar}>
         <Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S)</Text>
         <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
-        <Text style={styles.handLabel}>MAIN · {displayPlayers[0]?.handCount ?? 0} CARTES</Text>
+        <Text style={styles.handLabel}>MAIN · {viewerHandCount} CARTES</Text>
         <Pressable onPress={() => setNetworkVisible(true)} style={styles.lookupButton} accessibilityRole="button">
           <Text style={styles.lookupButtonText}>{roomView ? "RÉSEAU ✓" : "RÉSEAU"}</Text>
         </Pressable>
