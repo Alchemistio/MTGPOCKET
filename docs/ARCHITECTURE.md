@@ -1,6 +1,6 @@
 # Architecture technique
 
-## Monorepo
+## Choix de langages\n- **TypeScript** pour l’app React Native, le serveur Node.js, le moteur et le protocole : partage du modèle de règles, validation statique et absence de pont natif entre client et moteur.\n- **SQL** pour le stockage local SQLite et, plus tard si les comptes/salons l’exigent, PostgreSQL côté service.\n- **Python** réservé aux scripts ponctuels d’ingestion, d’analyse et de contrôle des dumps de données ; pas dans le chemin d’exécution d’une partie.\n- **Rust** n’est pas introduit au démarrage : le coût FFI et la duplication des modèles ne sont justifiés que si un profilage démontre un goulot d’étranglement du moteur.\n\n## Monorepo
 - `apps/mobile` : React Native, Expo, TypeScript.
 - `apps/server` : Node.js, TypeScript, WebSocket.
 - `packages/game-engine` : domaine, état, règles, commandes, événements.
