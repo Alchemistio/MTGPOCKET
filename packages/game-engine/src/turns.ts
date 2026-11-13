@@ -32,7 +32,7 @@ export function nextTurnStep(state: GameState): GameState {
   return {
     ...state, revision: state.revision + 1, activePlayerId: nextPlayer.id,
     turnNumber: state.turnNumber + 1, phase: "beginning", step: "untap",
-    priorityPlayerId: null, consecutivePasses: []
+    priorityPlayerId: null, consecutivePasses: [], priorityWindowClosed: false
   };
 }
 
