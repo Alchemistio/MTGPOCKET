@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCardInstance, createGame, drawCards, shuffleLibrary } from "../src/index.js";
+import { addCardInstance, applyStateBasedActions, createGame, drawCards, shuffleLibrary } from "../src/index.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -28,5 +28,8 @@ describe("library operations", () => {
     expect(result.failedToDraw).toBe(true);
     expect(result.state.players[0]?.hand).toHaveLength(8);
     expect(result.state.players[0]?.library).toHaveLength(0);
+    expect(result.state.players[0]?.attemptedEmptyLibraryDraw).toBe(true);
+    const afterStateActions = applyStateBasedActions(result.state);
+    expect(afterStateActions.players[0]?.isEliminated).toBe(true);
   });
 });
