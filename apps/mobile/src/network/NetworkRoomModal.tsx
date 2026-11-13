@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ActivityIndicator, Modal, Pressable, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { RoomClient, type SeatCredential } from "./room-client.js";
 
 export interface MobileGameView {
@@ -88,7 +88,7 @@ export function NetworkRoomModal({ visible, client, onClose, onConnected }: Prop
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="overFullScreen" onRequestClose={onClose}>
-      <View style={styles.screen}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>PARTIE EN RÉSEAU LOCAL</Text>
@@ -131,13 +131,14 @@ export function NetworkRoomModal({ visible, client, onClose, onConnected }: Prop
           </View>
         ) : null}
         <Text style={styles.footer}>Le serveur doit être lancé sur le réseau local. La découverte automatique et la reconnexion seront ajoutées ensuite.</Text>
-      </View>
+      </ScrollView>
     </Modal>
   );
 }
 
 const styles = {
   screen: { flex: 1, backgroundColor: "#0b1018", padding: 18, paddingTop: 36 } as const,
+  content: { paddingBottom: 24 },
   header: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "center" as const, marginBottom: 16 },
   title: { color: "#f1f5f9", fontSize: 14, fontWeight: "900" as const, letterSpacing: 1 },
   subtitle: { color: "#8ea0b5", fontSize: 10, marginTop: 4 },
