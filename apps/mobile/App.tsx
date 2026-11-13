@@ -201,6 +201,7 @@ export default function App() {
   const phase = roomView?.phase ?? game.phase;
   const step = roomView?.step ?? game.step;
   const stackCount = roomView?.stack.length ?? game.stack.length;
+  const pendingDecisionCount = roomView?.pendingCommanderChoiceCount ?? 0;
   const awaitingResolutionId = roomView ? roomView.awaitingResolutionId : game.awaitingResolutionId;
   const priorityPlayer = displayPlayers.find(player => player.id === priorityPlayerId);
   const viewerHandCount = displayPlayers.find(player => player.id === (roomSession?.playerId ?? "p1"))?.handCount ?? 0;
@@ -299,7 +300,7 @@ export default function App() {
       ))}
       <View style={styles.bottomBar}>
         <Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S)</Text>
-        <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
+        <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : pendingDecisionCount > 0 ? "Choix du commandant en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
         <Text style={styles.handLabel}>MAIN · {viewerHandCount} CARTES</Text>
         <Pressable onPress={() => setNetworkVisible(true)} style={styles.lookupButton} accessibilityRole="button">
           <Text style={styles.lookupButtonText}>{roomView ? "RÉSEAU ✓" : "RÉSEAU"}</Text>
