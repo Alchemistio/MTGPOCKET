@@ -26,6 +26,7 @@ describe("ScryfallRepository", () => {
     expect(first.oracleId).toBe("oracle-cache");
     expect(requests).toHaveLength(1);
     await repository.getCardById("cache-card");
+    await repository.getNamedCard("Cached Card", "exact");
     expect(requests).toHaveLength(1);
     now += 501;
     await repository.getCardById("cache-card");
