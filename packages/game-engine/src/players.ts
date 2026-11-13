@@ -1,4 +1,5 @@
 import { EngineError, type GameState, type PlayerId, type RuntimeCardState } from "./model.js";
+import { moveCardToZone } from "./cards.js";
 
 export function changeLife(state: GameState, playerId: PlayerId, delta: number): GameState {
   if (!Number.isSafeInteger(delta)) throw new Error("La variation de vie doit être un entier.");
@@ -9,6 +10,26 @@ export function changeLife(state: GameState, playerId: PlayerId, delta: number):
   return {
     ...state, revision: state.revision + 1,
     players: state.players.map(p => p.id === playerId ? { ...p, life: p.life + delta } : p)
+  };
+}
+
+
+export function discardCards(state: GameState, playerId: PlayerId, cardIds: readonly string[]): GameState {
+  if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
+  if (state.pendingDiscardPlayerId !== playerId || state.pendingDiscardCount <= 0) {
+    throw new Error("Ce joueur n'a pas de défausse de nettoyage en attente.");
+  }
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
+  if (cardIds.length !== state.pendingDiscardCount || new Set(cardIds).size !== cardIds.length ||
+      cardIds.some(id => !player.hand.includes(id))) {
+    throw new Error(`Il faut défausser exactement ${state.pendingDiscardCount} cartes distinctes de la main.`);
+  }
+  let next = state;
+  for (const instanceId of cardIds) next = moveCardToZone(next, instanceId, "graveyard");
+  return {
+    ...next, revision: next.revision + 1,
+    pendingDiscardPlayerId: null, pendingDiscardCount: 0
   };
 }
 
