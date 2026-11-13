@@ -48,6 +48,7 @@ describe("card zones", () => {
     let game = createGame("commander-replacement", players);
     game = addCardInstance(game, { instance_id: "cmd1", card_id: "commander-card", owner_id: "p1", zone: "command", is_commander: true });
     expect(() => moveCardToZone(game, "cmd1", "hand")).toThrowError("Le propriétaire doit choisir");
+    expect(moveCardToZone(game, "cmd1", "command")).toBe(game);
     game = moveCardToZone(game, "cmd1", "hand", undefined, "command");
     expect(game.cards.cmd1?.zone).toBe("command");
     expect(game.players[0]?.command).toContain("cmd1");

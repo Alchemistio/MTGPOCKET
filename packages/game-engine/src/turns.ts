@@ -67,6 +67,7 @@ export function nextTurnStep(state: GameState): GameState {
 }
 
 export function beginPriorityWindow(state: GameState): GameState {
+  if (state.pendingCommanderChoices.length > 0) throw new EngineError("RESOLUTION_REQUIRED", "Un choix de retour du commandant est en attente.");
   if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
   return { ...state, revision: state.revision + 1, priorityPlayerId: state.activePlayerId ?? nextLivingPlayerAfterSeat(state, state.activePlayerSeat)?.id ?? null, consecutivePasses: [], priorityWindowClosed: false };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceAfterAllPass, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, passPriority, type GameState } from "../src/index.js";
+import { addCardInstance, advanceAfterAllPass, advanceAutomaticStep, applyStateBasedActions, beginPriorityWindow, changeLife, createGame, moveCardToZone, passPriority, type GameState } from "../src/index.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -24,6 +24,16 @@ describe("createGame", () => {
 });
 
 describe("priority", () => {
+  it("blocks turn progression while a commander-return choice is pending", () => {
+    let game = createGame("pending-choice", players);
+    game = addCardInstance(game, { instance_id: "cmd1", card_id: "commander", owner_id: "p1", zone: "command", is_commander: true });
+    game = moveCardToZone(game, "cmd1", "exile");
+    game = applyStateBasedActions(game);
+    expect(game.priorityPlayerId).toBeNull();
+    expect(() => beginPriorityWindow(game)).toThrowError();
+    expect(() => advanceAfterAllPass({ ...game, priorityWindowClosed: true })).toThrowError();
+  });
+
   it("cycles clockwise and closes an empty stack window after four passes", () => {
     let game: GameState = { ...createGame("g1", players), priorityPlayerId: "p1" };
     const a = passPriority(game, "p1");

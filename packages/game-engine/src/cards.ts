@@ -43,6 +43,7 @@ export function moveCardToZone(
 ): GameState {
   const card = state.cards[instanceId];
   if (!card) throw new EngineError("INVALID_ZONE_MOVE", "Instance de carte inconnue.");
+  if (card.zone === destination) return state;
   if (card.is_commander && (destination === "hand" || destination === "library") && commanderReplacementChoice === undefined) {
     throw new EngineError("COMMANDER_CHOICE_REQUIRED", "Le propriétaire doit choisir si le commandant rejoint la zone de commandement ou la destination prévue.");
   }
