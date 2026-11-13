@@ -28,6 +28,8 @@ export interface CommanderDeckValidationOptions {
   areCommandersCompatible?: (commanders: readonly CardDefinition[]) => boolean;
   /** Supports explicit singleton exceptions such as "a deck can have any number". */
   allowsMultipleCopies?: (card: CardDefinition) => boolean;
+  /** Normalizes interchangeable English names under CR 201.3 when applicable. */
+  deckNameKey?: (card: CardDefinition) => string;
   expectedCardCount?: number;
 }
 
@@ -77,14 +79,6 @@ export function validateCommanderDeck(
     resolvedEntries.push({ card, quantity });
     if (card.legalities.commander !== "legal") {
       issues.push({ code: "ILLEGAL_CARD", cardId, message: `${card.name} n'est pas légale en Commander selon les données chargées.` });
-    }
-    const identity = card.oracleId ?? card.providerId;
-    const copies = resolvedEntries
-      .filter(item => (item.card.oracleId ?? item.card.providerId) === identity)
-      .reduce((sum, item) => sum + item.quantity, 0);
-    const multipleAllowed = (options.allowsMultipleCopies ?? allowsMultipleByDefault)(card);
-    if (copies > 1 && !multipleAllowed) {
-      issues.push({ code: "DUPLICATE_CARD", cardId, message: `${card.name} dépasse la limite singleton.` });
     }
   }
 
