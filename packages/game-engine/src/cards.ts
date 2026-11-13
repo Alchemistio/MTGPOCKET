@@ -65,9 +65,12 @@ export function moveCardToZone(
     }
     return next;
   });
+  const cards = Object.fromEntries(Object.entries(state.cards).map(([id, existing]) => [
+    id, existing.attached_to === instanceId ? { ...existing, attached_to: null } : existing
+  ]));
   const moved: RuntimeCardState = {
     ...card, zone: destination, controller_id: controllerId,
     is_tapped: false, counters: { ...EMPTY_COUNTERS }, attached_to: null, damage_marked: 0
   };
-  return { ...state, revision: state.revision + 1, cards: { ...state.cards, [instanceId]: moved }, players };
+  return { ...state, revision: state.revision + 1, cards: { ...cards, [instanceId]: moved }, players };
 }
