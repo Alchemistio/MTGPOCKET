@@ -40,8 +40,26 @@ function isScryfallCard(value: unknown): value is ScryfallCard {
 export class ScryfallClient {
   constructor(
     private readonly fetcher: FetchLike = fetch,
-    private readonly baseUrl = "https://api.scryfall.com"
+    private readonly baseUrl = "https://api.scryfall.com",
+    private readonly minRequestIntervalMs = 100
   ) {}
+
+  private requestQueue: Promise<void> = Promise.resolve();
+  private lastRequestAt = 0;
+
+  private async fetchRateLimited(input: RequestInfo | URL, init: RequestInit): Promise<Response> {
+    let response: Response | undefined;
+    const task = this.requestQueue.then(async () => {
+      const waitMs = Math.max(0, this.lastRequestAt + this.minRequestIntervalMs - Date.now());
+      if (waitMs > 0) await new Promise<void>(resolve => setTimeout(resolve, waitMs));
+      this.lastRequestAt = Date.now();
+      response = await this.fetcher(input, init);
+    });
+    this.requestQueue = task.catch(() => undefined);
+    await task;
+    if (!response) throw new Error("Scryfall request did not return a response.");
+    return response;
+  }
 
   async getCardById(id: string, signal?: AbortSignal): Promise<ScryfallCard> {
     return this.requestCard(`/cards/${encodeURIComponent(id)}`, signal);
@@ -54,7 +72,7 @@ export class ScryfallClient {
 
   async searchCards(query: string, page = 1, signal?: AbortSignal): Promise<ScryfallSearchPage> {
     const params = new URLSearchParams({ q: query, page: String(page) });
-    const response = await this.fetcher(`${this.baseUrl}/cards/search?${params.toString()}`, {
+    const response = await this.fetchRateLimited(`${this.baseUrl}/cards/search?${params.toString()}`, {
       headers: { accept: "application/json", "user-agent": "CommanderPocket/0.1.0" },
       ...(signal ? { signal } : {})
     });
@@ -73,7 +91,7 @@ export class ScryfallClient {
   }
 
   private async requestCard(path: string, signal?: AbortSignal): Promise<ScryfallCard> {
-    const response = await this.fetcher(`${this.baseUrl}${path}`, {
+    const response = await this.fetchRateLimited(`${this.baseUrl}${path}`, {
       headers: { accept: "application/json", "user-agent": "CommanderPocket/0.1.0" },
       ...(signal ? { signal } : {})
     });
