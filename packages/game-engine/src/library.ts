@@ -57,5 +57,12 @@ export function drawCards(state: GameState, playerId: PlayerId, count: number): 
     next = moveCardToZone(next, instanceId, "hand");
     drawn.push(instanceId);
   }
-  return { state: next, drawn, failedToDraw: drawn.length < count };
+  const failedToDraw = drawn.length < count;
+  if (failedToDraw) {
+    next = {
+      ...next, revision: next.revision + 1,
+      players: next.players.map(p => p.id === playerId ? { ...p, attemptedEmptyLibraryDraw: true } : p)
+    };
+  }
+  return { state: next, drawn, failedToDraw };
 }
