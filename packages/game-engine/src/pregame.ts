@@ -178,7 +178,7 @@ export function startGame(state: GameState): GameState {
     throw new Error("Tous les joueurs doivent avoir gardé leur main avant le début.");
   }
   return {
-    ...state, revision: state.revision + 1, status: "active", turnNumber: 1,
+    ...state, revision: state.revision + 1, status: "active", deckSetupComplete: true, turnNumber: 1,
     phase: "beginning", step: "untap", priorityPlayerId: null,
     consecutivePasses: [], priorityWindowClosed: false
   };
