@@ -21,7 +21,7 @@ function card(providerId: string, name: string, typeLine: string, colorIdentity:
   };
 }
 
-const commander = card("cmd", "Test Commander", "Legendary Creature — Wizard");
+const commander = card("cmd", "Test Commander", "Legendary Creature — Wizard", ["U"]);
 const island = card("island", "Island", "Basic Land — Island", ["U"]);
 const catalog = { cmd: commander, island };
 const deck: CommanderDeckList = {
