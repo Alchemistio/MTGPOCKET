@@ -36,7 +36,7 @@ export interface PlayerState {
   battlefield: InstanceId[];
   command: InstanceId[];
   commanderCastCount: Readonly<Record<string, number>>;
-  commanderDamageReceived: Readonly<Record<PlayerId, number>>;
+  commanderDamageReceived: Readonly<Record<InstanceId, number>>;
   manaPool: Readonly<Record<string, number>>;
   isEliminated: boolean;
 }
