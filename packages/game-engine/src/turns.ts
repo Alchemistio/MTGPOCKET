@@ -38,5 +38,5 @@ export function nextTurnStep(state: GameState): GameState {
 
 export function beginPriorityWindow(state: GameState): GameState {
   if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
-  return { ...state, revision: state.revision + 1, priorityPlayerId: state.activePlayerId, consecutivePasses: [] };
+  return { ...state, revision: state.revision + 1, priorityPlayerId: state.activePlayerId, consecutivePasses: [], priorityWindowClosed: false };
 }
