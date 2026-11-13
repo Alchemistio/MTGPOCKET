@@ -27,7 +27,7 @@ export class ScryfallRepository {
   async getCardById(id: string): Promise<CardDefinition> {
     return this.cached(`card:id:${id}`, async () => {
       const card = normalizeScryfallCard(await this.client.getCardById(id));
-      this.cache.set(`card:id:${card.providerId}`, { value: card, expiresAt: this.now() + ttlMs });
+      this.cache.set(`card:id:${card.providerId}`, { value: card, expiresAt: this.now() + this.ttlMs });
       return card;
     });
   }
@@ -61,7 +61,7 @@ export class ScryfallRepository {
     const pending = this.inFlight.get(key);
     if (pending) return pending as Promise<T>;
     const request = load().then(value => {
-      this.cache.set(key, { value, expiresAt: this.now() + this.ttlMs });
+      this.cache.set(key, { value, expiresAt: this.now() + ttlMs });
       return value;
     }).finally(() => {
       this.inFlight.delete(key);
