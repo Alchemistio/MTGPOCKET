@@ -156,5 +156,5 @@ const styles = {
   credentials: { marginTop: 14, padding: 12, backgroundColor: "#172333", borderRadius: 7 },
   credentialsTitle: { color: "#9dd9bb", fontSize: 9, fontWeight: "900" as const, marginBottom: 8 },
   credential: { color: "#edf2f8", fontSize: 11, marginTop: 4, fontVariant: ["tabular-nums"] as const },
-  footer: { color: "#708198", fontSize: 9, lineHeight: 14, marginTop: "auto" as const }
+  footer: { color: "#708198", fontSize: 9, lineHeight: 14, marginTop: 18 }
 };
