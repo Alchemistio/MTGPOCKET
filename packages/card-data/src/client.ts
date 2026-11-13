@@ -75,7 +75,7 @@ export class ScryfallClient {
   private async requestCard(path: string, signal?: AbortSignal): Promise<ScryfallCard> {
     const response = await this.fetcher(`${this.baseUrl}${path}`, {
       headers: { accept: "application/json", "user-agent": "CommanderPocket/0.1.0" },
-      signal
+      ...(signal ? { signal } : {})
     });
     const body: unknown = await response.json();
     if (!response.ok) throw new ScryfallApiError("Scryfall card request failed.", response.status, body);
