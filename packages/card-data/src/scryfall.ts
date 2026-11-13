@@ -15,6 +15,7 @@ export interface ScryfallCardFace {
 
 export interface ScryfallCard {
   id: string;
+  oracle_id?: string;
   name: string;
   layout: string;
   mana_cost?: string;
@@ -36,6 +37,7 @@ export interface ScryfallCard {
 export interface CardDefinition {
   provider: "scryfall";
   providerId: string;
+  oracleId: string | null;
   name: string;
   layout: string;
   manaCost: string | null;
@@ -53,6 +55,7 @@ export function normalizeScryfallCard(card: ScryfallCard): CardDefinition {
   return {
     provider: "scryfall",
     providerId: card.id,
+    oracleId: card.oracle_id ?? null,
     name: card.name,
     layout: card.layout,
     manaCost: card.mana_cost ?? null,
