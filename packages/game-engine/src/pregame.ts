@@ -6,7 +6,7 @@ import { drawCards, shuffleLibrary } from "./library.js";
 export interface MulliganDecision {
   playerId: PlayerId;
   action: "mulligan" | "keep";
-  /** Cards to put on the bottom, in the order chosen by the player. */
+  /** Cards to put on the bottom after this mulligan, in the chosen order. */
   bottomCardIds?: readonly string[];
 }
 
@@ -30,24 +30,57 @@ export function initializeOpeningHands(
   return next;
 }
 
+function putOnBottom(state: GameState, playerId: PlayerId, cardIds: readonly string[]): GameState {
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
+  if (cardIds.length === 0) return state;
+  if (new Set(cardIds).size !== cardIds.length || cardIds.some(id => !player.hand.includes(id))) {
+    throw new Error("Les cartes à remettre sous la bibliothèque doivent être distinctes et provenir de la main.");
+  }
+  const bottomSet = new Set(cardIds);
+  const cards = { ...state.cards };
+  for (const id of cardIds) {
+    const card = cards[id];
+    if (card) cards[id] = {
+      ...card, zone: "library", controller_id: card.owner_id, is_tapped: false,
+      attached_to: null, damage_marked: 0,
+      counters: { p1p1: 0, m1m1: 0, shield: 0, custom: {} }
+    };
+  }
+  return {
+    ...state, revision: state.revision + 1, cards,
+    players: state.players.map(p => p.id === playerId
+      ? { ...p, hand: p.hand.filter(id => !bottomSet.has(id)), library: [...cardIds, ...p.library] }
+      : p)
+  };
+}
+
 export function performLondonMulligan(
   state: GameState,
   playerId: PlayerId,
   seed: string,
+  bottomCardIds: readonly string[] = [],
   startingHandSize = 7
 ): GameState {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "Le mulligan n'est possible qu'avant le début de la partie.");
   const player = state.players.find(p => p.id === playerId);
   if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
   if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
-  if (player.mulliganCount >= startingHandSize + 1) throw new Error("Le joueur ne peut plus prendre de mulligan.");
+  const nextMulliganCount = player.mulliganCount + 1;
+  if (nextMulliganCount > startingHandSize + 1) throw new Error("Le joueur ne peut plus prendre de mulligan.");
+  const requiredBottomCount = Math.max(0, nextMulliganCount - 1);
+  if (bottomCardIds.length !== requiredBottomCount || new Set(bottomCardIds).size !== bottomCardIds.length) {
+    throw new Error(`Après ce mulligan, il faut remettre exactement ${requiredBottomCount} carte(s) sous la bibliothèque.`);
+  }
+
   let next = state;
   for (const cardId of [...player.hand]) next = moveCardToZone(next, cardId, "library");
   next = shuffleLibrary(next, playerId, seed);
   next = drawCards(next, playerId, startingHandSize).state;
+  next = putOnBottom(next, playerId, bottomCardIds);
   return {
     ...next, revision: next.revision + 1,
-    players: next.players.map(p => p.id === playerId ? { ...p, mulliganCount: p.mulliganCount + 1 } : p)
+    players: next.players.map(p => p.id === playerId ? { ...p, mulliganCount: nextMulliganCount } : p)
   };
 }
 
@@ -60,22 +93,10 @@ export function keepOpeningHand(
   const player = state.players.find(p => p.id === playerId);
   if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
   if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
-  const requiredBottomCount = Math.max(0, player.mulliganCount - 1);
-  if (bottomCardIds.length !== requiredBottomCount || new Set(bottomCardIds).size !== bottomCardIds.length) {
-    throw new Error(`Il faut remettre exactement ${requiredBottomCount} carte(s) sous la bibliothèque.`);
-  }
-  if (bottomCardIds.some(id => !player.hand.includes(id))) throw new Error("Une carte choisie ne se trouve pas dans la main.");
-  const bottomSet = new Set(bottomCardIds);
-  const hand = player.hand.filter(id => !bottomSet.has(id));
-  const library = [...bottomCardIds, ...player.library];
-  const cards = { ...state.cards };
-  for (const id of bottomCardIds) {
-    const card = cards[id];
-    if (card) cards[id] = { ...card, zone: "library", controller_id: card.owner_id, is_tapped: false, attached_to: null, damage_marked: 0, counters: { p1p1: 0, m1m1: 0, shield: 0, custom: {} } };
-  }
+  if (bottomCardIds.length > 0) throw new Error("Les cartes à remettre sous la bibliothèque sont choisies au moment de chaque mulligan.");
   return {
-    ...state, revision: state.revision + 1, cards,
-    players: state.players.map(p => p.id === playerId ? { ...p, hand, library, hasKeptHand: true } : p)
+    ...state, revision: state.revision + 1,
+    players: state.players.map(p => p.id === playerId ? { ...p, hasKeptHand: true } : p)
   };
 }
 
@@ -102,7 +123,7 @@ export function resolveMulliganRound(
     } else {
       const seed = seeds[decision.playerId];
       if (!seed) throw new Error(`Graine de mulligan manquante pour ${decision.playerId}.`);
-      next = performLondonMulligan(next, decision.playerId, seed, startingHandSize);
+      next = performLondonMulligan(next, decision.playerId, seed, decision.bottomCardIds ?? [], startingHandSize);
     }
   }
   return { state: next, readyToStart: next.players.every(p => p.hasKeptHand) };
