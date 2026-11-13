@@ -127,8 +127,8 @@ function CardLookupModal({ visible, onClose, repository, storageWarning }: {
             {selected.faces.length > 0 ? selected.faces.map((face, index) => (
               <View key={`${selected.providerId}-face-${index}`} style={styles.faceBlock}>
                 <Text style={styles.faceName}>{face.name}</Text>
-                <Text style={styles.faceType}>{face.typeLine}</Text>
-                <Text style={styles.oracleText}>{face.oracleText}</Text>
+                <Text style={styles.faceType}>{face.type_line ?? "—"}</Text>
+                <Text style={styles.oracleText}>{face.oracle_text ?? ""}</Text>
               </View>
             )) : <Text style={styles.oracleText}>{selected.oracleText}</Text>}
             <Pressable onPress={() => setSelected(null)} style={styles.backButton}><Text style={styles.backButtonText}>RETOUR AUX RÉSULTATS</Text></Pressable>
