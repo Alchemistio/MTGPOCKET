@@ -40,6 +40,8 @@ export interface PlayerState {
   manaPool: Readonly<Record<string, number>>;
   isEliminated: boolean;
   attemptedEmptyLibraryDraw: boolean;
+  mulliganCount: number;
+  hasKeptHand: boolean;
 }
 
 export interface StackItem {
