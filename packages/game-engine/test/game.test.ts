@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGame, passPriority } from "../src/index.js";
+import { createGame, passPriority, type GameState } from "../src/index.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -20,7 +20,7 @@ describe("createGame", () => {
 
 describe("priority", () => {
   it("cycles clockwise and closes an empty stack window after four passes", () => {
-    let game = { ...createGame("g1", players), priorityPlayerId: "p1" };
+    let game: GameState = { ...createGame("g1", players), priorityPlayerId: "p1" };
     const a = passPriority(game, "p1");
     const b = passPriority(a.state, "p2");
     const c = passPriority(b.state, "p3");
@@ -29,7 +29,7 @@ describe("priority", () => {
     expect(d.outcome).toBe("step-advance");
   });
   it("rejects a pass from a player without priority", () => {
-    const game = { ...createGame("g1", players), priorityPlayerId: "p1" };
+    const game: GameState = { ...createGame("g1", players), priorityPlayerId: "p1" };
     expect(() => passPriority(game, "p2")).toThrowError();
   });
 });
