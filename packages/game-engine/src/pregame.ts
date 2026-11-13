@@ -174,7 +174,7 @@ export function resolveMulliganRound(
 
 export function startGame(state: GameState): GameState {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas en phase de préparation.");
-  if (!state.players.every(p => p.hasKeptHand && p.pendingBottomCount === 0 && p.command.length >= 1 && p.command.length <= 2)) {
+  if (!state.players.every(p => p.hasKeptHand && p.pendingBottomCount === 0 && p.command.length >= 1 && p.command.length <= 2 && p.command.every(id => state.cards[id]?.is_commander))) {
     throw new Error("Tous les joueurs doivent avoir gardé leur main avant le début.");
   }
   return {
