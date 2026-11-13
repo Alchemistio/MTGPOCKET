@@ -41,7 +41,7 @@ export class ScryfallClient {
   constructor(
     private readonly fetcher: FetchLike = fetch,
     private readonly baseUrl = "https://api.scryfall.com",
-    private readonly minRequestIntervalMs = 100
+    private readonly minRequestIntervalMs = 125
   ) {}
 
   private requestQueue: Promise<void> = Promise.resolve();
@@ -73,7 +73,7 @@ export class ScryfallClient {
   async searchCards(query: string, page = 1, signal?: AbortSignal): Promise<ScryfallSearchPage> {
     const params = new URLSearchParams({ q: query, page: String(page) });
     const response = await this.fetchRateLimited(`${this.baseUrl}/cards/search?${params.toString()}`, {
-      headers: { accept: "application/json", "user-agent": "CommanderPocket/0.1.0" },
+      headers: { accept: "application/json;q=0.9,*/*;q=0.8", "user-agent": "CommanderPocket/0.1.0" },
       ...(signal ? { signal } : {})
     });
     const body: unknown = await response.json();
