@@ -61,6 +61,7 @@ export interface GameState {
   activePlayerId: PlayerId | null;
   activePlayerSeat: number;
   result: { type: "win"; winnerId: PlayerId } | { type: "draw" } | null;
+  deckSetupComplete: boolean;
   turnNumber: number;
   phase: Phase;
   step: Step;
