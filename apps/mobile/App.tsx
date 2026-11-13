@@ -65,7 +65,7 @@ function PlayerPanel({ player, hasPriority, canPass, onPass }: {
           <View style={styles.cardPile}><Text style={styles.pileTitle}>Bibliothèque</Text><Text style={styles.pileCount}>{player.libraryCount}</Text></View>
         </View>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Passer la priorité pour ${player.name}`} disabled={!canPass} onPress={onPass} style={[styles.priorityButton, !hasPriority && styles.priorityButtonDisabled]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Passer la priorité pour ${player.name}`} disabled={!canPass} onPress={onPass} style={[styles.priorityButton, !canPass && styles.priorityButtonDisabled]}>
         <Text style={styles.priorityButtonText}>{canPass ? "PASSER LA PRIORITÉ" : player.isEliminated ? "ÉLIMINÉ" : hasPriority ? "PRIORITÉ ADVERSE" : "EN ATTENTE"}</Text>
       </Pressable>
     </View>
@@ -165,7 +165,7 @@ function CardLookupModal({ visible, onClose, repository, storageWarning }: {
                 <Text style={styles.resultMana}>{item.manaCost ?? "—"}</Text>
               </Pressable>
             )}
-            ListEmptyComponent={!loading && !error ? <Text style={styles.emptyResults}>Recherche par nom, type, couleur ou texte Oracle.</Text> : null}
+            ListEmptyComponent={!loading && !error ? <Text style={styles.emptyResults}>Recherche par nom, type, couleur ou texte Oracle.</Text> : undefined}
           />
         )}
       </View>
