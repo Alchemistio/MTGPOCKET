@@ -1,5 +1,6 @@
 import { EngineError, type GameState, type PlayerId, type PlayerState } from "./model.js";
 import { nextTurnStep } from "./turns.js";
+import { applyStateBasedActions } from "./players.js";
 
 export interface PlayerSetup { id: PlayerId; name: string; seat: number; }
 
@@ -78,10 +79,11 @@ export function pushStackItem(state: GameState, item: import("./model.js").Stack
   }
   const controller = state.players.find(p => p.id === item.controller_id);
   if (!controller || controller.isEliminated) throw new EngineError("PLAYER_ELIMINATED", "Le contrôleur n'est pas un joueur actif.");
-  return {
+  const next = {
     ...state, revision: state.revision + 1,
     stack: [...state.stack, item], consecutivePasses: [], priorityWindowClosed: false
   };
+  return applyStateBasedActions(next);
 }
 
 /** Resolves the top stack item through an injected card/effect handler, then grants priority. */
@@ -94,7 +96,7 @@ export function resolveStackItem(
   const top = state.stack[state.stack.length - 1];
   if (!top || top.id !== stackItemId) throw new EngineError("STACK_ITEM_MISMATCH", "L'objet demandé n'est pas au sommet de la pile.");
   const afterEffect = resolveEffect(state, top);
-  return completeStackResolution(afterEffect, stackItemId);
+  return applyStateBasedActions(completeStackResolution(afterEffect, stackItemId));
 }
 
 export function advanceAfterAllPass(state: GameState): GameState {
