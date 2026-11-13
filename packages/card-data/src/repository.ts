@@ -20,13 +20,14 @@ export class ScryfallRepository {
   constructor(
     private readonly client = new ScryfallClient(),
     private readonly ttlMs = 6 * 60 * 60 * 1000,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly searchTtlMs = 15 * 60 * 1000
   ) {}
 
   async getCardById(id: string): Promise<CardDefinition> {
     return this.cached(`card:id:${id}`, async () => {
       const card = normalizeScryfallCard(await this.client.getCardById(id));
-      this.cache.set(`card:id:${card.providerId}`, { value: card, expiresAt: this.now() + this.ttlMs });
+      this.cache.set(`card:id:${card.providerId}`, { value: card, expiresAt: this.now() + ttlMs });
       return card;
     });
   }
@@ -47,14 +48,14 @@ export class ScryfallRepository {
         has_more: result.has_more,
         ...(result.next_page ? { next_page: result.next_page } : {})
       };
-    });
+    }, this.searchTtlMs);
   }
 
   invalidateAll(): void {
     this.cache.clear();
   }
 
-  private async cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  private async cached<T>(key: string, load: () => Promise<T>, ttlMs = this.ttlMs): Promise<T> {
     const hit = this.cache.get(key);
     if (hit && hit.expiresAt > this.now()) return hit.value as T;
     const pending = this.inFlight.get(key);
