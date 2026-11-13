@@ -11,6 +11,8 @@ import {
   ScryfallClient, ScryfallRepository, type CardDefinition
 } from "@commander-pocket/card-data";
 import { createMobileCardRepository } from "./src/data/card-repository.js";
+import { NetworkRoomModal, type MobileGameView, type RoomSession } from "./src/network/NetworkRoomModal.js";
+import { RoomClient } from "./src/network/room-client.js";
 
 const initialPlayers = [
   { id: "p1", name: "Vous", seat: 0 },
@@ -23,9 +25,23 @@ function createDemoGame(): GameState {
   return advanceAutomaticStep(createGame("mobile-demo", initialPlayers));
 }
 
-function PlayerPanel({ player, hasPriority, onPass }: {
-  player: PlayerState;
+interface PlayerPanelData {
+  id: string;
+  name: string;
+  life: number;
+  handCount: number;
+  battlefieldCount: number;
+  graveyardCount: number;
+  libraryCount: number;
+  commanderCastCount: Readonly<Record<string, number>>;
+  manaPool: Readonly<Record<string, number>>;
+  isEliminated: boolean;
+}
+
+function PlayerPanel({ player, hasPriority, canPass, onPass }: {
+  player: PlayerPanelData;
   hasPriority: boolean;
+  canPass: boolean;
   onPass: () => void;
 }) {
   const commanderTax = Object.values(player.commanderCastCount).reduce((sum, count) => sum + count * 2, 0);
@@ -37,20 +53,20 @@ function PlayerPanel({ player, hasPriority, onPass }: {
         <Text style={styles.life}>{player.life} PV</Text>
       </View>
       <View style={styles.telemetry}>
-        <Text style={styles.metric}>Main {player.hand.length}</Text>
+        <Text style={styles.metric}>Main {player.handCount}</Text>
         <Text style={styles.metric}>Taxe {commanderTax}</Text>
         <Text style={styles.metric}>Mana {mana}</Text>
       </View>
       <View style={styles.battlefield}>
         <Text style={styles.hint}>CHAMP DE BATAILLE</Text>
         <View style={styles.pileRow}>
-          <View style={styles.cardPile}><Text style={styles.pileTitle}>Permanents</Text><Text style={styles.pileCount}>{player.battlefield.length}</Text></View>
-          <View style={styles.cardPile}><Text style={styles.pileTitle}>Cimetière</Text><Text style={styles.pileCount}>{player.graveyard.length}</Text></View>
-          <View style={styles.cardPile}><Text style={styles.pileTitle}>Bibliothèque</Text><Text style={styles.pileCount}>{player.library.length}</Text></View>
+          <View style={styles.cardPile}><Text style={styles.pileTitle}>Permanents</Text><Text style={styles.pileCount}>{player.battlefieldCount}</Text></View>
+          <View style={styles.cardPile}><Text style={styles.pileTitle}>Cimetière</Text><Text style={styles.pileCount}>{player.graveyardCount}</Text></View>
+          <View style={styles.cardPile}><Text style={styles.pileTitle}>Bibliothèque</Text><Text style={styles.pileCount}>{player.libraryCount}</Text></View>
         </View>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Passer la priorité pour ${player.name}`} disabled={!hasPriority} onPress={onPass} style={[styles.priorityButton, !hasPriority && styles.priorityButtonDisabled]}>
-        <Text style={styles.priorityButtonText}>{hasPriority ? "PASSER LA PRIORITÉ" : player.isEliminated ? "ÉLIMINÉ" : "EN ATTENTE"}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Passer la priorité pour ${player.name}`} disabled={!canPass} onPress={onPass} style={[styles.priorityButton, !hasPriority && styles.priorityButtonDisabled]}>
+        <Text style={styles.priorityButtonText}>{canPass ? "PASSER LA PRIORITÉ" : player.isEliminated ? "ÉLIMINÉ" : hasPriority ? "PRIORITÉ ADVERSE" : "EN ATTENTE"}</Text>
       </Pressable>
     </View>
   );
@@ -159,10 +175,46 @@ function CardLookupModal({ visible, onClose, repository, storageWarning }: {
 
 export default function App() {
   const [game, setGame] = useState<GameState>(createDemoGame);
+  const [roomClient] = useState(() => new RoomClient());
+  const [roomView, setRoomView] = useState<MobileGameView | null>(null);
+  const [roomSession, setRoomSession] = useState<RoomSession | null>(null);
+  const [networkVisible, setNetworkVisible] = useState(false);
+  const [networkMessage, setNetworkMessage] = useState<string | null>(null);
   const [repository, setRepository] = useState<ScryfallRepository | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [lookupVisible, setLookupVisible] = useState(false);
-  const priorityPlayer = game.players.find(player => player.id === game.priorityPlayerId);
+  const displayPlayers: PlayerPanelData[] = roomView
+    ? roomView.players.map(player => ({
+        id: player.id, name: player.name, life: player.life, handCount: player.handCount,
+        battlefieldCount: player.battlefield.length, graveyardCount: player.graveyard.length,
+        libraryCount: player.libraryCount, commanderCastCount: player.commanderCastCount,
+        manaPool: player.manaPool, isEliminated: player.isEliminated
+      }))
+    : game.players.map(player => ({
+        id: player.id, name: player.name, life: player.life, handCount: player.hand.length,
+        battlefieldCount: player.battlefield.length, graveyardCount: player.graveyard.length,
+        libraryCount: player.library.length, commanderCastCount: player.commanderCastCount,
+        manaPool: player.manaPool, isEliminated: player.isEliminated
+      }));
+  const priorityPlayerId = roomView?.priorityPlayerId ?? game.priorityPlayerId;
+  const turnNumber = roomView?.turnNumber ?? game.turnNumber;
+  const phase = roomView?.phase ?? game.phase;
+  const step = roomView?.step ?? game.step;
+  const stackCount = roomView?.stack.length ?? game.stack.length;
+  const awaitingResolutionId = roomView?.awaitingResolutionId ?? game.awaitingResolutionId;
+  const priorityPlayer = displayPlayers.find(player => player.id === priorityPlayerId);
+
+  useEffect(() => roomClient.onEvent(event => {
+    if (event.type === "game-view") setRoomView(event.view as MobileGameView);
+    if (event.type === "command-rejected" || event.type === "room-error" || event.type === "protocol-error") {
+      setNetworkMessage(event.code);
+    }
+    if (event.type === "disconnected") {
+      setRoomView(null);
+      setRoomSession(null);
+      setNetworkMessage("Connexion réseau fermée.");
+    }
+  }), [roomClient]);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,6 +230,20 @@ export default function App() {
   }, []);
 
   function pass(playerId: string) {
+    if (roomView && roomSession) {
+      if (playerId !== roomSession.playerId) return;
+      setNetworkMessage(null);
+      roomClient.sendCommand({
+        protocolVersion: 1,
+        gameId: roomSession.gameId,
+        commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+        playerId: roomSession.playerId,
+        expectedRevision: roomView.revision,
+        type: "pass-priority",
+        payload: {}
+      });
+      return;
+    }
     setGame(current => {
       const result = passPriority(current, playerId);
       return result.outcome === "step-advance" ? advanceAfterAllPass(result.state) : result.state;
@@ -189,22 +255,42 @@ export default function App() {
       <StatusBar hidden />
       <View style={styles.topBar}>
         <Text style={styles.brand}>COMMANDER POCKET</Text>
-        <Text style={styles.turn}>TOUR {game.turnNumber} · {game.phase.toUpperCase()} · {game.step.toUpperCase()}</Text>
+        <Text style={styles.turn}>TOUR {turnNumber} · {phase.toUpperCase()} · {step.toUpperCase()}</Text>
         <Text style={styles.priority}>{priorityPlayer ? `Priorité : ${priorityPlayer.name}` : "Résolution / transition"}</Text>
       </View>
       <View style={styles.board}>
-        {game.players.map(player => (
-          <PlayerPanel key={player.id} player={player} hasPriority={game.priorityPlayerId === player.id} onPass={() => pass(player.id)} />
+        {displayPlayers.map(player => (
+          <PlayerPanel
+            key={player.id}
+            player={player}
+            hasPriority={priorityPlayerId === player.id}
+            canPass={priorityPlayerId === player.id && (!roomView || roomSession?.playerId === player.id)}
+            onPass={() => pass(player.id)}
+          />
         ))}
       </View>
       <View style={styles.bottomBar}>
-        <Text style={styles.drawerTitle}>PILE · {game.stack.length} OBJET(S)</Text>
-        <Text style={styles.drawerHint}>{game.awaitingResolutionId ? "Résolution en attente" : "Réponses et déclenchements à venir"}</Text>
-        <Text style={styles.handLabel}>MAIN · {game.players[0]?.hand.length ?? 0} CARTES</Text>
+        <Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S)</Text>
+        <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
+        <Text style={styles.handLabel}>MAIN · {displayPlayers[0]?.handCount ?? 0} CARTES</Text>
+        <Pressable onPress={() => setNetworkVisible(true)} style={styles.lookupButton} accessibilityRole="button">
+          <Text style={styles.lookupButtonText}>{roomView ? "RÉSEAU ✓" : "RÉSEAU"}</Text>
+        </Pressable>
         <Pressable onPress={() => setLookupVisible(true)} style={styles.lookupButton} accessibilityRole="button">
           <Text style={styles.lookupButtonText}>CARTES</Text>
         </Pressable>
       </View>
+      {networkMessage ? <Text style={styles.networkMessage}>{networkMessage}</Text> : null}
+      <NetworkRoomModal
+        visible={networkVisible}
+        client={roomClient}
+        onClose={() => setNetworkVisible(false)}
+        onConnected={(session, view) => {
+          setRoomSession(session);
+          setRoomView(view);
+          setNetworkMessage(null);
+        }}
+      />
       <CardLookupModal visible={lookupVisible} onClose={() => setLookupVisible(false)} repository={repository} storageWarning={storageWarning} />
     </View>
   );
@@ -240,6 +326,7 @@ const styles = StyleSheet.create({
   handLabel: { color: "#c7d4e4", fontSize: 11, fontWeight: "800" },
   lookupButton: { backgroundColor: "#31445a", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 5 },
   lookupButtonText: { color: "#e7eff8", fontSize: 10, fontWeight: "900" },
+  networkMessage: { color: "#d9bd7d", fontSize: 9, textAlign: "center", marginTop: 4 },
   lookupScreen: { flex: 1, backgroundColor: "#0b1018", padding: 16, paddingTop: 34 },
   lookupHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   lookupTitle: { color: "#f1f5f9", fontSize: 14, fontWeight: "900", letterSpacing: 1 },
