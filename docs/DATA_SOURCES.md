@@ -16,7 +16,7 @@ Références :
 ## MTGJSON — import secondaire
 - Source secondaire pour les données bulk, métadonnées, sets et rapprochements.
 - Les fichiers AllPrintings sont volumineux ; téléchargement et transformation côté pipeline/serveur uniquement, jamais au lancement de l’app mobile.
-- Générer un snapshot compact versionné (SQLite/JSON compressé), conserver la date de génération et la somme de contrôle.
+- Le pipeline initial est dans `scripts/import_mtgjson.py` : lecture JSON/JSON.GZ en streaming, extraction vers SQLite, checksum SHA-256 et provenance de la version/date source.\n- Générer un snapshot compact versionné (SQLite/JSON compressé), conserver la date de génération et la somme de contrôle.
 - Ne pas écraser silencieusement les champs Scryfall : chaque champ garde sa provenance et une politique de priorité.
 
 Références :
