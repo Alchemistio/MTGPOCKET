@@ -5,6 +5,7 @@ La référence de travail du projet est le PDF Comprehensive Rules fourni avec l
 
 ## Couverture actuellement implémentée
 - **CR 103.4c** : total de départ Commander à 40 points de vie.
+- **CR 103.5 / 103.5c / 800.6** : déclarations de mulligan par ronde, mulligan de Londres, premier mulligan multijoueur gratuit pour le calcul des cartes à remettre sous la bibliothèque, et remise des cartes choisies dans l’ordre du joueur.
 - **CR 104.3b / 704.5a** : perte liée à un total de vie inférieur ou égal à zéro, appliquée au checkpoint de state-based actions.
 - **CR 104.3c / 704.5b** : suivi d'une tentative de pioche dans une bibliothèque vide et perte au checkpoint de state-based actions.
 - **CR 104.3j / 704.6c** : cumul des blessures de combat par instance de commandant et perte à 21.
