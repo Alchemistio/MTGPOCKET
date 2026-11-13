@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addCardInstance, createPregameGame, initializeOpeningHands,
+  addCardInstance, chooseMulliganBottomCards, createPregameGame, initializeOpeningHands,
   resolveMulliganRound, startGame
 } from "../src/index.js";
 
@@ -25,7 +25,7 @@ function preparedPregame() {
 }
 
 describe("Commander multiplayer London mulligan", () => {
-  it("does not bottom a card for the first mulligan (CR 103.5c / 800.6)", () => {
+  it("does not bottom a card for the first mulligan (CR 103.5c)", () => {
     const first = resolveMulliganRound(preparedPregame(), [
       { playerId: "p1", action: "mulligan" },
       { playerId: "p2", action: "keep" },
@@ -34,13 +34,14 @@ describe("Commander multiplayer London mulligan", () => {
     ], { p1: "mulligan-one" });
     expect(first.readyToStart).toBe(false);
     expect(first.state.players[0]?.mulliganCount).toBe(1);
+    expect(first.state.players[0]?.pendingBottomCount).toBe(0);
     const second = resolveMulliganRound(first.state, [{ playerId: "p1", action: "keep" }], {});
     expect(second.readyToStart).toBe(true);
     expect(second.state.players[0]?.hand).toHaveLength(7);
     expect(startGame(second.state).status).toBe("active");
   });
 
-  it("bottoms one chosen card after the second mulligan", () => {
+  it("requires a bottom choice immediately after the second mulligan", () => {
     const first = resolveMulliganRound(preparedPregame(), [
       { playerId: "p1", action: "mulligan" },
       { playerId: "p2", action: "keep" },
@@ -50,15 +51,16 @@ describe("Commander multiplayer London mulligan", () => {
     const second = resolveMulliganRound(first.state, [
       { playerId: "p1", action: "mulligan" }
     ], { p1: "mulligan-two" });
+    expect(second.state.players[0]?.pendingBottomCount).toBe(1);
     const hand = second.state.players[0]?.hand ?? [];
     const chosenBottom = hand[0];
     expect(chosenBottom).toBeDefined();
-    const third = resolveMulliganRound(second.state, [
-      { playerId: "p1", action: "keep", bottomCardIds: [chosenBottom!] }
-    ], {});
+    const bottomed = chooseMulliganBottomCards(second.state, "p1", [chosenBottom!]);
+    expect(bottomed.players[0]?.hand).toHaveLength(6);
+    expect(bottomed.players[0]?.library[0]).toBe(chosenBottom);
+    const third = resolveMulliganRound(bottomed, [{ playerId: "p1", action: "keep" }], {});
     expect(third.readyToStart).toBe(true);
-    expect(third.state.players[0]?.hand).toHaveLength(6);
-    expect(third.state.players[0]?.library[0]).toBe(chosenBottom);
+    expect(startGame(third.state).status).toBe("active");
   });
 
   it("cannot start while any player has not kept an opening hand", () => {
