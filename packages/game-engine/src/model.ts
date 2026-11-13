@@ -39,6 +39,7 @@ export interface PlayerState {
   commanderDamageReceived: Readonly<Record<InstanceId, number>>;
   manaPool: Readonly<Record<string, number>>;
   isEliminated: boolean;
+  attemptedEmptyLibraryDraw: boolean;
 }
 
 export interface StackItem {
@@ -54,7 +55,9 @@ export interface GameState {
   revision: number;
   players: PlayerState[];
   cards: Readonly<Record<InstanceId, RuntimeCardState>>;
-  activePlayerId: PlayerId;
+  activePlayerId: PlayerId | null;
+  activePlayerSeat: number;
+  result: { type: "win"; winnerId: PlayerId } | { type: "draw" } | null;
   turnNumber: number;
   phase: Phase;
   step: Step;
