@@ -23,32 +23,33 @@ export class GameRoom {
   }
 
   apply(command: RoomCommand): RoomCommandResult {
-    const previous = this.commandResults.get(command.commandId);
+    const cacheKey = `${command.playerId}:${command.commandId}`;
+    const previous = this.commandResults.get(cacheKey);
     if (previous) return previous;
-    if (command.protocolVersion !== 1) return this.reject(command.commandId, "UNSUPPORTED_PROTOCOL");
-    if (command.gameId !== this.id) return this.reject(command.commandId, "UNKNOWN_GAME");
-    if (command.expectedRevision !== this.currentState.revision) return this.reject(command.commandId, "STALE_REVISION");
+    if (command.protocolVersion !== 1) return this.reject(cacheKey, "UNSUPPORTED_PROTOCOL");
+    if (command.gameId !== this.id) return this.reject(cacheKey, "UNKNOWN_GAME");
+    if (command.expectedRevision !== this.currentState.revision) return this.reject(cacheKey, "STALE_REVISION");
     if (command.type === "resolve-commander-return") {
       const payload = command.payload;
       if (!isRecord(payload) || typeof payload.instanceId !== "string" ||
           (payload.choice !== "command" && payload.choice !== "stay")) {
-        return this.reject(command.commandId, "INVALID_COMMANDER_CHOICE");
+        return this.reject(cacheKey, "INVALID_COMMANDER_CHOICE");
       }
       const pending = this.currentState.pendingCommanderChoices.find(item => item.instanceId === payload.instanceId);
       if (!pending || pending.ownerId !== command.playerId) {
-        return this.reject(command.commandId, "NOT_COMMANDER_OWNER");
+        return this.reject(cacheKey, "NOT_COMMANDER_OWNER");
       }
       try {
         this.currentState = resolveCommanderReturnChoice(this.currentState, payload.instanceId, payload.choice);
         const accepted: RoomCommandResult = { accepted: true, revision: this.currentState.revision, outcome: "decision-resolved" };
-        this.commandResults.set(command.commandId, accepted);
+        this.commandResults.set(cacheKey, accepted);
         return accepted;
       } catch (error) {
         const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
-        return this.reject(command.commandId, code);
+        return this.reject(cacheKey, code);
       }
     }
-    if (command.type !== "pass-priority") return this.reject(command.commandId, "UNSUPPORTED_COMMAND");
+    if (command.type !== "pass-priority") return this.reject(cacheKey, "UNSUPPORTED_COMMAND");
 
     try {
       const result = passPriority(this.currentState, command.playerId);
@@ -72,9 +73,9 @@ export class GameRoom {
     }
   }
 
-  private reject(commandId: string, code: string): RoomCommandResult {
+  private reject(cacheKey: string, code: string): RoomCommandResult {
     const rejected: RoomCommandResult = { accepted: false, revision: this.currentState.revision, code };
-    this.commandResults.set(commandId, rejected);
+    this.commandResults.set(cacheKey, rejected);
     return rejected;
   }
 }

@@ -37,6 +37,18 @@ describe("GameRoom", () => {
     const stale = room.apply(command("p2", revision, "stale"));
     expect(stale).toMatchObject({ accepted: false, code: "STALE_REVISION" });
   });
+  it("scopes idempotency keys to the authenticated player seat", () => {
+    const room = new GameRoom("room-1", players);
+    const first = room.apply(command("p1", room.state.revision, "shared-id"));
+    expect(first.accepted).toBe(true);
+
+    // The same opaque command ID from another seat is a distinct command,
+    // not a replay of the first player's cached response.
+    const second = room.apply(command("p2", room.state.revision, "shared-id"));
+    expect(second.accepted).toBe(true);
+    expect(second.revision).toBeGreaterThan(first.revision);
+  });
+
   it("resolves a commander-return choice only when submitted by its owner", () => {
     let state = createGame("room-1", players);
     state = addCardInstance(state, { instance_id: "cmd1", card_id: "commander", owner_id: "p1", zone: "command", is_commander: true });
