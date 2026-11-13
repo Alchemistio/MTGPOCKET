@@ -23,7 +23,7 @@ export function nextTurnStep(state: GameState): GameState {
   const next = TURN_SEQUENCE[index + 1];
   if (next) return {
     ...state, revision: state.revision + 1, phase: next.phase, step: next.step,
-    priorityPlayerId: next.grantsPriority ? state.activePlayerId : null, consecutivePasses: []
+    priorityPlayerId: next.grantsPriority ? state.activePlayerId : null, consecutivePasses: [], priorityWindowClosed: false
   };
   const alive = state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat);
   const currentIndex = alive.findIndex(p => p.id === state.activePlayerId);
