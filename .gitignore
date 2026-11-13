@@ -9,3 +9,15 @@ coverage/
 !.env.example
 .DS_Store
 *.log
+
+# Local databases, downloaded bulk datasets and Python tooling
+*.sqlite
+*.sqlite3
+*.db
+*.json.gz
+*.json.xz
+__pycache__/
+.venv/
+.pytest_cache/
+data/bulk/
+data/snapshots/
