@@ -12,12 +12,50 @@ export function createPregameGame(id: string, players: readonly PlayerSetup[]): 
   return { ...createGame(id, players), status: "pregame" };
 }
 
+
+export function placeCommandersInCommandZone(
+  state: GameState,
+  commandersByPlayer: Readonly<Record<PlayerId, readonly string[]>>
+): GameState {
+  if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "Les commandants doivent être placés avant le début de la partie.");
+  let next = state;
+  const used = new Set<string>();
+  for (const player of state.players) {
+    const commanderIds = commandersByPlayer[player.id];
+    if (!commanderIds || commanderIds.length < 1 || commanderIds.length > 2 ||
+        new Set(commanderIds).size !== commanderIds.length) {
+      throw new Error(`${player.name} doit désigner un ou deux commandants distincts.`);
+    }
+    for (const instanceId of commanderIds) {
+      if (used.has(instanceId)) throw new Error("Une même carte ne peut pas être le commandant de plusieurs joueurs.");
+      used.add(instanceId);
+      const card = next.cards[instanceId];
+      if (!card || card.owner_id !== player.id || card.zone !== "library") {
+        throw new Error(`Le commandant ${instanceId} doit appartenir au joueur et être dans sa bibliothèque.`);
+      }
+      next = moveCardToZone(next, instanceId, "command");
+      const moved = next.cards[instanceId];
+      if (!moved) throw new Error("Commandant introuvable après déplacement.");
+      next = {
+        ...next, revision: next.revision + 1,
+        cards: { ...next.cards, [instanceId]: { ...moved, is_commander: true } }
+      };
+    }
+  }
+  return next;
+}
+
 export function initializeOpeningHands(
   state: GameState,
   seeds: Readonly<Record<PlayerId, string>>,
   startingHandSize = 7
 ): GameState {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas en phase de préparation.");
+  for (const player of state.players) {
+    if (player.command.length < 1 || player.command.length > 2 || player.command.some(id => !state.cards[id]?.is_commander)) {
+      throw new Error(`${player.name} doit avoir un ou deux commandants face visible en zone de commandement.`);
+    }
+  }
   let next = state;
   for (const player of [...state.players].sort((a, b) => a.seat - b.seat)) {
     const seed = seeds[player.id];
@@ -136,7 +174,7 @@ export function resolveMulliganRound(
 
 export function startGame(state: GameState): GameState {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas en phase de préparation.");
-  if (!state.players.every(p => p.hasKeptHand && p.pendingBottomCount === 0)) {
+  if (!state.players.every(p => p.hasKeptHand && p.pendingBottomCount === 0 && p.command.length >= 1 && p.command.length <= 2)) {
     throw new Error("Tous les joueurs doivent avoir gardé leur main avant le début.");
   }
   return {
