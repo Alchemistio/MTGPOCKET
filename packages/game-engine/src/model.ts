@@ -41,6 +41,7 @@ export interface PlayerState {
   isEliminated: boolean;
   attemptedEmptyLibraryDraw: boolean;
   mulliganCount: number;
+  pendingBottomCount: number;
   hasKeptHand: boolean;
 }
 
