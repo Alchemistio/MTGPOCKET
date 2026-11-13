@@ -62,7 +62,7 @@ export function completeStackResolution(state: GameState, stackItemId: string): 
   if (!top || top.id !== stackItemId) throw new EngineError("STACK_ITEM_MISMATCH", "Le sommet de pile a changé.");
   return {
     ...state, revision: state.revision + 1, stack: state.stack.slice(0, -1),
-    awaitingResolutionId: null, priorityPlayerId: state.activePlayerId, consecutivePasses: [], priorityWindowClosed: false
+    awaitingResolutionId: null, priorityPlayerId: state.activePlayerId ?? state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat).find(p => p.seat > state.activePlayerSeat)?.id ?? state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat)[0]?.id ?? null, consecutivePasses: [], priorityWindowClosed: false
   };
 }
 
