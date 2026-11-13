@@ -13,7 +13,7 @@
 | Comprendre les fournisseurs | [DATA_SOURCES](DATA_SOURCES.md) | Scryfall, MTGJSON, Scrydex et politique d'intégration |
 | Retrouver les docs techniques | [references/README](references/README.md) | Fiches locales, sources officielles, dates et licences |
 | Comprendre une décision | [DECISIONS](DECISIONS.md) | ADRs et raisons des choix |
-| Retrouver l'historique | [PROJECT_LOG](PROJECT_LOG.md) | Livraisons, tests, incidents et prochaines actions |
+| Retrouver l'historique | [PROJECT_LOG](PROJECT_LOG.md) | Livraisons, tests, incidents et prochaines actions |\n| Savoir ce qui est testé | [TEST_MATRIX](TEST_MATRIX.md) | Fichiers de tests, périmètre vérifié et trous de couverture |
 
 ## Sources normatives
 
