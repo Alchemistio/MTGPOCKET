@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceAfterAllPass, createGame, passPriority, type GameState } from "../src/index.js";
+import { advanceAfterAllPass, advanceAutomaticStep, createGame, passPriority, type GameState } from "../src/index.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -12,6 +12,11 @@ describe("createGame", () => {
     expect(game.players).toHaveLength(4);
     expect(game.players.every(p => p.life === 40)).toBe(true);
     expect(game.step).toBe("untap");
+  });
+  it("automatically advances from untap to upkeep without a priority window", () => {
+    const game = advanceAutomaticStep(createGame("g1", players));
+    expect(game.step).toBe("upkeep");
+    expect(game.priorityPlayerId).toBe("p1");
   });
   it("rejects non-four-player tables", () => {
     expect(() => createGame("g1", players.slice(0, 3))).toThrowError();
