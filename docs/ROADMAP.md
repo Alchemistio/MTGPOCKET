@@ -29,14 +29,14 @@
 
 ## M3 — Mobile <badge>prototype</badge>
 - [x] Plateau paysage quatre joueurs et télémétrie compacte.
-- [x] Prototype interactif connecté au moteur pour les passes de priorité.
+- [x] Prototype interactif connecté au moteur pour les passes de priorité.\n- [x] Recherche Scryfall, détail multi-faces et cache SQLite local accessibles depuis le plateau.
 - [ ] Lobby, recherche de cartes, deckbuilding et collection.
 - [ ] Main réelle, piles compactées, badges, attachements et tiroir de pile interactif.
 - [ ] Radar/gaze gesture, gestes accessibles et motifs géométriques WUBRG.
 **Sortie :** prototype jouable sur appareils 5,5–6,7 pouces.
 
 ## M4 — Réseau local <badge>socle</badge>
-- [x] WebSocket LAN, création/rejoindre salle, jetons de siège.
+- [x] Serveur et client WebSocket LAN, écrans créer/rejoindre, jetons de siège et vues privées.
 - [x] Révisions, idempotence et vues filtrées par joueur.
 - [ ] Commandes de jeu complètes, découverte LAN, reconnexion, reprise et tests de déconnexion.
 - [ ] Authentification et sécurité adaptées à un réseau non fiable.
