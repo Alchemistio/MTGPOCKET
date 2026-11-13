@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addCardInstance, chooseMulliganBottomCards, createPregameGame, initializeOpeningHands,
+  addCardInstance, chooseMulliganBottomCards, createPregameGame, initializeOpeningHands, placeCommandersInCommandZone,
   resolveMulliganRound, startGame
 } from "../src/index.js";
 
@@ -12,7 +12,7 @@ const players = [
 function preparedPregame() {
   let game = createPregameGame("opening", players);
   for (const player of players) {
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < 9; i += 1) {
       game = addCardInstance(game, {
         instance_id: `${player.id}-card-${i}`,
         card_id: `card-${i}`,
@@ -21,6 +21,12 @@ function preparedPregame() {
       });
     }
   }
+  for (const player of players) {
+    game = addCardInstance(game, { instance_id: `${player.id}-commander`, card_id: "commander", owner_id: player.id, zone: "library" });
+  }
+  game = placeCommandersInCommandZone(game, {
+    p1: ["p1-commander"], p2: ["p2-commander"], p3: ["p3-commander"], p4: ["p4-commander"]
+  });
   return initializeOpeningHands(game, { p1: "seed-a", p2: "seed-b", p3: "seed-c", p4: "seed-d" });
 }
 
