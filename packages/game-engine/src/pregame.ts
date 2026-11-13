@@ -6,8 +6,6 @@ import { drawCards, shuffleLibrary } from "./library.js";
 export interface MulliganDecision {
   playerId: PlayerId;
   action: "mulligan" | "keep";
-  /** Cards to put on the bottom after this mulligan, in the chosen order. */
-  bottomCardIds?: readonly string[];
 }
 
 export function createPregameGame(id: string, players: readonly PlayerSetup[]): GameState {
@@ -30,12 +28,45 @@ export function initializeOpeningHands(
   return next;
 }
 
-function putOnBottom(state: GameState, playerId: PlayerId, cardIds: readonly string[]): GameState {
+export function performLondonMulligan(
+  state: GameState,
+  playerId: PlayerId,
+  seed: string,
+  startingHandSize = 7
+): GameState {
+  if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "Le mulligan n'est possible qu'avant le début de la partie.");
   const player = state.players.find(p => p.id === playerId);
   if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
-  if (cardIds.length === 0) return state;
-  if (new Set(cardIds).size !== cardIds.length || cardIds.some(id => !player.hand.includes(id))) {
-    throw new Error("Les cartes à remettre sous la bibliothèque doivent être distinctes et provenir de la main.");
+  if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
+  if (player.pendingBottomCount !== 0) throw new Error("Le joueur doit d'abord choisir les cartes à remettre sous la bibliothèque.");
+  const nextMulliganCount = player.mulliganCount + 1;
+  if (nextMulliganCount > startingHandSize + 1) throw new Error("Le joueur ne peut plus prendre de mulligan.");
+
+  let next = state;
+  for (const cardId of [...player.hand]) next = moveCardToZone(next, cardId, "library");
+  next = shuffleLibrary(next, playerId, seed);
+  next = drawCards(next, playerId, startingHandSize).state;
+  const pendingBottomCount = Math.max(0, nextMulliganCount - 1);
+  return {
+    ...next, revision: next.revision + 1,
+    players: next.players.map(p => p.id === playerId
+      ? { ...p, mulliganCount: nextMulliganCount, pendingBottomCount }
+      : p)
+  };
+}
+
+export function chooseMulliganBottomCards(
+  state: GameState,
+  playerId: PlayerId,
+  cardIds: readonly string[]
+): GameState {
+  if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "Le choix de mulligan est terminé.");
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
+  if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
+  if (cardIds.length !== player.pendingBottomCount || new Set(cardIds).size !== cardIds.length ||
+      cardIds.some(id => !player.hand.includes(id))) {
+    throw new Error(`Il faut choisir exactement ${player.pendingBottomCount} carte(s) distincte(s) de la main.`);
   }
   const bottomSet = new Set(cardIds);
   const cards = { ...state.cards };
@@ -49,51 +80,21 @@ function putOnBottom(state: GameState, playerId: PlayerId, cardIds: readonly str
   }
   return {
     ...state, revision: state.revision + 1, cards,
-    players: state.players.map(p => p.id === playerId
-      ? { ...p, hand: p.hand.filter(id => !bottomSet.has(id)), library: [...cardIds, ...p.library] }
-      : p)
+    players: state.players.map(p => p.id === playerId ? {
+      ...p,
+      hand: p.hand.filter(id => !bottomSet.has(id)),
+      library: [...cardIds, ...p.library],
+      pendingBottomCount: 0
+    } : p)
   };
 }
 
-export function performLondonMulligan(
-  state: GameState,
-  playerId: PlayerId,
-  seed: string,
-  bottomCardIds: readonly string[] = [],
-  startingHandSize = 7
-): GameState {
-  if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "Le mulligan n'est possible qu'avant le début de la partie.");
-  const player = state.players.find(p => p.id === playerId);
-  if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
-  if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
-  const nextMulliganCount = player.mulliganCount + 1;
-  if (nextMulliganCount > startingHandSize + 1) throw new Error("Le joueur ne peut plus prendre de mulligan.");
-  const requiredBottomCount = Math.max(0, nextMulliganCount - 1);
-  if (bottomCardIds.length !== requiredBottomCount || new Set(bottomCardIds).size !== bottomCardIds.length) {
-    throw new Error(`Après ce mulligan, il faut remettre exactement ${requiredBottomCount} carte(s) sous la bibliothèque.`);
-  }
-
-  let next = state;
-  for (const cardId of [...player.hand]) next = moveCardToZone(next, cardId, "library");
-  next = shuffleLibrary(next, playerId, seed);
-  next = drawCards(next, playerId, startingHandSize).state;
-  next = putOnBottom(next, playerId, bottomCardIds);
-  return {
-    ...next, revision: next.revision + 1,
-    players: next.players.map(p => p.id === playerId ? { ...p, mulliganCount: nextMulliganCount } : p)
-  };
-}
-
-export function keepOpeningHand(
-  state: GameState,
-  playerId: PlayerId,
-  bottomCardIds: readonly string[] = []
-): GameState {
+export function keepOpeningHand(state: GameState, playerId: PlayerId): GameState {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "La main d'ouverture ne peut être gardée qu'avant le début de la partie.");
   const player = state.players.find(p => p.id === playerId);
   if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
   if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
-  if (bottomCardIds.length > 0) throw new Error("Les cartes à remettre sous la bibliothèque sont choisies au moment de chaque mulligan.");
+  if (player.pendingBottomCount !== 0) throw new Error("Le joueur doit remettre ses cartes sous la bibliothèque avant de garder.");
   return {
     ...state, revision: state.revision + 1,
     players: state.players.map(p => p.id === playerId ? { ...p, hasKeptHand: true } : p)
@@ -109,6 +110,7 @@ export function resolveMulliganRound(
 ): { state: GameState; readyToStart: boolean } {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "La phase de mulligan est terminée.");
   const waiting = state.players.filter(p => !p.hasKeptHand);
+  if (waiting.some(p => p.pendingBottomCount > 0)) throw new Error("Tous les joueurs doivent terminer leur choix de cartes à remettre sous la bibliothèque avant la prochaine ronde.");
   if (decisions.length !== waiting.length || new Set(decisions.map(d => d.playerId)).size !== decisions.length ||
       waiting.some(p => !decisions.some(d => d.playerId === p.id))) {
     throw new Error("Chaque joueur qui n'a pas encore gardé sa main doit déclarer simultanément keep ou mulligan.");
@@ -119,19 +121,24 @@ export function resolveMulliganRound(
   );
   for (const decision of ordered) {
     if (decision.action === "keep") {
-      next = keepOpeningHand(next, decision.playerId, decision.bottomCardIds ?? []);
+      next = keepOpeningHand(next, decision.playerId);
     } else {
       const seed = seeds[decision.playerId];
       if (!seed) throw new Error(`Graine de mulligan manquante pour ${decision.playerId}.`);
-      next = performLondonMulligan(next, decision.playerId, seed, decision.bottomCardIds ?? [], startingHandSize);
+      next = performLondonMulligan(next, decision.playerId, seed, startingHandSize);
     }
   }
-  return { state: next, readyToStart: next.players.every(p => p.hasKeptHand) };
+  return {
+    state: next,
+    readyToStart: next.players.every(p => p.hasKeptHand && p.pendingBottomCount === 0)
+  };
 }
 
 export function startGame(state: GameState): GameState {
   if (state.status !== "pregame") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas en phase de préparation.");
-  if (!state.players.every(p => p.hasKeptHand)) throw new Error("Tous les joueurs doivent avoir gardé leur main avant le début.");
+  if (!state.players.every(p => p.hasKeptHand && p.pendingBottomCount === 0)) {
+    throw new Error("Tous les joueurs doivent avoir gardé leur main avant le début.");
+  }
   return {
     ...state, revision: state.revision + 1, status: "active", turnNumber: 1,
     phase: "beginning", step: "untap", priorityPlayerId: null,
