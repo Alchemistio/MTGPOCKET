@@ -233,6 +233,19 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  function resolveCommanderChoice(instanceId: string, choice: "command" | "stay") {
+    if (!roomView || !roomSession) return;
+    roomClient.sendCommand({
+      protocolVersion: 1,
+      gameId: roomSession.gameId,
+      commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+      playerId: roomSession.playerId,
+      expectedRevision: roomView.revision,
+      type: "resolve-commander-return",
+      payload: { instanceId, choice }
+    });
+  }
+
   function pass(playerId: string) {
     if (roomView && roomSession) {
       if (playerId !== roomSession.playerId) return;
@@ -273,6 +286,17 @@ export default function App() {
           />
         ))}
       </View>
+      {roomView?.pendingCommanderChoices.map(choice => (
+        <View key={choice.instanceId} style={styles.pendingChoice}>
+          <Text style={styles.pendingChoiceText}>Commandant au {choice.fromZone === "graveyard" ? "cimetière" : "bannissement"} : choisir son retour</Text>
+          <Pressable onPress={() => resolveCommanderChoice(choice.instanceId, "command")} style={styles.choiceButton}>
+            <Text style={styles.choiceButtonText}>ZONE DE COMMANDEMENT</Text>
+          </Pressable>
+          <Pressable onPress={() => resolveCommanderChoice(choice.instanceId, "stay")} style={styles.choiceButton}>
+            <Text style={styles.choiceButtonText}>LE LAISSER</Text>
+          </Pressable>
+        </View>
+      ))}
       <View style={styles.bottomBar}>
         <Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S)</Text>
         <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
@@ -324,6 +348,10 @@ const styles = StyleSheet.create({
   priorityButton: { minHeight: 28, borderRadius: 5, backgroundColor: "#2f795d", alignItems: "center", justifyContent: "center", marginTop: 5 },
   priorityButtonDisabled: { backgroundColor: "#263243" },
   priorityButtonText: { color: "#edf8f2", fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
+  pendingChoice: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6, backgroundColor: "#302a1e", borderColor: "#8b7342", borderWidth: 1, borderRadius: 7, padding: 6, marginTop: 5 },
+  pendingChoiceText: { color: "#f0dfb8", fontSize: 9, flex: 1, fontWeight: "700" },
+  choiceButton: { backgroundColor: "#46513e", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 6 },
+  choiceButtonText: { color: "#f4f7ed", fontSize: 8, fontWeight: "900" },
   bottomBar: { minHeight: 48, marginTop: 6, borderRadius: 8, backgroundColor: "#151f2d", paddingHorizontal: 10, paddingVertical: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   drawerTitle: { color: "#e6edf5", fontSize: 11, fontWeight: "900" },
   drawerHint: { color: "#8998aa", fontSize: 10 },

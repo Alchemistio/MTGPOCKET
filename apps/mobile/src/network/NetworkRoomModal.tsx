@@ -11,6 +11,8 @@ export interface MobileGameView {
   priorityPlayerId: string | null;
   stack: readonly unknown[];
   awaitingResolutionId: string | null;
+  pendingCommanderChoiceCount: number;
+  pendingCommanderChoices: readonly { instanceId: string; fromZone: "graveyard" | "exile" }[];
   players: readonly {
     id: string;
     name: string;
