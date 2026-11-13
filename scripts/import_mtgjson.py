@@ -75,7 +75,7 @@ def json_text(value: object) -> str:
 
 def iter_sets(path: Path) -> Iterator[tuple[str, dict]]:
     with open_source(path) as source:
-        yield from ijson.kvitems(source, "data")
+        yield from ijson.kvitems(source, "data", use_float=True)
 
 
 def import_all_printings(source_path: Path, output_path: Path) -> tuple[int, int]:
@@ -92,7 +92,7 @@ def import_all_printings(source_path: Path, output_path: Path) -> tuple[int, int
         db.execute("DELETE FROM import_metadata")
 
         with open_source(source_path) as source:
-            source_meta = next(ijson.items(source, "meta"), {})
+            source_meta = next(ijson.items(source, "meta", use_float=True), {})
 
         card_count = 0
         set_count = 0
