@@ -7,7 +7,7 @@ import type { GameCommandEnvelope } from "@commander-pocket/protocol";
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required"; state: GameState }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" }
   | { accepted: false; revision: number; code: string };
 
 export class GameRoom {
@@ -43,7 +43,7 @@ export class GameRoom {
         outcome = "passed";
       }
       this.currentState = nextState;
-      const accepted: RoomCommandResult = { accepted: true, revision: nextState.revision, outcome, state: nextState };
+      const accepted: RoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
       this.commandResults.set(command.commandId, accepted);
       return accepted;
     } catch (error) {
