@@ -52,6 +52,7 @@ export class RoomClient {
         resolve();
       };
       const onError = () => {
+        this.socket = null;
         socket.removeEventListener("open", onOpen);
         socket.removeEventListener("error", onError);
         reject(new Error("Impossible d’ouvrir la connexion au serveur."));
@@ -126,11 +127,11 @@ export class RoomClient {
       this.emit({ type: "protocol-error", code: "INVALID_JSON" });
       return;
     }
-    if (!isRecord(parsed) || typeof parsed.type !== "string") {
+    const event = parseRoomEvent(parsed);
+    if (!event) {
       this.emit({ type: "protocol-error", code: "INVALID_ENVELOPE" });
       return;
     }
-    const event = parsed as unknown as RoomClientEvent;
     if (this.pendingHandshake) {
       if (event.type === this.pendingHandshake.expected) {
         const pending = this.pendingHandshake;
@@ -150,6 +151,33 @@ export class RoomClient {
 
   private emit(event: RoomClientEvent): void {
     for (const listener of this.listeners) listener(event);
+  }
+}
+
+function parseRoomEvent(value: unknown): RoomClientEvent | null {
+  if (!isRecord(value) || typeof value.type !== "string") return null;
+  switch (value.type) {
+    case "room-created": {
+      if (typeof value.gameId !== "string" || !Array.isArray(value.credentials)) return null;
+      const credentials = value.credentials.filter((item): item is SeatCredential =>
+        isRecord(item) && typeof item.playerId === "string" && typeof item.token === "string"
+      );
+      if (credentials.length !== value.credentials.length) return null;
+      return { type: "room-created", gameId: value.gameId, credentials, view: value.view };
+    }
+    case "room-joined":
+    case "game-view":
+      return { type: value.type, view: value.view };
+    case "command-result":
+      return { type: "command-result", result: value.result };
+    case "command-rejected":
+    case "room-error":
+    case "protocol-error":
+      return { type: value.type, code: typeof value.code === "string" ? value.code : "UNKNOWN_ERROR" };
+    case "pong":
+      return typeof value.timestamp === "number" ? { type: "pong", timestamp: value.timestamp } : null;
+    default:
+      return null;
   }
 }
 
