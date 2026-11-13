@@ -72,7 +72,15 @@ describe("Commander multiplayer London mulligan", () => {
   it("allows more than eight mulligans and caps bottom choices at the actual hand size", () => {
     let state = preparedPregame();
     for (let round = 1; round <= 9; round += 1) {
-      state = resolveMulliganRound(state, [{ playerId: "p1", action: "mulligan" }], {
+      const decisions = round === 1
+        ? [
+            { playerId: "p1", action: "mulligan" as const },
+            { playerId: "p2", action: "keep" as const },
+            { playerId: "p3", action: "keep" as const },
+            { playerId: "p4", action: "keep" as const }
+          ]
+        : [{ playerId: "p1", action: "mulligan" as const }];
+      state = resolveMulliganRound(state, decisions, {
         p1: `many-mulligans-${round}`
       }).state;
       const player = state.players.find(item => item.id === "p1");
