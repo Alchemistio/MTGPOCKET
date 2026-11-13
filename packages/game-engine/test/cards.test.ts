@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addCardInstance, applyCommanderDamageLosses, createGame, getCommanderTax,
+  addCardInstance, applyStateBasedActions, createGame, getCommanderTax,
   moveCardToZone, recordCommanderCast, recordCommanderCombatDamage
 } from "../src/index.js";
 
@@ -38,7 +38,7 @@ describe("Commander tracking", () => {
     game = recordCommanderCombatDamage(game, "cmd1", "p2", 11);
     game = recordCommanderCombatDamage(game, "cmd1", "p2", 10);
     expect(game.players[1]?.commanderDamageReceived.cmd1).toBe(21);
-    game = applyCommanderDamageLosses(game);
+    game = applyStateBasedActions(game);
     expect(game.players[1]?.isEliminated).toBe(true);
   });
 });
