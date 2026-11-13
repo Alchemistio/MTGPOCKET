@@ -45,10 +45,12 @@ export class SQLiteCardCacheStore implements CardCacheStore {
   }
 
   async set(key: string, value: unknown, expiresAt: number): Promise<void> {
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) throw new Error("La valeur du cache n’est pas sérialisable en JSON.");
     const db = await this.database;
     await db.runAsync(
       "INSERT OR REPLACE INTO card_cache(cache_key, value_json, expires_at, updated_at) VALUES(?, ?, ?, ?)",
-      key, JSON.stringify(value), expiresAt, Date.now()
+      key, serialized, expiresAt, Date.now()
     );
   }
 
