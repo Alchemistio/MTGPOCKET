@@ -47,7 +47,13 @@ export function nextTurnStep(state: GameState): GameState {
       const cards = Object.fromEntries(Object.entries(nextState.cards).map(([id, card]) => [
         id, card.zone === "battlefield" ? { ...card, damage_marked: 0 } : card
       ]));
-      nextState = { ...nextState, revision: nextState.revision + 1, cards };
+      const active = nextState.activePlayerId === null ? undefined : nextState.players.find(p => p.id === nextState.activePlayerId);
+      const pendingDiscardCount = active ? Math.max(0, active.hand.length - active.maxHandSize) : 0;
+      nextState = {
+        ...nextState, revision: nextState.revision + 1, cards,
+        pendingDiscardPlayerId: pendingDiscardCount > 0 ? active?.id ?? null : null,
+        pendingDiscardCount
+      };
     }
     return nextState;
   }
@@ -68,7 +74,7 @@ export function beginPriorityWindow(state: GameState): GameState {
 /** Advances only the rules-defined no-priority steps (currently untap and cleanup). */
 export function advanceAutomaticStep(state: GameState): GameState {
   if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
-  if (state.priorityPlayerId !== null || state.priorityWindowClosed || state.stack.length > 0 || state.awaitingResolutionId !== null) {
+  if (state.priorityPlayerId !== null || state.priorityWindowClosed || state.stack.length > 0 || state.awaitingResolutionId !== null || state.pendingDiscardCount > 0) {
     throw new EngineError("RESOLUTION_REQUIRED", "La partie n'est pas dans une étape automatique libre.");
   }
   if (state.step !== "untap" && state.step !== "cleanup") {
