@@ -45,7 +45,7 @@
 ## M5 — Données <badge>socle</badge>
 - [x] Client Scryfall typé, cartes multi-faces et cadence des requêtes.
 - [x] Validation initiale des decks Commander.
-- [ ] Cache persistant mobile, recherche avancée et fonctionnement hors ligne.
+- [x] Store SQLite mobile persistant, TTL et composition du repository Scryfall.\n- [ ] Brancher la recherche avancée dans l’UI et compléter le mode hors ligne (index local/import bulk).
 - [ ] Import MTGJSON et adaptateurs secondaires vérifiés.
 **Sortie :** decks réels validés et cartes consultables hors ligne après cache.
 
