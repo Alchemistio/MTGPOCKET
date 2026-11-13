@@ -23,8 +23,7 @@ export function addCardInstance(state: GameState, setup: CardInstanceSetup): Gam
     instance_id: setup.instance_id, card_id: setup.card_id, owner_id: setup.owner_id,
     controller_id: setup.zone === "battlefield" ? controllerId : setup.owner_id,
     zone: setup.zone, is_tapped: false, counters: { ...EMPTY_COUNTERS },
-    attached_to: null, damage_marked: 0, is_commander: setup.is_commander ?? false,
-    commanderReturnEligibleAtRevision: null
+    attached_to: null, damage_marked: 0, is_commander: setup.is_commander ?? false
   };
   const cards = { ...state.cards, [card.instance_id]: card };
   const destinationId = setup.zone === "battlefield" ? controllerId : owner.id;
@@ -38,18 +37,11 @@ export function moveCardToZone(
   state: GameState,
   instanceId: InstanceId,
   destination: Zone,
-  destinationControllerId?: PlayerId,
-  commanderReplacementChoice?: "command" | "destination"
+  destinationControllerId?: PlayerId
 ): GameState {
   const card = state.cards[instanceId];
   if (!card) throw new EngineError("INVALID_ZONE_MOVE", "Instance de carte inconnue.");
-  if (card.is_commander && (destination === "hand" || destination === "library") && commanderReplacementChoice === undefined) {
-    throw new EngineError("COMMANDER_CHOICE_REQUIRED", "Le propriétaire doit choisir si le commandant rejoint la zone de commandement ou la destination prévue.");
-  }
-  const actualDestination = card.is_commander && (destination === "hand" || destination === "library") && commanderReplacementChoice === "command"
-    ? "command"
-    : destination;
-  const controllerId = actualDestination === "battlefield" || actualDestination === "stack"
+  const controllerId = destination === "battlefield" || destination === "stack"
     ? destinationControllerId ?? card.controller_id
     : card.owner_id;
   const destinationPlayer = state.players.find(p => p.id === controllerId);
@@ -66,10 +58,10 @@ export function moveCardToZone(
       battlefield: p.battlefield.filter(id => id !== instanceId),
       command: p.command.filter(id => id !== instanceId)
     };
-    if (p.id !== controllerId || actualDestination === "stack") return next;
-    if (actualDestination === "hand" || actualDestination === "library" || actualDestination === "graveyard" ||
-        actualDestination === "exile" || actualDestination === "battlefield" || actualDestination === "command") {
-      return { ...next, [actualDestination]: [...next[actualDestination], instanceId] };
+    if (p.id !== controllerId || destination === "stack") return next;
+    if (destination === "hand" || destination === "library" || destination === "graveyard" ||
+        destination === "exile" || destination === "battlefield" || destination === "command") {
+      return { ...next, [destination]: [...next[destination], instanceId] };
     }
     return next;
   });
@@ -77,11 +69,8 @@ export function moveCardToZone(
     id, existing.attached_to === instanceId ? { ...existing, attached_to: null } : existing
   ]));
   const moved: RuntimeCardState = {
-    ...card, zone: actualDestination, controller_id: controllerId,
-    is_tapped: false, counters: { ...EMPTY_COUNTERS }, attached_to: null, damage_marked: 0,
-    commanderReturnEligibleAtRevision: card.is_commander && (actualDestination === "graveyard" || actualDestination === "exile")
-      ? state.revision + 1
-      : null
+    ...card, zone: destination, controller_id: controllerId,
+    is_tapped: false, counters: { ...EMPTY_COUNTERS }, attached_to: null, damage_marked: 0
   };
   return { ...state, revision: state.revision + 1, cards: { ...cards, [instanceId]: moved }, players };
 }

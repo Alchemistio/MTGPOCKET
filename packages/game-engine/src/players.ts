@@ -115,6 +115,7 @@ function eliminatePlayers(state: GameState, leavingIds: ReadonlySet<PlayerId>): 
     priorityPlayerId: result ? null : nextPriority,
     consecutivePasses: state.consecutivePasses.filter(id => !leavingIds.has(id)),
     awaitingResolutionId: null,
+    pendingCommanderChoices: state.pendingCommanderChoices.filter(choice => !leavingIds.has(choice.ownerId) && !removedCardIds.has(choice.instanceId)),
     pendingDiscardPlayerId: state.pendingDiscardPlayerId !== null && leavingIds.has(state.pendingDiscardPlayerId) ? null : state.pendingDiscardPlayerId,
     pendingDiscardCount: state.pendingDiscardPlayerId !== null && leavingIds.has(state.pendingDiscardPlayerId) ? 0 : state.pendingDiscardCount,
     priorityWindowClosed: false,
@@ -123,9 +124,39 @@ function eliminatePlayers(state: GameState, leavingIds: ReadonlySet<PlayerId>): 
   };
 }
 
-/** Checks the supported multiplayer loss-based state actions at a priority checkpoint. */
+/** Resolve the optional CR 704.6d / 903.9a move after the commander entered graveyard or exile. */
+export function resolveCommanderReturnChoice(
+  state: GameState,
+  instanceId: string,
+  choice: "command" | "stay"
+): GameState {
+  const pending = state.pendingCommanderChoices.find(item => item.instanceId === instanceId);
+  if (!pending) throw new EngineError("INVALID_COMMANDER_CHOICE", "Aucun choix de retour en zone de commandement n'est en attente pour cette carte.");
+  const owner = state.players.find(player => player.id === pending.ownerId);
+  if (!owner || owner.isEliminated) throw new EngineError("PLAYER_ELIMINATED", "Le propriétaire n'est plus dans la partie.");
+  let next = state;
+  if (choice === "command") {
+    next = moveCardToZone(state, instanceId, "command");
+  } else {
+    next = { ...state, revision: state.revision + 1 };
+  }
+  next = {
+    ...next,
+    pendingCommanderChoices: next.pendingCommanderChoices.filter(item => item.instanceId !== instanceId)
+  };
+  return next.pendingCommanderChoices.length === 0 ? applyStateBasedActions(next) : next;
+}
+
+/** Checks supported loss-based SBAs and queues commander-return choices at the same checkpoint. */
 export function applyStateBasedActions(state: GameState): GameState {
-  if (state.status !== "active") return state;
+  if (state.status !== "active" || state.pendingCommanderChoices.length > 0) return state;
+  const eligibleCommanders = Object.values(state.cards).filter(card =>
+    card.is_commander &&
+    (card.zone === "graveyard" || card.zone === "exile") &&
+    card.commanderReturnEligibleAtRevision !== null &&
+    card.commanderReturnEligibleAtRevision <= state.revision &&
+    !state.players.find(player => player.id === card.owner_id)?.isEliminated
+  );
   const leaving = new Set(state.players.filter(player =>
     !player.isEliminated && (
       player.life <= 0 ||
@@ -133,6 +164,23 @@ export function applyStateBasedActions(state: GameState): GameState {
       Object.values(player.commanderDamageReceived).some(total => total >= 21)
     )
   ).map(player => player.id));
-  if (leaving.size === 0) return state;
-  return eliminatePlayers(state, leaving);
+  let next = leaving.size > 0 ? eliminatePlayers(state, leaving) : state;
+  const pending = eligibleCommanders
+    .filter(card => !leaving.has(card.owner_id))
+    .map(card => ({ instanceId: card.instance_id, ownerId: card.owner_id, fromZone: card.zone as "graveyard" | "exile" }));
+  if (pending.length === 0) return next;
+  const cards = { ...next.cards };
+  for (const choice of pending) {
+    const card = cards[choice.instanceId];
+    if (card) cards[choice.instanceId] = { ...card, commanderReturnEligibleAtRevision: null };
+  }
+  return {
+    ...next,
+    revision: next.revision + 1,
+    cards,
+    pendingCommanderChoices: [...next.pendingCommanderChoices, ...pending],
+    priorityPlayerId: null,
+    consecutivePasses: [],
+    priorityWindowClosed: false
+  };
 }

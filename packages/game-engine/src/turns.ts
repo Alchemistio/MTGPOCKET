@@ -24,7 +24,7 @@ export const TURN_SEQUENCE: ReadonlyArray<{ phase: Phase; step: Step; grantsPrio
 
 export function nextTurnStep(state: GameState): GameState {
   if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
-  if (state.awaitingResolutionId !== null) throw new EngineError("RESOLUTION_REQUIRED", "La pile doit être résolue avant de continuer.");
+  if (state.awaitingResolutionId !== null || state.pendingCommanderChoices.length > 0) throw new EngineError("RESOLUTION_REQUIRED", "La pile ou un choix de règle doit être résolu avant de continuer.");
   const index = TURN_SEQUENCE.findIndex(x => x.phase === state.phase && x.step === state.step);
   if (index < 0) throw new Error("État de tour incohérent.");
   const next = TURN_SEQUENCE[index + 1];
@@ -74,7 +74,7 @@ export function beginPriorityWindow(state: GameState): GameState {
 /** Advances only the rules-defined no-priority steps (currently untap and cleanup). */
 export function advanceAutomaticStep(state: GameState): GameState {
   if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
-  if (state.priorityPlayerId !== null || state.priorityWindowClosed || state.stack.length > 0 || state.awaitingResolutionId !== null || state.pendingDiscardCount > 0) {
+  if (state.priorityPlayerId !== null || state.priorityWindowClosed || state.stack.length > 0 || state.awaitingResolutionId !== null || state.pendingDiscardCount > 0 || state.pendingCommanderChoices.length > 0) {
     throw new EngineError("RESOLUTION_REQUIRED", "La partie n'est pas dans une étape automatique libre.");
   }
   if (state.step !== "untap" && state.step !== "cleanup") {
