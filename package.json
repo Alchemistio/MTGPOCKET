@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.20.0",
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
+    "dev:mobile": "pnpm --filter @commander-pocket/mobile start",
+    "dev:server": "pnpm --filter @commander-pocket/server dev",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test",
-    "lint": "pnpm -r --if-present lint"
+    "test": "pnpm -r --if-present test"
   }
 }
