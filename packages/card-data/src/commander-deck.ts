@@ -39,7 +39,7 @@ export interface CommanderDeckValidationResult {
 }
 
 function allowsMultipleByDefault(card: CardDefinition): boolean {
-  return card.typeLine.startsWith("Basic Land");
+  return card.typeLine.startsWith("Basic") && card.typeLine.includes("Land");
 }
 
 export function validateCommanderDeck(
