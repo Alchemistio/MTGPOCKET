@@ -20,7 +20,7 @@ function nextLivingPlayerAfterSeat(players: GameState["players"], seat: number) 
 /** Implements the player-leaves cleanup relevant to CR 800.4a and 800.4j. */
 function eliminatePlayers(state: GameState, leavingIds: ReadonlySet<PlayerId>): GameState {
   const leavingPlayers = state.players.filter(p => leavingIds.has(p.id));
-  const leavingSeats = new Map(leavingPlayers.map(p => [p.id, p.seat]));
+  const leavingSeats = new Map<PlayerId, number>(leavingPlayers.map(p => [p.id, p.seat] as const));
   const removedCardIds = new Set<string>();
   const exileByOwner = new Map<PlayerId, string[]>();
 
