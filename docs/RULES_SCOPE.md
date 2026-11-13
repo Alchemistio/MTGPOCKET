@@ -1,33 +1,30 @@
 # Périmètre de conformité des règles
 
 ## Référence normative
-La référence de travail du projet est le PDF Comprehensive Rules fourni avec le projet, édition du 25 septembre 2026. Les numéros de règles sont consignés dans les tests et cette matrice ; le texte intégral du PDF n'est pas recopié dans le dépôt. Les règles de format Commander sont suivies séparément des Comprehensive Rules.
+La référence de travail est le PDF Comprehensive Rules fourni avec le projet, édition du 25 septembre 2026 (312 pages). Les numéros de règles sont consignés ici ; le texte intégral n'est pas recopié dans le dépôt. Les règles de format Commander et la banlist sont suivies séparément des Comprehensive Rules.
 
-## Couverture actuellement implémentée
-- **CR 103.4c** : total de départ Commander à 40 points de vie.
-- **CR 103.5 / 103.5c / 800.6** : déclarations de mulligan par ronde, mulligan de Londres, premier mulligan multijoueur gratuit pour le calcul des cartes à remettre sous la bibliothèque, et remise des cartes choisies dans l’ordre du joueur.
-- **CR 104.3b / 704.5a** : perte liée à un total de vie inférieur ou égal à zéro, appliquée au checkpoint de state-based actions.
-- **CR 104.3c / 704.5b** : suivi d'une tentative de pioche dans une bibliothèque vide et perte au checkpoint de state-based actions.
-- **CR 104.3j / 704.6c** : cumul des blessures de combat par instance de commandant et perte à 21.
-- **CR 800.4a** : retrait des objets possédés par un joueur qui quitte la partie ; exil des permanents/cartes encore contrôlés par ce joueur et possédés par un autre ; retrait des objets de pile contrôlés par ce joueur.
-- **CR 800.4a / 800.4j** : transfert de priorité après le départ d'un joueur et poursuite du tour sans joueur actif si le joueur actif quitte la partie.
-- **CR 903.4 / 903.5a–e** : validation de la taille de deck, du singleton par nom anglais, de l’identité couleur et de la légalité Commander via un registre versionné d’éligibilité/partenariat.
-- **CR 903.6 / 903.7** : placement face visible d’un ou deux commandants en zone de commandement, mélange de la bibliothèque restante, 40 points de vie et main initiale de sept cartes.
-- **CR 903.8 / 903.10a** : suivi de la taxe de commandant par commandant et des blessures par commandant (la taxe est calculée à +{2} par lancement antérieur).
+## Couverture actuellement implémentée (à la date du journal)
+- **CR 103.4c** : 40 points de vie de départ en Commander.
+- **CR 103.5 / 103.5c / 800.6** : mulligan multijoueur de Londres ; premier mulligan non comptabilisé pour les cartes à remettre et le nombre de mulligans ; déclarations dans l'ordre du tour et mulligans simultanés doivent rester couverts par des tests de scénario.
+- **CR 104.3j / 704.6c / 903.10a** : perte à 21 blessures de combat ou plus infligées par le même commandant ; suivi séparé par commandant.
+- **CR 704.6d / 903.9a** : fenêtre de choix de retour en zone de commandement depuis cimetière/exil après l'événement et avant le prochain checkpoint SBA.
+- **CR 903.6–903.8** : placement face visible des commandants, mélange de la bibliothèque restante, 40 PV, main de sept cartes et taxe de +{2} par lancement depuis la zone de commandement.
+- **CR 800.4a / 800.4j** : certaines conséquences du départ d'un joueur et continuité de tour/priorité sont couvertes par le moteur de base ; les cas avec effets continus restent incomplets.
+- Validation initiale des decks : taille, singleton par nom anglais, identité couleur, légalité et registre de compatibilité des commandants.
 
-Cette couverture est partielle : les effets de contrôle continus, les choix de remplacement liés au départ d'un joueur, les objets non-cartes complexes et les actions basées sur l'état autres que les pertes listées restent à implémenter.
+**Important :** cette liste décrit le périmètre des tests et du code actuels, pas une certification de conformité. Les règles citées doivent être reliées à des tests précis ; les cas non testés restent « à vérifier ».
 
-## À implémenter ensuite
-1. **CR 103.5 / 103.5c / 800.6** : mulligan de Londres en multijoueur, premier mulligan gratuit pour le nombre de cartes à remettre sous la bibliothèque, déclarations simultanées et verrouillage des mains gardées.
-2. **CR 704** : autres actions basées sur un état (créatures, auras, légende, planeswalkers, jetons, etc.).
-3. **CR 117** : gestion complète des fenêtres de priorité, actions spéciales, déclenchements et résolution de pile.
-4. **CR 500–514** : automatisation des actions obligatoires de chaque étape, fenêtres conditionnelles et nettoyage.
-5. **CR 800.4** : effets continus, choix et cas particuliers lors du départ d'un joueur.
+## Lacunes critiques avant une partie complète
+1. **CR 704.6d / 903.9a** : implémenter le choix facultatif du propriétaire au checkpoint SBA après l'arrivée du commandant au cimetière ou en exil.
+2. **CR 903.9b–c** : effet de remplacement facultatif vers la zone de commandement depuis main/bibliothèque et cas de permanents fusionnés/assemblés.
+3. **CR 117** : fenêtres de priorité complètes, actions spéciales, déclenchements et résolution de pile.
+4. **CR 704** : actions basées sur un état générales et simultanées.
+5. **CR 500–514** : actions obligatoires des phases/étapes, combat complet, étapes de nettoyage et fenêtres conditionnelles.
+6. **CR 800.4** : départ d'un joueur, objets possédés/contrôlés par d'autres joueurs, effets continus et cas de remplacement.
+7. Capacités de cartes : coûts, cibles, choix, couches, copies, remplacement, prévention et effets continus.
 
-## Processus de développement
-Référence → modèle de données → commande/transition → tests positifs → tests négatifs → documentation. Distinguer règle générale et règle de format, capacité oracle et effet réellement implémenté. Ne jamais exécuter du texte de carte arbitraire.
-
-Le moteur ne doit jamais annoncer une conformité complète sans matrice de couverture et tests correspondants. Les limites doivent remonter à l'interface afin qu'une intervention humaine soit possible.
+## Processus
+Référence → modèle de données → commande/transition → test positif → test négatif → test de régression → mise à jour de cette matrice. Distinguer règle générale, règle de format, capacité Oracle et effet réellement implémenté. Ne jamais exécuter du texte Oracle comme du code arbitraire.
 
 ## Données et propriété intellectuelle
-Respecter les conditions des fournisseurs, limites de débit et droits des ayants droit. Conserver identifiants et provenance. Ne pas committer de dumps ou images sans autorisation.
+Respecter les conditions des fournisseurs, les limites de débit et les droits des ayants droit. Conserver identifiants et provenance. Ne pas committer de dumps ou images sans autorisation.

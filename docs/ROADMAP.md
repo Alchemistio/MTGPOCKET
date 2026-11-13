@@ -1,57 +1,68 @@
 # Roadmap et critères de sortie
 
-## M0 — Fondation <badge>validé</badge>
-- [x] Dépôt, branche de travail et PR dédiés.
-- [x] Monorepo pnpm, TypeScript strict et pipeline CI.
-- [x] Architecture, produit, règles et UX documentés.
-- [x] Modèle à quatre joueurs, zones, instances runtime et priorité.
-- [x] Tests automatisés moteur, données et serveur.
-**Sortie :** installation reproductible, typecheck et tests verts sur GitHub Actions.
+Les cases ne passent à [x] qu'après implémentation et tests correspondants. CI verte, validation sur simulateur et validation sur appareils physiques sont des états distincts.
 
-## M1 — Partie locale jouable <badge>en cours</badge>
-- [x] Setup Commander : commandants en zone de commandement, 40 PV, mélange et main de sept cartes.
-- [x] Mulligan de Londres multijoueur, premier mulligan gratuit et sélection des cartes à remettre sous la bibliothèque après chaque mulligan.
-- [x] Phases/étapes, passes de priorité, pile générique et handlers d'effets injectés.
-- [x] Pioche, dégagement, vidage du mana entre étapes, nettoyage des blessures et défausse de fin de tour.
-- [x] Vie, pioche impossible, 21 blessures de commandant, taxe et élimination multijoueur.
-- [x] Validation initiale de decks Commander (taille, singleton, identité couleur, légalité, éligibilité/partenariat par registre).
-- [ ] Connecter un deck réel au serveur et à l'app, puis jouer un tour complet avec une carte de test.
-- [ ] Persister les événements et reprendre une partie après reconnexion.
-**Sortie :** scénario complet avec cartes de test et historique rejouable.
+## M0 — Fondation — socle présent
+- [x] Monorepo pnpm, TypeScript strict, CI.
+- [x] Architecture, spécification produit, UX et périmètre de règles.
+- [x] Modèle de table à quatre joueurs, zones, instances runtime et priorité.
+- [x] Index documentaire, fiches de référence, ADR et journal.
+**Sortie :** installation, typecheck et tests CI reproductibles.
+
+## M1 — Partie locale jouable — en cours
+- [x] Setup Commander : commandants en zone de commandement, 40 PV, mélange et main initiale.
+- [x] Mulligan de Londres multijoueur, premier mulligan gratuit et sélection des cartes à remettre.
+- [x] Phases/étapes, passes de priorité, pile générique et handlers injectés.
+- [x] Pioche, dégagement, vidage du mana, nettoyage des blessures et taille de main.
+- [x] Pertes sur vie, pioche impossible, 21 blessures de commandant, taxe et élimination.
+- [x] Validation initiale de decks.
+- [ ] Deck réel importé dans une partie ; zones privées/main et commandes serveur complètes.
+- [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.
+- [ ] Journal d'événements et rejeu déterministe.
+**Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.
 
 ## M2 — Fidélité du moteur
-- [ ] Actions basées sur un état complètes (créatures, auras, légende, jetons, planeswalkers, etc.).
+- [ ] SBA générales complètes et vérifiées aux checkpoints.
+- [ ] Retour/remplacement du commandant (CR 704.6d, 903.9).
 - [ ] Capacités statiques, activées et déclenchées.
-- [ ] Couches, coûts, cibles, copies, remplacement et prévention.
+- [ ] Coûts, cibles, couches, copies, remplacement et prévention.
 - [ ] Combat multijoueur complet et dégâts assignés/résolus.
-- [ ] Règles de commandant restantes, notamment retours/remplacements vers la zone de commandement.
-**Sortie :** interactions prioritaires testées et matrice de couverture détaillée.
+- [ ] Matrice de couverture et corpus de tests de régression.
+**Sortie :** couverture des règles communes et des cartes supportées explicitement déclarée.
 
-## M3 — Mobile <badge>prototype</badge>
+## M3 — Mobile — prototype
 - [x] Plateau paysage quatre joueurs et télémétrie compacte.
-- [x] Prototype interactif connecté au moteur pour les passes de priorité.\n- [x] Recherche Scryfall, détail multi-faces et cache SQLite local accessibles depuis le plateau.
-- [ ] Lobby, recherche de cartes, deckbuilding et collection.
-- [ ] Main réelle, piles compactées, badges, attachements et tiroir de pile interactif.
-- [ ] Radar/gaze gesture, gestes accessibles et motifs géométriques WUBRG.
-**Sortie :** prototype jouable sur appareils 5,5–6,7 pouces.
+- [x] Recherche Scryfall, détail multi-face et cache SQLite.
+- [ ] Deckbuilder, collection et sélection de commandant.
+- [ ] Main réelle, piles compactées, badges et attachements.
+- [ ] Tiroir de pile interactif, réponses rapides, auto-yield.
+- [ ] Radar/gaze gesture et motifs géométriques WUBRG.
+- [ ] Tests VoiceOver/TalkBack, tailles de texte et appareils 5,5–6,7 pouces.
+**Sortie :** flux complet de partie jouable et utilisable sur iOS/Android.
 
-## M4 — Réseau local <badge>socle</badge>
-- [x] Serveur et client WebSocket LAN, écrans créer/rejoindre, jetons de siège et vues privées.
-- [x] Révisions, idempotence et vues filtrées par joueur.
-- [ ] Commandes de jeu complètes, découverte LAN, reconnexion, reprise et tests de déconnexion.
-- [ ] Authentification et sécurité adaptées à un réseau non fiable.
-**Sortie :** quatre appareils dans une partie fiable.
+## M4 — Réseau local — socle
+- [x] Serveur/client WebSocket, créer/rejoindre, jetons et vues privées.
+- [x] Révisions et idempotence de commandes.
+- [ ] Commandes de jeu complètes, validation serveur et synchronisation de toutes les zones.
+- [ ] Découverte LAN, reconnexion, reprise de partie et gestion des conflits.
+- [ ] Sécurité : jetons à usage/rotation, TLS selon réseau, limitation de débit, anti-rejeu.
+- [ ] Tests quatre appareils, perte Wi-Fi, hôte quittant, paquets invalides.
+**Sortie :** quatre appareils peuvent terminer une partie sans divergence.
 
-## M5 — Données <badge>socle</badge>
-- [x] Client Scryfall typé, cartes multi-faces et cadence des requêtes.
-- [x] Validation initiale des decks Commander.
-- [x] Store SQLite mobile persistant, TTL et composition du repository Scryfall.\n- [ ] Brancher la recherche avancée dans l’UI et compléter le mode hors ligne (index local/import bulk).
-- [ ] Import MTGJSON et adaptateurs secondaires vérifiés.
-**Sortie :** decks réels validés et cartes consultables hors ligne après cache.
+## M5 — Données et offline
+- [x] Client Scryfall typé et cache.
+- [x] Store SQLite mobile.
+- [x] Importateur MTGJSON streaming et checksum.
+- [ ] Index local complet, sync incrémentale et migrations.
+- [ ] Recherche avancée et fonctionnement hors ligne.
+- [ ] Tests de tous les layouts multi-faces et schémas nouveaux.
+**Sortie :** deck validé et cartes disponibles hors ligne sans dépendance à un appel réseau par carte.
 
 ## M6 — Solo et bêta
-- [ ] IA progressive, tutoriels, historique, statistiques et outils de débogage.
-- [ ] Profilage, optimisation, tests appareils et publication bêta.
+- [ ] IA progressive et adversaires de test.
+- [ ] Tutoriels, historique, statistiques et outils de débogage.
+- [ ] Profilage, tests appareils, crash reporting et bêta privée.
+**Sortie :** release candidate iOS/Android avec checklist de publication.
 
 ## Definition of Done
-Code typé, tests pertinents exécutés, règles non supportées explicites, erreurs documentées, UX vérifiée sur appareils et paramètres d'accessibilité.
+Typecheck et tests pertinents verts ; cas négatifs et régressions ; erreurs et règles non supportées explicites ; documentation/index/journal à jour ; tests natifs et UX validés sur appareils pour toute fonctionnalité mobile.

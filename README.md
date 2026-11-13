@@ -4,40 +4,42 @@ Application mobile indépendante de jeu **Magic: The Gathering Commander à quat
 
 ## Choix technologiques
 
-| Domaine | Technologie | Justification |
+| Domaine | Technologie | Rôle |
 |---|---|---|
-| Mobile iOS/Android | React Native + Expo + TypeScript | UI native partagée et intégration mobile |
-| Moteur de règles | TypeScript strict, sans dépendance UI | Même logique locale/serveur, tests déterministes |
-| Serveur multijoueur | Node.js + TypeScript + WebSocket | Faible latence et partage du modèle métier |
-| Stockage local | SQLite | Offline-first |
-| Données cartes | Adaptateurs Scryfall et MTGJSON | Recherche distante et données en masse |
-| ETL ponctuel | Python si utile | Traitement de dumps, hors runtime de jeu |
-
-## Architecture
-
-`apps/mobile`, `apps/server`, `packages/game-engine`, `packages/card-data`, `packages/protocol`, `scripts/` et `docs/`.
+| Mobile iOS/Android | React Native + Expo + TypeScript | Interface native partagée |
+| Moteur de règles | TypeScript strict | Domaine déterministe partagé local/serveur |
+| Serveur multijoueur | Node.js + TypeScript + WebSocket | Autorité de partie et transport |
+| Stockage mobile | SQLite | Cache, decks et données hors ligne |
+| Cartes | Scryfall + MTGJSON | Recherche temps réel et imports bulk |
+| ETL | Python | Ingestion/validation des dumps, hors runtime |
 
 ## Démarrage
 
-Node.js 22+ et pnpm :
+Prérequis : Node.js 22.13+ et pnpm 10.20+.
 
 ```sh
 corepack enable
 pnpm install
 pnpm typecheck
 pnpm test
-
-# Lancer le prototype mobile ou le serveur LAN
 pnpm dev:mobile
 pnpm dev:server
 ```
 
-## Documentation
+## Documentation et suivi
+
+Commencer par **[l'index du projet](docs/PROJECT_INDEX.md)**. Il recense les spécifications, l'architecture, les règles, les références techniques, les décisions, la roadmap et le journal de suivi.
 
 - [Spécification produit](docs/PRODUCT_SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Périmètre des règles](docs/RULES_SCOPE.md)\n- [Sources de données](docs/DATA_SOURCES.md)\n- [Guide mobile et réseau local](apps/mobile/README.md)
+- [Périmètre et couverture des règles](docs/RULES_SCOPE.md)
+- [Roadmap et critères de sortie](docs/ROADMAP.md)
+- [Sources de données](docs/DATA_SOURCES.md)
+- [Références techniques locales](docs/references/README.md)
+- [Guide mobile et réseau local](apps/mobile/README.md)
 
-Le moteur est développé par paliers. Une règle non implémentée doit être explicitement signalée, jamais simulée silencieusement. Projet indépendant, non affilié à Wizards of the Coast.
-\n## État du prototype\nLe plateau mobile sait créer/rejoindre une salle LAN et transmettre le passage de priorité ; la recherche Scryfall et son cache SQLite sont branchés. Le serveur ne distribue pas encore les decks et le moteur ne couvre pas encore toutes les règles/cartes. Voir la [roadmap](docs/ROADMAP.md) pour les critères et les limites exactes.\n
+## État du prototype
+
+Le socle du moteur, le plateau mobile, la recherche Scryfall et le cache SQLite existent. Le client peut créer/rejoindre une salle LAN et passer la priorité. Le serveur ne distribue pas encore de decks et le jeu n'est pas encore complet : consulter la roadmap et le journal avant de considérer une fonctionnalité comme livrée.
+
+Projet indépendant, non affilié à Wizards of the Coast.

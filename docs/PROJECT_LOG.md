@@ -1,0 +1,34 @@
+# Journal de suivi du projet
+
+Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l'historique. Les commits et runs CI doivent pointer vers des identifiants vérifiables.
+
+## 2026-11-13 — Consolidation documentaire et références
+
+- Création de l'index documentaire, du journal, du registre ADR et des fiches locales de référence.
+- Correction des liens de documentation et des marqueurs de mise en forme qui n'étaient pas du Markdown.
+- Revue de cohérence de la matrice de règles avec le PDF Comprehensive Rules fourni (édition 2026-09-25), notamment mulligan multijoueur et retour du commandant.
+- Sources techniques consultées : Expo SDK (SDK 58 / RN 0.88), expo-sqlite, politique API Scryfall, index de fichiers MTGJSON v5 et documentation Scrydex.
+- La documentation complète des tiers n'est pas copiée lorsque la licence de redistribution n'est pas établie ; des fiches de synthèse locales et les URLs canoniques sont enregistrées.
+- CI précédente observée verte : run GitHub Actions `43441612723` (jobs `validate` et `python-data`). Ce résultat porte sur le commit testé, pas automatiquement sur les commits documentaires ajoutés ensuite.
+- À faire : exécuter la CI après cette mise à jour, et vérifier les fiches sur les appareils réels.
+
+## 2026-11-13 — Fondation initiale (PR #1)
+
+- Monorepo pnpm et packages partagés ; moteur TypeScript, application Expo, serveur WebSocket et import Python.
+- Moteur : setup Commander, mulligan multijoueur, priorité/pile de base, étapes, nettoyage, pertes et validation initiale de deck.
+- Mobile : plateau paysage quatre joueurs, recherche Scryfall, détail multi-face, cache SQLite, création/rejoindre salle LAN.
+- Serveur : sièges, jetons, vues privées, révisions et première commande de passage de priorité.
+- Import MTGJSON : extraction streaming vers SQLite avec provenance et checksum.
+- Limites consignées dans la PR : pas encore de jeu complet, de deck partagé serveur, de moteur complet de cartes, de reconnexion ou de sécurité réseau de production.
+
+## Format d'une entrée future
+
+```md
+## YYYY-MM-DD — Sujet
+- Livré :
+- Fichiers/modules :
+- Tests réellement exécutés :
+- Résultats CI / commit :
+- Limites et risques :
+- Prochaine étape :
+```

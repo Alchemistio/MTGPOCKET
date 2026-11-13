@@ -1,36 +1,52 @@
 # Spécification produit — Commander Pocket
 
-Version 0.1.0 — 13 novembre 2026.
+## Vision
+Application iOS/Android pour jouer à Commander à quatre joueurs, en présentiel autour d'un réseau local ou en solo. L'app gère les règles et l'état de partie, facilite la consultation des cartes et rend visibles les priorités et déclenchements sans remplacer les décisions Magic par une automatisation opaque.
 
-## Vision et plateformes
-Jouer à Commander à quatre joueurs sur iOS/Android, d'abord sur téléphone, puis tablette et PC. Modes : réseau local, solo contre IA, entraînement local avec journal et explication des validations.
+## Plateformes et orientation
+- Cible principale : téléphones 5,5 à 6,7 pouces ; iOS et Android.
+- Plateau de partie en paysage obligatoire pour exposer quatre zones joueurs.
+- Main, recherche, modales et tiroir de pile peuvent utiliser une présentation verticale/feuille inférieure.
+- Interface compacte : compteurs, piles regroupées, badges d'état et arbre d'attachements au long appui.
+- Barre de télémétrie persistante : vies, cartes en main, taxe de commandant, mana et priorité.
+- Radar adverse / geste hold-and-slide pour consulter un plateau sans perdre le contexte de la main.
+- Tiroir inférieur pour pile, déclenchements, réponses et macros de résolution.
+- Accessibilité : WUBRG non distingué par couleur seule ; formes, motifs, libellés, contraste, VoiceOver et TalkBack.
 
-## Parcours
-1. Créer/rejoindre un salon et assigner quatre sièges.
-2. Importer/choisir decks et commandants ; valider le format.
-3. Effectuer les choix de départ et mulligans.
-4. Jouer avec phases, étapes, fenêtres de priorité, pile et choix.
-5. Consulter zones, journal, dégâts de commandant et statistiques.
+## Modes
+1. Partie locale sur un appareil : plusieurs joueurs autour du même écran, avec contrôle des informations privées.
+2. Réseau local : un hôte crée la salle, les autres rejoignent depuis le même réseau ; quatre sièges.
+3. Solo : adversaires IA, tutoriel et scénarios.
+4. Consultation : recherche, détail multi-faces, decklists et collection.
 
-## Règles Commander
-Configuration par version : 40 points de vie par défaut, deck singleton de 100 cartes incluant le ou les commandants, identité couleur, bannissements, zone de commandement, taxe de commandant et blessures de commandant. Ces règles de format restent distinctes des Comprehensive Rules. Les joueurs éliminés ne participent plus aux fenêtres de priorité.
+## Règles et intégrité
+- Moteur commun aux modes solo, local et LAN.
+- Le serveur LAN est autoritaire ; les clients envoient des commandes et reçoivent des vues filtrées.
+- Chaque commande est versionnée, authentifiée, idempotente et vérifiée contre la révision.
+- Les règles non prises en charge sont signalées ; aucune résolution silencieuse ou approximation cachée.
+- Données de cartes alignées sur le modèle Scryfall, y compris layouts multi-faces.
+- Référence des règles : Comprehensive Rules fournies, édition du 25 septembre 2026, plus règles/banlist Commander courantes.
 
-## Moteur
-Le moteur reçoit un état et une commande, valide les préconditions, puis retourne un nouvel état et des événements. Modèle minimum : Game, Player, Turn, Phase, Step, PriorityWindow, StackItem, CardDefinition, RuntimeCardState, Zone, Counter, Attachment, Combat, CommanderDamage, RuleVersion.
+## Principaux flux
+- Créer/importer un deck et valider taille, singleton, identité couleur, légalité et commandant.
+- Créer une salle LAN ou rejoindre avec un jeton de siège.
+- Préparer commandants, bibliothèques, mulligans et mains.
+- Progresser phase/étape et priorité, jouer sorts/capacités, choisir cibles et coûts.
+- Résoudre la pile, déclenchements et actions basées sur un état.
+- Reprendre une partie après perte réseau et consulter l'historique.
+- Solo : même moteur, adversaire IA proposant des commandes légales.
 
-Chaque permanent contient `instance_id`, `controller_id`, `zone`, `is_tapped`, `counters` (p1p1, m1m1, shield, custom), `attached_to`, `damage_marked`. Les données imprimées suivent Scryfall : `id`, `name`, `layout`, `mana_cost`, `cmc`, `type_line`, `oracle_text`, `colors`, `color_identity`, `legalities`, `card_faces[]`.
+## Non-objectifs initiaux
+- Pas de serveur mondial public avant que le LAN soit fiable.
+- Pas d'exécution automatique de texte Oracle arbitraire.
+- Pas de copie locale de bases de cartes/images sans vérifier licence et provenance.
+- Pas de portage natif Rust avant profilage.
 
-## Priorité et pile
-Ordre de tour en ignorant les joueurs éliminés ; tous les joueurs concernés doivent passer successivement pour fermer une fenêtre. Si la pile est non vide, son sommet est résolu avant la progression. Les déclenchements et actions basées sur un état devront suivre les règles applicables. Auto-Yield et macros ne s'activent que dans des fenêtres sûres et configurées.
-
-## UX mobile
-Plateau paysage strict, quatre zones de bataille compactes, télémétrie persistante (vie, main, taxe, mana), geste maintien-glissement pour inspecter les adversaires, piles de permanents avec quantité, badges d'état par icônes/formes, arbre d'attachements au long-press, main et tiroir de pile en panneaux bas. Accessibilité WUBRG : formes/lettres/motifs en plus des couleurs, contrastes et zones tactiles adaptées.
-
-## Données
-Scryfall pour recherche/détails oracle/images selon ses conditions ; MTGJSON pour snapshots et traitements en masse. magicthegathering.io et mtgapi.com restent des adaptateurs optionnels, seulement après vérification de disponibilité, couverture et conditions. Cache local, limitation de débit, horodatage et fonctionnement hors ligne. Ne pas intégrer de dumps ou images sans droits de redistribution.
-
-## Réseau et sécurité
-Serveur autoritaire : commandes avec idempotency key, joueur, gameId et expectedRevision. Vérifier siège, priorité et légalité avant mutation. Journal d'événements + snapshots pour reprise. Filtrer les informations cachées par destinataire. Solo et réseau utilisent le même moteur.
-
-## Qualité
-Reproductibilité via seed/journal, tests unitaires et scénarios, aucune mutation client non validée, couverture des règles documentée, performance sur appareils milieu de gamme et accessibilité.
+## Critères d'acceptation de la première version jouable
+- Quatre sièges peuvent importer/choisir un deck Commander et commencer.
+- Chaque joueur ne voit que sa main et ses informations privées.
+- Tour complet : priorité, sort, réponse, pile, résolution, SBA, combat et nettoyage.
+- Hôte et clients peuvent se déconnecter/reconnecter sans divergence.
+- Une partie peut être sauvegardée et rejouée depuis un journal versionné.
+- Les règles non prises en charge sont bloquantes ou explicitement signalées.
+- Tests automatisés moteur/protocole/données et validation sur appareils iOS/Android.
