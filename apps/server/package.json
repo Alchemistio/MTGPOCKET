@@ -13,7 +13,8 @@
     "@commander-pocket/protocol": "workspace:*",
     "ws": "^8.18.3",
     "@commander-pocket/game-engine": "workspace:*",
-    "tsx": "^4.20.5"
+    "tsx": "^4.20.5",
+    "@commander-pocket/card-data": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
