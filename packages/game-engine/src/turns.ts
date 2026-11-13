@@ -15,7 +15,7 @@ export const TURN_SEQUENCE: ReadonlyArray<{ phase: Phase; step: Step; grantsPrio
   { phase: "ending", step: "cleanup", grantsPriority: false }
 ];
 
-function nextTurnStep(state: GameState): GameState {
+export function nextTurnStep(state: GameState): GameState {
   if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
   if (state.awaitingResolutionId !== null) throw new EngineError("RESOLUTION_REQUIRED", "La pile doit être résolue avant de continuer.");
   const index = TURN_SEQUENCE.findIndex(x => x.phase === state.phase && x.step === state.step);
