@@ -33,7 +33,7 @@ export class GameRoom {
     try {
       const result = passPriority(this.currentState, command.playerId);
       let nextState = result.state;
-      let outcome: RoomCommandResult extends infer _T ? "passed" | "step-advanced" | "resolution-required" : never;
+      let outcome: "passed" | "step-advanced" | "resolution-required";
       if (result.outcome === "step-advance") {
         nextState = advanceAfterAllPass(nextState);
         outcome = "step-advanced";
