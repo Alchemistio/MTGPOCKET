@@ -21,7 +21,7 @@ export interface PlayerGameView {
 export interface GameView {
   id: string;
   revision: number;
-  activePlayerId: string;
+  activePlayerId: string | null;
   turnNumber: number;
   phase: GameState["phase"];
   step: GameState["step"];
