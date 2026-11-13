@@ -66,7 +66,7 @@ export interface GameState {
   status: "pregame" | "active" | "finished";
 }
 
-export type EngineErrorCode = "INVALID_PLAYER_COUNT" | "DUPLICATE_PLAYER" | "UNKNOWN_PLAYER" | "PLAYER_ELIMINATED" | "NOT_ACTIVE_GAME" | "NOT_PRIORITY_PLAYER" | "RESOLUTION_REQUIRED" | "NO_PENDING_RESOLUTION" | "STACK_ITEM_MISMATCH";
+export type EngineErrorCode = "INVALID_PLAYER_COUNT" | "DUPLICATE_PLAYER" | "UNKNOWN_PLAYER" | "PLAYER_ELIMINATED" | "NOT_ACTIVE_GAME" | "NOT_PRIORITY_PLAYER" | "RESOLUTION_REQUIRED" | "NO_PENDING_RESOLUTION" | "STACK_ITEM_MISMATCH" | "DUPLICATE_CARD_INSTANCE" | "INVALID_ZONE_MOVE" | "INVALID_DAMAGE" | "NOT_COMMANDER" | "INVALID_COMMANDER_CAST";
 export class EngineError extends Error {
   constructor(public readonly code: EngineErrorCode, message: string) {
     super(message);
