@@ -30,7 +30,6 @@ export function nextTurnStep(state: GameState): GameState {
     ...state, revision: state.revision + 1, phase: next.phase, step: next.step,
     priorityPlayerId: next.grantsPriority ? (state.activePlayerId ?? nextLivingPlayerAfterSeat(state, state.activePlayerSeat)?.id ?? null) : null, consecutivePasses: [], priorityWindowClosed: false
   };
-  const alive = state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat);
   const nextPlayer = nextLivingPlayerAfterSeat(state, state.activePlayerSeat);
   if (!nextPlayer) throw new Error("Aucun joueur actif.");
   return {
