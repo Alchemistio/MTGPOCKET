@@ -61,6 +61,7 @@ export interface GameState {
   consecutivePasses: PlayerId[];
   stack: StackItem[];
   awaitingResolutionId: string | null;
+  priorityWindowClosed: boolean;
   status: "pregame" | "active" | "finished";
 }
 
