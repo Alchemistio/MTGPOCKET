@@ -32,6 +32,8 @@ function isScryfallCard(value: unknown): value is ScryfallCard {
     && typeof value.type_line === "string"
     && Array.isArray(value.colors)
     && Array.isArray(value.color_identity)
+    && typeof value.set === "string"
+    && typeof value.collector_number === "string"
     && isRecord(value.legalities);
 }
 
@@ -54,7 +56,7 @@ export class ScryfallClient {
     const params = new URLSearchParams({ q: query, page: String(page) });
     const response = await this.fetcher(`${this.baseUrl}/cards/search?${params.toString()}`, {
       headers: { accept: "application/json", "user-agent": "CommanderPocket/0.1.0" },
-      signal
+      ...(signal ? { signal } : {})
     });
     const body: unknown = await response.json();
     if (!response.ok) throw new ScryfallApiError("Scryfall search request failed.", response.status, body);
