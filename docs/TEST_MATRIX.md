@@ -10,7 +10,7 @@ Dernière revue : 2026-11-13. Cette matrice décrit les tests présents dans le 
 | Zones / Commander | `packages/game-engine/test/cards.test.ts` | déplacement entre zones, taxe, dégâts de commandant, choix retour depuis cimetière/exil, remplacement main/bibliothèque | CR 903.9c, remplacement concurrent, changement de contrôle |
 | Élimination | `packages/game-engine/test/elimination.test.ts` | retrait des objets possédés, exil des objets contrôlés appartenant à d'autres | effets continus, attachements complexes, départs simultanés |
 | Bibliothèque / pioche | `packages/game-engine/test/library.test.ts` | pioche, bibliothèque vide et état de bibliothèque | effets de remplacement de pioche |
-| Mulligan | `packages/game-engine/test/pregame.test.ts` | mulligan de Londres, premier mulligan gratuit et cartes bottom | choix simultanés plus complexes et effets d'ouverture |
+| Mulligan | `packages/game-engine/test/pregame.test.ts` | mulligan de Londres, premier mulligan gratuit, cartes bottom et neuf mulligans successifs | choix simultanés plus complexes et effets d'ouverture |
 | Pile | `packages/game-engine/test/stack.test.ts` | empilement, passes, résolution générique | déclenchements réels, APNAP, copies, cibles et coûts |
 | Phases/étapes | `packages/game-engine/test/turn-actions.test.ts` | séquence initiale, actions automatiques, nettoyage | combat réel, SBA complètes, fenêtres conditionnelles |
 
@@ -19,6 +19,7 @@ Dernière revue : 2026-11-13. Cette matrice décrit les tests présents dans le 
 | Domaine | Tests | Ce qui est vérifié | Lacunes majeures |
 |---|---|---|---|
 | Salle LAN | `apps/server/test/game-room.test.ts` | démarrage, passage priorité, stale revision, idempotence, autorisation de choix Commander | commandes de jeu complètes, persistance, reconnexion |
+| Pré-partie | `apps/server/test/pregame-coordinator.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan simultané, cartes bottom, démarrage conditionnel et confidentialité | raccordement WebSocket/mobile, catalogue/banlist versionnés en production, tests d'intégration multi-clients |
 | Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé | audit complet des champs sensibles et tests fuzz |
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, jetons et authentification de siège | rotation/expiration des jetons |
 | Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées et rejet de message mal formé | reconnexion, timeout, perte réseau et tests appareils |
@@ -39,7 +40,7 @@ Workflow `.github/workflows/ci.yml` :
 - `pnpm test` (Vitest sur les packages)
 - `python -m unittest discover -s scripts -p "test_*.py"`
 
-Dernier run complet vérifié : **43467356882**, commit `92422465ca7b2247d6bb6ffe7fd6eb1fed1b3151`, jobs `validate` et `python-data` réussis.
+Dernier run complet vérifié : **43475390536**, commit `15ce2127251c62f46897ba85994f1436b7dbc7f7`, jobs `validate` et `python-data` réussis.
 
 ## Validation non automatisée — non encore réalisée
 

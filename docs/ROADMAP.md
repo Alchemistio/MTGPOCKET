@@ -16,7 +16,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Pioche, dégagement, vidage du mana, nettoyage des blessures et taille de main.
 - [x] Pertes sur vie, pioche impossible, 21 blessures de commandant, taxe et élimination.
 - [x] Validation initiale de decks.
-- [ ] Deck réel importé dans une partie ; zones privées/main et commandes serveur complètes.
+- [x] Service serveur de pré-partie : validation des quatre listes, création des instances, commandants, mains initiales et mulligans (tests unitaires).
+- [ ] Raccorder l'import de deck et le service de pré-partie aux commandes WebSocket/mobile ; zones privées/main et commandes serveur complètes.
 - [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.
 - [ ] Journal d'événements et rejeu déterministe.
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.

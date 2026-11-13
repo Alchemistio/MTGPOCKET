@@ -1,5 +1,15 @@
 # Journal de suivi du projet
 
+## 2026-11-13 — Coordinateur de pré-partie autoritaire
+
+- Ajout de `PregameCoordinator` côté serveur : réception d'une liste de deck par siège, validation à partir du catalogue et de la politique de légalité fournis par le serveur, expansion en instances runtime, placement des commandants, mélange et distribution des mains initiales.
+- Coordination des déclarations de mulligan simultanées, génération des graines côté serveur, choix privés des cartes à remettre sous la bibliothèque et démarrage uniquement lorsque les quatre joueurs ont gardé.
+- Les vues existantes masquent toujours l'identité des mains adverses ; tests de non-régression ajoutés pour la confidentialité et les refus de decks invalides.
+- Correctifs CI : types Fetch nécessaires au module Scryfall utilisé par le serveur ; agrégation des lignes répétées d'un même identifiant de carte avant de créer les instances.
+- CI GitHub Actions `43475390536`, commit `15ce2127251c62f46897ba85994f1436b7dbc7f7` : `validate` (typecheck + Vitest) et `python-data` réussis.
+- Limite actuelle : le coordinateur est un service serveur testable, mais il n'est pas encore raccordé aux messages WebSocket/mobile. La politique d'éligibilité Commander reste une dépendance versionnée injectée par le serveur ; aucune légalité client n'est acceptée.
+- Prochaine étape : exposer ces opérations via un protocole de pré-partie authentifié, avec réponses ciblées au joueur et tests d'intégration WebSocket.
+
 ## 2026-11-13 — Correction du mulligan londonien
 
 - Correction : suppression de la limite arbitraire de huit mulligans ; les mulligans répétés restent possibles.
@@ -7,7 +17,6 @@
 - Ajout d'un test de non-régression couvrant neuf mulligans successifs et la conservation de l'état de préparation.
 - CI GitHub Actions `43467356882`, commit `92422465ca7b2247d6bb6ffe7fd6eb1fed1b3151` : `validate` (typecheck + tests Vitest) et `python-data` réussis.
 - Prochaine étape : intégrer les commandes de pré-partie au serveur LAN et le chargement des listes de decks sans exposer les mains adverses.
-
 
 Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l'historique. Les commits et runs CI doivent pointer vers des identifiants vérifiables.
 
