@@ -56,7 +56,7 @@ websocketServer.on("connection", socket => {
       }
       try {
         const { room, credentials } = rooms.create(parsed.gameId, parsed.players);
-        const host = parsed.players[0];
+        const host = parsed.players.find(player => player.seat === 0);
         if (!host) throw new Error("HOST_SEAT_MISSING");
         session = { socket, gameId: parsed.gameId, playerId: host.id };
         clients.add(session);
