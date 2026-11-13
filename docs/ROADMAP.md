@@ -30,7 +30,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Matrice de couverture et corpus de tests de régression.
 **Sortie :** couverture des règles communes et des cartes supportées explicitement déclarée.
 
-## M3 — Mobile — prototype
+## M3 — Mobile — prototype ([issue #6](https://github.com/Alchemistio/MTGPOCKET/issues/6))
 - [x] Plateau paysage quatre joueurs et télémétrie compacte.
 - [x] Recherche Scryfall, détail multi-face et cache SQLite.
 - [ ] Deckbuilder, collection et sélection de commandant.
@@ -58,7 +58,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Tests de tous les layouts multi-faces et schémas nouveaux.
 **Sortie :** deck validé et cartes disponibles hors ligne sans dépendance à un appel réseau par carte.
 
-## M6 — Solo et bêta
+## M6 — Solo et bêta ([issue #7](https://github.com/Alchemistio/MTGPOCKET/issues/7))
 - [ ] IA progressive et adversaires de test.
 - [ ] Tutoriels, historique, statistiques et outils de débogage.
 - [ ] Profilage, tests appareils, crash reporting et bêta privée.
