@@ -69,6 +69,24 @@ describe("Commander multiplayer London mulligan", () => {
     expect(startGame(third.state).status).toBe("active");
   });
 
+  it("allows more than eight mulligans and caps bottom choices at the actual hand size", () => {
+    let state = preparedPregame();
+    for (let round = 1; round <= 9; round += 1) {
+      state = resolveMulliganRound(state, [{ playerId: "p1", action: "mulligan" }], {
+        p1: `many-mulligans-${round}`
+      }).state;
+      const player = state.players.find(item => item.id === "p1");
+      expect(player?.mulliganCount).toBe(round);
+      if (player && player.pendingBottomCount > 0) {
+        expect(player.pendingBottomCount).toBeLessThanOrEqual(player.hand.length);
+        state = chooseMulliganBottomCards(state, "p1", player.hand.slice(0, player.pendingBottomCount));
+      }
+    }
+    const kept = resolveMulliganRound(state, [{ playerId: "p1", action: "keep" }], {});
+    expect(kept.readyToStart).toBe(true);
+    expect(startGame(kept.state).status).toBe("active");
+  });
+
   it("cannot start while any player has not kept an opening hand", () => {
     expect(() => startGame(preparedPregame())).toThrowError();
   });

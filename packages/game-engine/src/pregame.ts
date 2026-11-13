@@ -78,13 +78,13 @@ export function performLondonMulligan(
   if (player.hasKeptHand) throw new Error("Ce joueur a déjà gardé sa main.");
   if (player.pendingBottomCount !== 0) throw new Error("Le joueur doit d'abord choisir les cartes à remettre sous la bibliothèque.");
   const nextMulliganCount = player.mulliganCount + 1;
-  if (nextMulliganCount > startingHandSize + 1) throw new Error("Le joueur ne peut plus prendre de mulligan.");
 
   let next = state;
   for (const cardId of [...player.hand]) next = moveCardToZone(next, cardId, "library");
   next = shuffleLibrary(next, playerId, seed);
   next = drawCards(next, playerId, startingHandSize).state;
-  const pendingBottomCount = Math.max(0, nextMulliganCount - 1);
+  const currentHandSize = next.players.find(p => p.id === playerId)?.hand.length ?? 0;
+  const pendingBottomCount = Math.min(startingHandSize, nextMulliganCount - 1, currentHandSize);
   return {
     ...next, revision: next.revision + 1,
     players: next.players.map(p => p.id === playerId
