@@ -82,6 +82,20 @@ export function validateCommanderDeck(
     }
   }
 
+
+  const countsByEnglishName = new Map<string, { card: CardDefinition; quantity: number }>();
+  for (const { card, quantity } of resolvedEntries) {
+    const nameKey = options.deckNameKey?.(card) ?? card.name.toLocaleLowerCase("en-US");
+    const current = countsByEnglishName.get(nameKey);
+    countsByEnglishName.set(nameKey, { card, quantity: (current?.quantity ?? 0) + quantity });
+  }
+  for (const { card, quantity } of countsByEnglishName.values()) {
+    const multipleAllowed = (options.allowsMultipleCopies ?? allowsMultipleByDefault)(card);
+    if (quantity > 1 && !multipleAllowed) {
+      issues.push({ code: "DUPLICATE_CARD", cardId: card.providerId, message: `${card.name} dépasse la limite singleton par nom anglais.` });
+    }
+  }
+
   const commanders = deck.commanderIds.flatMap(id => {
     const card = cardIndex[id];
     if (!card) {
