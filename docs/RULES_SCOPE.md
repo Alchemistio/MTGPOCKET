@@ -12,6 +12,7 @@ La référence de travail du projet est le PDF Comprehensive Rules fourni avec l
 - **CR 800.4a** : retrait des objets possédés par un joueur qui quitte la partie ; exil des permanents/cartes encore contrôlés par ce joueur et possédés par un autre ; retrait des objets de pile contrôlés par ce joueur.
 - **CR 800.4a / 800.4j** : transfert de priorité après le départ d'un joueur et poursuite du tour sans joueur actif si le joueur actif quitte la partie.
 - **CR 903.4 / 903.5a–e** : validation de la taille de deck, du singleton par nom anglais, de l’identité couleur et de la légalité Commander via un registre versionné d’éligibilité/partenariat.
+- **CR 903.6 / 903.7** : placement face visible d’un ou deux commandants en zone de commandement, mélange de la bibliothèque restante, 40 points de vie et main initiale de sept cartes.
 - **CR 903.8 / 903.10a** : suivi de la taxe de commandant par commandant et des blessures par commandant (la taxe est calculée à +{2} par lancement antérieur).
 
 Cette couverture est partielle : les effets de contrôle continus, les choix de remplacement liés au départ d'un joueur, les objets non-cartes complexes et les actions basées sur l'état autres que les pertes listées restent à implémenter.
