@@ -48,7 +48,6 @@ export function recordCommanderCombatDamage(
   };
 }
 
-/** Applies the 21-combat-damage loss check after the damage event has fully resolved. */
 /** Compatibility helper: applies all currently implemented loss-based state actions. */
 export function applyCommanderDamageLosses(state: GameState): GameState {
   return applyStateBasedActions(state);
