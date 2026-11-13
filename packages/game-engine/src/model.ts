@@ -22,6 +22,7 @@ export interface RuntimeCardState {
   attached_to: InstanceId | null;
   damage_marked: number;
   is_commander: boolean;
+  commanderReturnEligibleAtRevision: number | null;
 }
 
 export interface PlayerState {
@@ -65,6 +66,7 @@ export interface GameState {
   deckSetupComplete: boolean;
   pendingDiscardPlayerId: PlayerId | null;
   pendingDiscardCount: number;
+  pendingCommanderChoices: Array<{ instanceId: InstanceId; ownerId: PlayerId; fromZone: "graveyard" | "exile" }>; 
   turnNumber: number;
   phase: Phase;
   step: Step;
@@ -76,7 +78,7 @@ export interface GameState {
   status: "pregame" | "active" | "finished";
 }
 
-export type EngineErrorCode = "INVALID_PLAYER_COUNT" | "DUPLICATE_PLAYER" | "UNKNOWN_PLAYER" | "PLAYER_ELIMINATED" | "NOT_ACTIVE_GAME" | "NOT_PRIORITY_PLAYER" | "RESOLUTION_REQUIRED" | "NO_PENDING_RESOLUTION" | "STACK_ITEM_MISMATCH" | "DUPLICATE_CARD_INSTANCE" | "INVALID_ZONE_MOVE" | "INVALID_DAMAGE" | "NOT_COMMANDER" | "INVALID_COMMANDER_CAST";
+export type EngineErrorCode = "INVALID_PLAYER_COUNT" | "DUPLICATE_PLAYER" | "UNKNOWN_PLAYER" | "PLAYER_ELIMINATED" | "NOT_ACTIVE_GAME" | "NOT_PRIORITY_PLAYER" | "RESOLUTION_REQUIRED" | "NO_PENDING_RESOLUTION" | "STACK_ITEM_MISMATCH" | "DUPLICATE_CARD_INSTANCE" | "INVALID_ZONE_MOVE" | "INVALID_DAMAGE" | "NOT_COMMANDER" | "INVALID_COMMANDER_CAST" | "COMMANDER_CHOICE_REQUIRED" | "INVALID_COMMANDER_CHOICE";
 export class EngineError extends Error {
   constructor(public readonly code: EngineErrorCode, message: string) {
     super(message);
