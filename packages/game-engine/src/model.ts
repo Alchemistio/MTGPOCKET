@@ -21,6 +21,7 @@ export interface RuntimeCardState {
   counters: CounterSet;
   attached_to: InstanceId | null;
   damage_marked: number;
+  is_commander: boolean;
 }
 
 export interface PlayerState {
