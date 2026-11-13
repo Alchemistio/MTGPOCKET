@@ -52,7 +52,7 @@ export function passPriority(state: GameState, playerId: PlayerId): PassPriority
       outcome: "resolution-required", stackItemId: top.id
     };
   }
-  return { state: { ...state, revision: state.revision + 1, priorityPlayerId: null, consecutivePasses: [] }, outcome: "step-advance" };
+  return { state: { ...state, revision: state.revision + 1, priorityPlayerId: null, consecutivePasses: [], priorityWindowClosed: true }, outcome: "step-advance" };
 }
 
 export function completeStackResolution(state: GameState, stackItemId: string): GameState {
