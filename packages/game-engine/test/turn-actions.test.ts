@@ -39,6 +39,16 @@ describe("turn-based actions", () => {
     expect(drawStep.players[0]?.library).toHaveLength(0);
   });
 
+  it("eliminates a player who attempts to draw from an empty library before priority", () => {
+    let game = createGame("empty-draw", players);
+    game = { ...game, deckSetupComplete: true, phase: "beginning", step: "upkeep", priorityPlayerId: "p1" };
+    const drawStep = advanceAfterAllPass(passAll(game));
+    expect(drawStep.step).toBe("draw");
+    expect(drawStep.players[0]?.isEliminated).toBe(true);
+    expect(drawStep.activePlayerId).toBeNull();
+    expect(drawStep.priorityPlayerId).toBe("p2");
+  });
+
   it("clears marked damage and floating mana when cleanup begins", () => {
     let game = createGame("cleanup", players);
     game = addCardInstance(game, { instance_id: "perm", card_id: "permanent", owner_id: "p1", zone: "battlefield" });
