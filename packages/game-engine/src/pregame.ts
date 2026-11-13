@@ -1,6 +1,6 @@
 import { EngineError, type GameState, type PlayerId } from "./model.js";
 import { createGame, type PlayerSetup } from "./game.js";
-import { addCardInstance, moveCardToZone } from "./cards.js";
+import { moveCardToZone } from "./cards.js";
 import { drawCards, shuffleLibrary } from "./library.js";
 
 export interface MulliganDecision {
