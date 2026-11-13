@@ -1,4 +1,3 @@
-import { applyStateBasedActions } from "./players.js";
 import { EngineError, type GameState, type InstanceId, type PlayerId } from "./model.js";
 
 export function getCommanderTax(state: GameState, commanderInstanceId: InstanceId): number {
@@ -48,7 +47,3 @@ export function recordCommanderCombatDamage(
   };
 }
 
-/** Compatibility helper: applies all currently implemented loss-based state actions. */
-export function applyCommanderDamageLosses(state: GameState): GameState {
-  return applyStateBasedActions(state);
-}
