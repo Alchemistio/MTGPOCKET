@@ -66,6 +66,37 @@ export function completeStackResolution(state: GameState, stackItemId: string): 
   };
 }
 
+
+export function pushStackItem(state: GameState, item: import("./model.js").StackItem): GameState {
+  if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
+  if (state.awaitingResolutionId !== null) throw new EngineError("RESOLUTION_REQUIRED", "La pile est en cours de résolution.");
+  if (state.priorityPlayerId !== item.controller_id) throw new EngineError("NOT_PRIORITY_PLAYER", "Le contrôleur de l'objet doit avoir la priorité pour l'ajouter à la pile.");
+  if (state.stack.some(existing => existing.id === item.id)) throw new EngineError("STACK_ITEM_MISMATCH", "Identifiant d'objet de pile déjà utilisé.");
+  if (item.kind === "spell" && item.source_instance_id !== null) {
+    const source = state.cards[item.source_instance_id];
+    if (!source || source.zone !== "stack") throw new EngineError("STACK_ITEM_MISMATCH", "La carte du sort doit déjà être dans la zone de pile.");
+  }
+  const controller = state.players.find(p => p.id === item.controller_id);
+  if (!controller || controller.isEliminated) throw new EngineError("PLAYER_ELIMINATED", "Le contrôleur n'est pas un joueur actif.");
+  return {
+    ...state, revision: state.revision + 1,
+    stack: [...state.stack, item], consecutivePasses: [], priorityWindowClosed: false
+  };
+}
+
+/** Resolves the top stack item through an injected card/effect handler, then grants priority. */
+export function resolveStackItem(
+  state: GameState,
+  stackItemId: string,
+  resolveEffect: (current: GameState, item: import("./model.js").StackItem) => GameState
+): GameState {
+  if (state.awaitingResolutionId !== stackItemId) throw new EngineError("STACK_ITEM_MISMATCH", "Cet objet n'attend pas sa résolution.");
+  const top = state.stack[state.stack.length - 1];
+  if (!top || top.id !== stackItemId) throw new EngineError("STACK_ITEM_MISMATCH", "L'objet demandé n'est pas au sommet de la pile.");
+  const afterEffect = resolveEffect(state, top);
+  return completeStackResolution(afterEffect, stackItemId);
+}
+
 export function advanceAfterAllPass(state: GameState): GameState {
   if (state.awaitingResolutionId !== null || state.stack.length > 0) throw new EngineError("RESOLUTION_REQUIRED", "La pile doit être vide avant de continuer.");
   if (!state.priorityWindowClosed) throw new EngineError("NOT_PRIORITY_PLAYER", "La fenêtre de priorité n'a pas été fermée par tous les joueurs.");
