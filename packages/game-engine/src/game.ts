@@ -7,7 +7,7 @@ function makePlayer(input: PlayerSetup): PlayerState {
   return {
     ...input, life: 40, hand: [], library: [], graveyard: [], exile: [],
     battlefield: [], command: [], commanderCastCount: {}, commanderDamageReceived: {},
-    manaPool: {}, isEliminated: false, attemptedEmptyLibraryDraw: false
+    manaPool: {}, isEliminated: false, attemptedEmptyLibraryDraw: false, mulliganCount: 0, hasKeptHand: false
   };
 }
 
