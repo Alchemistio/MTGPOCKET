@@ -5,6 +5,7 @@ export interface PlayerGameView {
   name: string;
   seat: number;
   life: number;
+  maxHandSize: number;
   handCount: number;
   hand: readonly string[];
   libraryCount: number;
@@ -30,6 +31,8 @@ export interface GameView {
   priorityPlayerId: string | null;
   stack: GameState["stack"];
   awaitingResolutionId: string | null;
+  pendingDiscardPlayerId: string | null;
+  pendingDiscardCount: number;
   players: readonly PlayerGameView[];
   visibleCards: Readonly<Record<string, RuntimeCardState>>;
 }
@@ -43,6 +46,7 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     name: player.name,
     seat: player.seat,
     life: player.life,
+    maxHandSize: player.maxHandSize,
     handCount: player.hand.length,
     hand: player.id === viewerId ? [...player.hand] : [],
     libraryCount: player.library.length,
@@ -69,6 +73,9 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     activePlayerSeat: state.activePlayerSeat, result: state.result,
     turnNumber: state.turnNumber, phase: state.phase, step: state.step,
     priorityPlayerId: state.priorityPlayerId, stack: [...state.stack],
-    awaitingResolutionId: state.awaitingResolutionId, players, visibleCards
+    awaitingResolutionId: state.awaitingResolutionId,
+    pendingDiscardPlayerId: state.pendingDiscardPlayerId,
+    pendingDiscardCount: state.pendingDiscardCount,
+    players, visibleCards
   };
 }
