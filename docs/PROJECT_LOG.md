@@ -1,5 +1,14 @@
 # Journal de suivi du projet
 
+## 2026-11-13 — Correction du mulligan londonien
+
+- Correction : suppression de la limite arbitraire de huit mulligans ; les mulligans répétés restent possibles.
+- Le nombre de cartes à remettre sous la bibliothèque est plafonné à la main réellement piochée et à la taille de main initiale.
+- Ajout d'un test de non-régression couvrant neuf mulligans successifs et la conservation de l'état de préparation.
+- CI GitHub Actions `43467356882`, commit `92422465ca7b2247d6bb6ffe7fd6eb1fed1b3151` : `validate` (typecheck + tests Vitest) et `python-data` réussis.
+- Prochaine étape : intégrer les commandes de pré-partie au serveur LAN et le chargement des listes de decks sans exposer les mains adverses.
+
+
 Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l'historique. Les commits et runs CI doivent pointer vers des identifiants vérifiables.
 
 ## 2026-11-13 — Consolidation documentaire et références

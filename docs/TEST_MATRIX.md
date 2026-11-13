@@ -39,7 +39,7 @@ Workflow `.github/workflows/ci.yml` :
 - `pnpm test` (Vitest sur les packages)
 - `python -m unittest discover -s scripts -p "test_*.py"`
 
-Dernier run complet vérifié : **43448497234**, commit `382953a0a68a229924b0649590615494a82fc2e2`, jobs `validate` et `python-data` réussis.
+Dernier run complet vérifié : **43467356882**, commit `92422465ca7b2247d6bb6ffe7fd6eb1fed1b3151`, jobs `validate` et `python-data` réussis.
 
 ## Validation non automatisée — non encore réalisée
 
