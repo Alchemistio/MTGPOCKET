@@ -21,7 +21,7 @@ export function createGame(id: string, players: readonly PlayerSetup[]): GameSta
   return {
     id, revision: 0, players: seats.map(makePlayer), cards: {}, activePlayerId: first.id,
     turnNumber: 1, phase: "beginning", step: "untap", priorityPlayerId: null,
-    consecutivePasses: [], stack: [], awaitingResolutionId: null, status: "active"
+    consecutivePasses: [], stack: [], awaitingResolutionId: null, priorityWindowClosed: false, status: "active"
   };
 }
 
