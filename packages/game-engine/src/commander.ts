@@ -33,7 +33,7 @@ export function recordCommanderCombatDamage(
 ): GameState {
   if (!Number.isSafeInteger(amount) || amount <= 0) throw new EngineError("INVALID_DAMAGE", "Les blessures doivent être un entier strictement positif.");
   const commander = state.cards[commanderInstanceId];
-  if (!commander?.is_commander) throw new EngineError("NOT_COMMANDER", "La source n'est pas un commandant.");
+  if (!commander?.is_commander || commander.zone !== "battlefield") throw new EngineError("NOT_COMMANDER", "La source doit être un commandant sur le champ de bataille.");
   const player = state.players.find(p => p.id === damagedPlayerId);
   if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur blessé inconnu.");
   if (player.isEliminated) throw new EngineError("PLAYER_ELIMINATED", "Le joueur est déjà éliminé.");
