@@ -6,7 +6,7 @@
 - Utiliser l’API HTTPS pour recherche, nom exact/flou et récupération par ID.
 - Conserver les IDs Scryfall et Oracle, `layout`, `card_faces`, identité couleur, légalité et provenance.
 - Limite publiée : rester **sous 10 requêtes par seconde**. Le client utilise une cadence de 125 ms, `User-Agent` applicatif et `Accept` JSON.
-- Cache mémoire : cartes six heures, recherches quinze minutes. Le cache persistant SQLite mobile et le téléchargement bulk restent à construire.
+- Cache mémoire serveur : cartes six heures, recherches quinze minutes. Le cache SQLite mobile conserve les cartes six heures et les pages de recherche vingt-quatre heures pour faciliter la consultation hors ligne ; l’indexation complète du catalogue reste à construire.
 - Pour les imports massifs, préférer les fichiers bulk Scryfall plutôt que de boucler sur des requêtes unitaires.
 
 Références :
