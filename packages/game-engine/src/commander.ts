@@ -1,3 +1,4 @@
+import { applyStateBasedActions } from "./players.js";
 import { EngineError, type GameState, type InstanceId, type PlayerId } from "./model.js";
 
 export function getCommanderTax(state: GameState, commanderInstanceId: InstanceId): number {
@@ -48,14 +49,7 @@ export function recordCommanderCombatDamage(
 }
 
 /** Applies the 21-combat-damage loss check after the damage event has fully resolved. */
+/** Compatibility helper: applies all currently implemented loss-based state actions. */
 export function applyCommanderDamageLosses(state: GameState): GameState {
-  const players = state.players.map(p => {
-    const lost = Object.values(p.commanderDamageReceived).some(total => total >= 21);
-    return lost && !p.isEliminated ? { ...p, isEliminated: true } : p;
-  });
-  const aliveCount = players.filter(p => !p.isEliminated).length;
-  return {
-    ...state, revision: state.revision + 1, players,
-    status: aliveCount <= 1 ? "finished" : state.status
-  };
+  return applyStateBasedActions(state);
 }
