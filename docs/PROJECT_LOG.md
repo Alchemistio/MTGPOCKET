@@ -1,3 +1,9 @@
+## 2026-11-14 — CI verte après correctif multi-sièges
+
+- Commit `74b9f36b9f1b6b1ed36572e2d1c214e110727bbf`, run `43607608283`: `validate` (typecheck + Vitest) et `python-data` réussis.
+- Le run précédent `43607532811` avait échoué sur deux déclarations de variable dans le test; renommage corrigé, sans changement runtime.
+- Synchronisation des vues pré-partie validée au niveau typecheck/tests automatisés; appareils réels non testés.
+
 ## 2026-11-14 — Correctif CI de la synchronisation pré-partie
 
 - Run `43607532811`: `python-data` passe; `validate` échoue au typecheck uniquement dans le test `pregame-session-registry.test.ts` (variable `aliceView` déclarée deux fois et narrowing sur le mauvais résultat).
