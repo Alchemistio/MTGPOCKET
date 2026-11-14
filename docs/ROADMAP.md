@@ -23,7 +23,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
 - [ ] Gestion des erreurs réseau, timeouts, déconnexions et reprise de l'interface pré-partie.
 - [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.
-- [ ] Journal d'événements et rejeu déterministe.
+- [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
+- [ ] Persistance durable, conservation des graines de pré-partie et rejeu après redémarrage.
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.
 
 ## M2 — Fidélité du moteur ([issue #3](https://github.com/Alchemistio/MTGPOCKET/issues/3))

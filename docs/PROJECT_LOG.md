@@ -1,3 +1,12 @@
+## 2026-11-14 — Journal mémoire et rejeu déterministe des commandes
+
+- GameRoom conserve les commandes acceptées sous forme d'événements versionnés (protocolVersion, engineVersion, révision, identifiant d'événement, snapshotRevision).
+- Le rejeu reconstruit l'état depuis le snapshot autoritaire courant (état de début de partie après pré-partie, ou état initial pour les salles sans pré-partie) et vérifie chaque résultat/révision.
+- Les commandes rejetées et les retries idempotents ne créent pas de nouvel événement; l'hydratation pré-partie réinitialise la base de rejeu et le journal.
+- Tests: rejeu après deux passes, unicité d'événement en cas de retry, rejeu après hydratation du GameRoom.
+- Limites explicites: journal en mémoire seulement; pas de stockage durable, de seed transcript du mulligan/shuffle, ni de replay complet après redémarrage.
+- CI à vérifier.
+
 ## 2026-11-14 — Intégration WebSocket pré-partie à quatre sièges
 
 - Ajout d'un test d'intégration avec quatre connexions WebSocket distinctes : création/rejoindre par jetons de siège, soumission des quatre decks, déclarations keep, démarrage, vues privées et première commande pass-priority.

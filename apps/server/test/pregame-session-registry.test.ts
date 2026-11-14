@@ -114,6 +114,8 @@ describe("PregameSessionRegistry", () => {
       });
       expect(result).toMatchObject({ accepted: true, outcome: "passed" });
       expect(room.state.priorityPlayerId).toBe("p2");
+      expect(room.eventLog).toHaveLength(1);
+      expect(room.replay()).toEqual(room.state);
     }
   });
 });

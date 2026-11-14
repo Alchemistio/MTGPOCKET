@@ -14,6 +14,7 @@
 - 4 sièges, salle LAN, jetons, WebSocket, vues privées par siège.
 - Moteur: tours/phases/priorité/pile de base; PV, pioche, taxes, commandant, élimination.
 - Pré-partie serveur + transport: deck, mulligan, bottom, start; après start, le GameRoom reçoit le même état validé, les mains et instances, et démarre à upkeep avec priorité.
+- Journal mémoire des commandes acceptées et replay déterministe depuis le snapshot de départ; chaque entrée porte les versions moteur/protocole.
 - Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder minimal + modal pré-partie. La vue réseau expose désormais `status` (`pregame`/`active`/`finished`) ; l'écran ne quitte la pré-partie qu'à `active`.
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
@@ -23,7 +24,7 @@
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
-- Partie complète non prouvée; effets, combat, SBA incomplets. Un test automatisé à quatre clients WebSocket couvre désormais la pré-partie et la première passe; aucun test sur quatre appareils physiques.
+- Partie complète non prouvée; effets, combat, SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
 - Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; pas de test 4 clients réel.
 - Découverte LAN, reconnexion, sécurité production absentes.
 - Test transport sur quatre appareils physiques non fait.

@@ -28,14 +28,32 @@ describe("GameRoom", () => {
     expect(room.state.priorityPlayerId).toBe("p1");
   });
 
-  it("rejects stale commands and does not apply duplicate command ids twice", () => {
+  it("journals accepted commands and deterministically replays from its authoritative snapshot", () => {
+    const room = new GameRoom("room-1", players);
+    const snapshotRevision = room.state.revision;
+    const first = room.apply(command("p1", room.state.revision, "event-1"));
+    const second = room.apply(command("p2", room.state.revision, "event-2"));
+    expect(first.accepted).toBe(true);
+    expect(second.accepted).toBe(true);
+    expect(room.eventLog).toHaveLength(2);
+    expect(room.eventLog[0]).toMatchObject({
+      protocolVersion: 1, gameId: "room-1", revision: first.revision,
+      eventId: "p1:event-1", type: "command-applied",
+      payload: { engineVersion: 1, snapshotRevision }
+    });
+    expect(room.replay()).toEqual(room.state);
+  });
+
+  it("rejects stale commands and does not apply duplicate command ids twice", () {
     const room = new GameRoom("room-1", players);
     const revision = room.state.revision;
     const first = room.apply(command("p1", revision, "same-id"));
     const retry = room.apply(command("p1", revision, "same-id"));
     expect(first).toEqual(retry);
+    expect(room.eventLog).toHaveLength(1);
     const stale = room.apply(command("p2", revision, "stale"));
     expect(stale).toMatchObject({ accepted: false, code: "STALE_REVISION" });
+    expect(room.eventLog).toHaveLength(1);
   });
   it("scopes idempotency keys to the authenticated player seat", () => {
     const room = new GameRoom("room-1", players);
