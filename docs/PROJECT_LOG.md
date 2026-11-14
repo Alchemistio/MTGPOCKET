@@ -1,3 +1,11 @@
+## 2026-11-14 — Loader catalogue serveur et policy Commander
+
+- Ajout d'un loader strict pour snapshots JSON Scryfall versionnés et policy Commander explicite (banlist, commandants éligibles, paires compatibles, exceptions singleton, clés de nom).
+- Le bootstrap lit CPOCKET_CARD_CATALOG_PATH et CPOCKET_COMMANDER_POLICY_PATH; config partielle/invalide => échec startup; absence des deux => pré-partie désactivée.
+- Les cartes bannies de la policy sont forcées illégales côté Commander. Les données client ne servent jamais à valider les decks.
+- Tests ajoutés: snapshot valide, policy absente/non versionnée, carte mal formée, variables d'environnement partielles.
+- Aucun snapshot réel ni policy officielle n'est fourni/committé; il faut les provisionner et réviser avant activation. CI à vérifier.
+
 ## 2026-11-14 — CI verte après correctif multi-sièges
 
 - Commit `74b9f36b9f1b6b1ed36572e2d1c214e110727bbf`, run `43607608283`: `validate` (typecheck + Vitest) et `python-data` réussis.
