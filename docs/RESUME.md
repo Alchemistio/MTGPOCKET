@@ -6,7 +6,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: `feat/commander-pocket-foundation`
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Base connue: `28904d6`; CI verte, run 43595322183.
+- Début session: `28904d6` (CI verte). Avancées: `cd26820` (panneau + reprise), `adafe27` (soumission deck locale corrigée). CI de `adafe27`: run 43598243291 en attente au dernier contrôle.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman

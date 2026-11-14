@@ -1,5 +1,12 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — État de CI de la tranche UI pré-partie
+
+- Run 43598197190: CI verte pour cd26820 (typecheck/tests TypeScript et Python).
+- Correctif adafe27 ajouté ensuite pour activer le mulligan après confirmation de soumission individuelle; run 43598243291 encore en file d'attente au dernier contrôle.
+- RESUME.md actualisé avec les deux commits et l'état CI courant.
+
+
 ## 2026-11-14 — Autoriser mulligan après soumission individuelle
 
 - Le serveur répond à chaque deck avec allDecksSubmitted=false jusqu'au quatrième joueur; cette valeur ne signifie pas que le deck de l'appelant a été refusé.
