@@ -42,7 +42,9 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 **Sortie :** flux complet de partie jouable et utilisable sur iOS/Android.
 
 ## M4 — Réseau local — socle ([issue #4](https://github.com/Alchemistio/MTGPOCKET/issues/4))
-- [x] Serveur/client WebSocket, créer/rejoindre, jetons et vues privées.\n- [x] Décision de retour du commandant acheminée au propriétaire et résolue côté serveur.
+- [x] Serveur/client WebSocket, créer/rejoindre, jetons et vues privées.
+- [x] Validation serveur des quatre sièges (identifiants uniques, sièges 0–3 sans doublon) avant l'enregistrement de la salle.
+- [x] Décision de retour du commandant acheminée au propriétaire et résolue côté serveur.
 - [x] Révisions et idempotence de commandes.
 - [ ] Commandes de jeu complètes, validation serveur et synchronisation de toutes les zones.
 - [ ] Découverte LAN, reconnexion, reprise de partie et gestion des conflits.
