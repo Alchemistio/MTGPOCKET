@@ -1,6 +1,7 @@
 # REPRISE — Commander Pocket
 
-> Lire ici en premier après interruption. État courant seulement. Mettre à jour à chaque avancée.\n> Workflow obligatoire : [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
+> Lire ici en premier après interruption. État courant seulement. Mettre à jour à chaque avancée.
+> Workflow obligatoire : [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
 
 ## Repères
 - Repo: https://github.com/Alchemistio/MTGPOCKET
