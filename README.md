@@ -28,7 +28,7 @@ pnpm dev:server
 
 ## Documentation et suivi
 
-Commencer par **[l'index du projet](docs/PROJECT_INDEX.md)**. Il recense les spécifications, l'architecture, les règles, les références techniques, les décisions, la roadmap et le journal de suivi.
+Reprise après interruption : **[docs/RESUME.md](docs/RESUME.md)**. Pour le détail : [index du projet](docs/PROJECT_INDEX.md). Il recense les spécifications, l'architecture, les règles, les références techniques, les décisions, la roadmap et le journal de suivi.
 
 - [Spécification produit](docs/PRODUCT_SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)

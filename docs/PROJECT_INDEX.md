@@ -1,5 +1,7 @@
 # Index général — Commander Pocket
 
+> Reprise rapide : [RESUME.md](RESUME.md), état courant canonique.
+
 > Point d'entrée documentaire. Dernière revue : 2026-11-13. Mettre cet index à jour dès qu'un document, une décision, une référence ou une étape de livraison change.
 
 ## Lecture par besoin

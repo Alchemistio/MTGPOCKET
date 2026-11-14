@@ -1,5 +1,14 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — UI pré-partie et point de reprise
+
+- Ajout de NetworkPregamePanel: envoi deck, keep/mulligan, sélection du nombre demandé de cartes, start si le serveur confirme readyToStart.
+- Les cartes sont identifiées par instance ID; noms Scryfall non reliés dans ce panneau.
+- Ajout docs/RESUME.md comme point de reprise compact; README et index y pointent.
+- CI à confirmer. Composant réutilisable, pas encore monté dans un écran/navigation.
+- Bloqueur: serveur sans catalogue/policy injectés; PREGAME_NOT_CONFIGURED.
+
+
 ## 2026-11-14 — Correction de compatibilité readonly dans le client de pré-partie
 
 - Le run CI 43595261312 a détecté que CommanderDeckList expose des tableaux readonly alors que le contrat réseau utilise des tableaux JSON mutables.
