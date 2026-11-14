@@ -14,6 +14,14 @@ export interface MobileHandCardView {
   isSupportedSpell: boolean;
 }
 
+export interface MobileStackItemView {
+  id: string;
+  kind: string;
+  controller_id: string;
+  source_instance_id: string | null;
+  payload: unknown;
+}
+
 export interface MobileGameView {
   id: string;
   revision: number;
@@ -24,7 +32,7 @@ export interface MobileGameView {
   phase: string;
   step: string;
   priorityPlayerId: string | null;
-  stack: readonly unknown[];
+  stack: readonly MobileStackItemView[];
   awaitingResolutionId: string | null;
   pendingCommanderChoiceCount: number;
   pendingCommanderChoices: readonly { instanceId: string; fromZone: "graveyard" | "exile" }[];

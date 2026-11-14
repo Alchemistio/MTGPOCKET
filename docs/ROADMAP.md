@@ -47,7 +47,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Deckbuilder, collection et sélection de commandant.
 - [x] Projection privée de la main avec nom/coût/type et UI compacte pour lancer les sorts supportés ou sélectionner la défausse de cleanup.
 - [ ] Main réelle complète, piles compactées, badges et attachements.
-- [ ] Tiroir de pile interactif, réponses rapides, auto-yield.
+- [x] Tiroir de pile compact avec contrôleur, carte/coût, ordre LIFO et toggle auto-yield conditionnel.
+- [ ] Réponses rapides complètes, auto-yield avec toutes les capacités activées.
 - [ ] Radar/gaze gesture et motifs géométriques WUBRG.
 - [ ] Tests VoiceOver/TalkBack, tailles de texte et appareils 5,5–6,7 pouces.
 **Sortie :** flux complet de partie jouable et utilisable sur iOS/Android.

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StatusBar, StyleSheet,
   Text, TextInput, View
@@ -11,7 +11,7 @@ import {
   ScryfallClient, ScryfallRepository, type CardDefinition
 } from "@commander-pocket/card-data";
 import { createMobileCardRepository } from "./src/data/card-repository.js";
-import { NetworkRoomModal, type MobileGameView, type RoomSession } from "./src/network/NetworkRoomModal.js";
+import { NetworkRoomModal, type MobileGameView, type MobileStackItemView, type RoomSession } from "./src/network/NetworkRoomModal.js";
 import { RoomClient } from "./src/network/room-client.js";
 import { NetworkPregameModal } from "./src/network/NetworkPregameModal.js";
 
@@ -186,6 +186,9 @@ export default function App() {
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [lookupVisible, setLookupVisible] = useState(false);
   const [selectedDiscardIds, setSelectedDiscardIds] = useState<string[]>([]);
+  const [stackDrawerOpen, setStackDrawerOpen] = useState(false);
+  const [autoYield, setAutoYield] = useState(false);
+  const autoYieldRevision = useRef<number | null>(null);
   const displayPlayers: PlayerPanelData[] = roomView
     ? roomView.players.map(player => ({
         id: player.id, name: player.name, life: player.life, handCount: player.handCount,
@@ -236,6 +239,36 @@ export default function App() {
     });
     return () => { unsubscribe(); roomClient.disconnect(); };
   }, [roomClient]);
+
+  useEffect(() => {
+    if (!autoYield || !roomView || !roomSession || !roomView.spellCastingAvailable) {
+      autoYieldRevision.current = null;
+      return;
+    }
+    if (roomView.priorityPlayerId !== roomSession.playerId) {
+      autoYieldRevision.current = null;
+      return;
+    }
+    const ownPlayer = roomView.players.find(player => player.id === roomSession.playerId);
+    const hasSupportedResponse = ownPlayer?.handCards.some(card => card.isSupportedSpell) ?? false;
+    const hasPendingChoice = roomView.pendingDiscardPlayerId === roomSession.playerId ||
+      roomView.pendingCommanderChoices.length > 0;
+    if (hasSupportedResponse || hasPendingChoice || autoYieldRevision.current === roomView.revision) return;
+    autoYieldRevision.current = roomView.revision;
+    try {
+      roomClient.sendCommand({
+        protocolVersion: 1,
+        gameId: roomSession.gameId,
+        commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+        playerId: roomSession.playerId,
+        expectedRevision: roomView.revision,
+        type: "pass-priority",
+        payload: {}
+      });
+    } catch {
+      setNetworkMessage("Auto-yield : envoi impossible.");
+    }
+  }, [autoYield, roomView, roomSession, roomClient]);
 
   useEffect(() => {
     let cancelled = false;
@@ -342,6 +375,49 @@ export default function App() {
           />
         ))}
       </View>
+      {roomView && stackDrawerOpen ? (
+        <View style={styles.stackDrawer}>
+          <View style={styles.stackDrawerHeader}>
+            <Text style={styles.stackDrawerTitle}>PILE · {roomView.stack.length}</Text>
+            <Pressable
+              disabled={!roomView.spellCastingAvailable}
+              onPress={() => setAutoYield(enabled => !enabled)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: autoYield, disabled: !roomView.spellCastingAvailable }}
+              accessibilityLabel="Auto-yield quand aucune réponse supportée n'est disponible"
+              style={[styles.autoYieldToggle, autoYield && styles.autoYieldEnabled, !roomView.spellCastingAvailable && styles.handCardDisabled]}
+            >
+              <Text style={styles.autoYieldText}>AUTO-YIELD {autoYield ? "ON" : "OFF"}</Text>
+            </Pressable>
+            <Pressable onPress={() => setStackDrawerOpen(false)} accessibilityRole="button">
+              <Text style={styles.stackDrawerClose}>FERMER ✕</Text>
+            </Pressable>
+          </View>
+          <ScrollView style={styles.stackDrawerItems}>
+            {roomView.stack.length === 0 ? (
+              <Text style={styles.stackEmpty}>Aucun objet sur la pile.</Text>
+            ) : [...roomView.stack].reverse().map((item: MobileStackItemView) => {
+              const payload = typeof item.payload === "object" && item.payload !== null
+                ? item.payload as Record<string, unknown> : {};
+              const title = typeof payload.name === "string" ? payload.name : item.kind;
+              const controller = displayPlayers.find(player => player.id === item.controller_id)?.name ?? item.controller_id;
+              const manaCost = typeof payload.manaCost === "string" ? payload.manaCost : "";
+              return (
+                <View key={item.id} style={styles.stackItemRow}>
+                  <View style={styles.stackItemCopy}>
+                    <Text numberOfLines={1} style={styles.stackItemName}>{title}</Text>
+                    <Text style={styles.stackItemMeta}>{controller} · {item.kind}</Text>
+                  </View>
+                  {manaCost ? <Text style={styles.stackItemMana}>{manaCost}</Text> : null}
+                </View>
+              );
+            })}
+          </ScrollView>
+          <Text style={styles.stackDrawerHint}>
+            {roomView.awaitingResolutionId ? "Tous les joueurs ont passé · résolution serveur en attente" : "L'ordre de résolution est du sommet vers le bas"}
+          </Text>
+        </View>
+      ) : null}
       {roomView?.pendingCommanderChoices.map(choice => (
         <View key={choice.instanceId} style={styles.pendingChoice}>
           <Text style={styles.pendingChoiceText}>Commandant au {choice.fromZone === "graveyard" ? "cimetière" : "bannissement"} : choisir son retour</Text>
@@ -410,7 +486,7 @@ export default function App() {
         </View>
       ) : null}
       <View style={styles.bottomBar}>
-        <Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S)</Text>
+        <Pressable onPress={() => setStackDrawerOpen(open => !open)} accessibilityRole="button" accessibilityLabel={stackDrawerOpen ? "Fermer la pile" : "Ouvrir la pile"}><Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S) {stackDrawerOpen ? "▾" : "▴"}</Text></Pressable>
         <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : pendingDecisionCount > 0 ? "Choix du commandant en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
         <Text style={styles.handLabel}>MAIN · {viewerHandCount} CARTES</Text>
         <Pressable onPress={() => setNetworkVisible(true)} style={styles.lookupButton} accessibilityRole="button">
@@ -467,6 +543,21 @@ const styles = StyleSheet.create({
   pendingChoiceText: { color: "#f0dfb8", fontSize: 9, flex: 1, fontWeight: "700" },
   choiceButton: { backgroundColor: "#46513e", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 6 },
   choiceButtonText: { color: "#f4f7ed", fontSize: 8, fontWeight: "900" },
+  stackDrawer: { position: "absolute", left: 10, right: 10, bottom: 142, maxHeight: 142, zIndex: 20, borderRadius: 8, borderWidth: 1, borderColor: "#526b83", backgroundColor: "#101a27", padding: 8 },
+  stackDrawerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 5 },
+  stackDrawerTitle: { color: "#edf3f9", fontSize: 10, fontWeight: "900" },
+  stackDrawerClose: { color: "#a8b8ca", fontSize: 8, fontWeight: "900" },
+  autoYieldToggle: { borderWidth: 1, borderColor: "#64748b", borderRadius: 5, paddingHorizontal: 8, paddingVertical: 5, backgroundColor: "#263548" },
+  autoYieldEnabled: { borderColor: "#9dd9bb", backgroundColor: "#285541" },
+  autoYieldText: { color: "#eaf5ef", fontSize: 8, fontWeight: "900" },
+  stackDrawerItems: { maxHeight: 86 },
+  stackItemRow: { minHeight: 32, borderTopWidth: 1, borderTopColor: "#2c3d52", flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 4 },
+  stackItemCopy: { flex: 1, paddingRight: 8 },
+  stackItemName: { color: "#edf3f9", fontSize: 10, fontWeight: "800" },
+  stackItemMeta: { color: "#9bacc0", fontSize: 8, marginTop: 2 },
+  stackItemMana: { color: "#d8e3f0", fontSize: 10, fontWeight: "800" },
+  stackEmpty: { color: "#91a2b7", fontSize: 10, paddingVertical: 10, textAlign: "center" },
+  stackDrawerHint: { color: "#91a2b7", fontSize: 8, marginTop: 4 },
   handTray: { minHeight: 82, marginTop: 5, borderRadius: 8, backgroundColor: "#111b28", borderWidth: 1, borderColor: "#29384b", paddingHorizontal: 7, paddingVertical: 5 },
   handHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 3, marginBottom: 4 },
   handTrayTitle: { color: "#e6edf5", fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },

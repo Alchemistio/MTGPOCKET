@@ -1,3 +1,11 @@
+## 2026-11-14 — Tiroir de pile et auto-yield mobile
+
+- Le drawer de pile est maintenant repliable et affiche le sommet en premier, le nom de carte, le contrôleur, le type et le coût quand disponibles.
+- Le toggle auto-yield est désactivé par défaut et indisponible sans handler serveur; activé, il passe uniquement quand le joueur a la priorité, qu'aucun sort simple supporté n'est en main et qu'aucun choix/défausse n'attend.
+- Garde-fou de révision pour éviter les doubles passes; les commandes restent validées côté serveur.
+- Limites: auto-yield ne connaît pas encore les capacités activées, terrains jouables, réponses ciblées ni les cartes non supportées; pas de test appareil.
+- CI à vérifier.
+
 ## 2026-11-14 — Main privée et commandes mobiles de base
 
 - GameView expose pour le seul propriétaire de la main les résumés lisibles des cartes (nom, coût, type, texte Oracle, layout) et un indicateur serveur des sorts supportés.
