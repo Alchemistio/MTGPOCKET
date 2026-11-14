@@ -1,3 +1,10 @@
+## 2026-11-14 — Résolveur de base validé par CI
+
+- Run 43638209930 sur c58b963 : validate (typecheck + Vitest) et python-data réussis.
+- Tests: Divination (Draw two cards.) paie {2}{U}, pioche deux cartes et rejoint le cimetière; un instant « You gain 3 life. » augmente les PV; un texte non supporté est rejeté avant le lancement.
+- Le serveur n'interprète aucun autre texte Oracle et reste limité aux cartes/effets explicitement supportés.
+- Pas de test appareil ni de catalogue/policy réels provisionnés.
+
 ## 2026-11-14 — Premier résolveur d'effets de cartes explicite
 
 - Ajout de basic-spell-effects.ts : seuls les textes Oracle exacts « Draw a card. », « Draw two cards. », « Draw three cards. » et « You gain N life. » sont pris en charge.
