@@ -1,13 +1,15 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, EngineError, passPriority, resolveCommanderReturnChoice,
-  type GameState, type PlayerSetup
+  advanceAfterAllPass, advanceAutomaticStep, createGame, EngineError, passPriority, resolveCommanderReturnChoice, resolveStackItem,
+  type GameState, type PlayerSetup, type StackItem
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
+
+export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "decision-resolved" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -26,7 +28,7 @@ export class GameRoom {
   private readonly commandResults = new Map<string, RoomCommandResult>();
   private readonly events: RoomEvent[] = [];
 
-  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState) {
+  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver) {
     this.currentState = initialState ?? advanceAutomaticStep(createGame(id, players));
     this.replayBaseState = cloneGameState(this.currentState);
   }
@@ -50,7 +52,7 @@ export class GameRoom {
   /** Rebuilds the current state by replaying accepted commands from the authoritative start snapshot. */
   replay(): GameState {
     const base = cloneGameState(this.replayBaseState);
-    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base);
+    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect);
     for (const event of this.events) {
       if (event.protocolVersion !== 1 || event.payload.engineVersion !== GAME_ENGINE_VERSION ||
           event.payload.snapshotRevision !== this.replayBaseState.revision ||
@@ -126,7 +128,12 @@ export class GameRoom {
         nextState = advanceAfterAllPass(nextState);
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
-        outcome = "resolution-required";
+        if (this.resolveStackEffect) {
+          nextState = resolveStackItem(nextState, result.stackItemId, this.resolveStackEffect);
+          outcome = "stack-resolved";
+        } else {
+          outcome = "resolution-required";
+        }
       } else {
         outcome = "passed";
       }

@@ -5,17 +5,17 @@ import type { CommanderDeckList } from "@commander-pocket/card-data";
 import type { PregameCoordinatorFactory } from "./pregame-session-registry.js";
 import { PregameSessionRegistry } from "./pregame-session-registry.js";
 import { loadServerPregameConfigFromEnvironment } from "./server-catalog.js";
-import type { RoomCommand } from "./game-room.js";
+import type { RoomCommand, StackEffectResolver } from "./game-room.js";
 import { RoomRegistry } from "./room-registry.js";
 import { toPlayerView } from "./player-view.js";
 
 interface ClientSession { socket: WebSocket; gameId: string; playerId: string; token: string; }
-export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; }
+export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; }
 export interface CommanderPocketServerRuntime {
   httpServer: Server; websocketServer: WebSocketServer; rooms: RoomRegistry; close(): Promise<void>;
 }
 export function createCommanderPocketServer(options: CommanderPocketServerOptions = {}): CommanderPocketServerRuntime {
-  const rooms = new RoomRegistry();
+  const rooms = new RoomRegistry(options.resolveStackEffect);
   const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory) : null;
   const clients = new Set<ClientSession>();
   const httpServer = createServer((request, response) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GameRoom } from "../src/game-room.js";
-import { addCardInstance, applyStateBasedActions, createGame, moveCardToZone } from "@commander-pocket/game-engine";
+import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -26,6 +26,24 @@ describe("GameRoom", () => {
     expect(d.accepted && d.outcome).toBe("step-advanced");
     expect(room.state.step).toBe("draw");
     expect(room.state.priorityPlayerId).toBe("p1");
+  });
+
+  it("resolves the top stack item after all seats pass and replays the resolved state", () => {
+    const initial = pushStackItem(advanceAutomaticStep(createGame("room-1", players)), {
+      id: "trigger-life", controller_id: "p1", source_instance_id: null,
+      kind: "triggered-ability", payload: { effect: "lose-life" }
+    });
+    const room = new GameRoom("room-1", players, initial, state => changeLife(state, "p2", -3));
+    let result;
+    for (const player of players) {
+      result = room.apply(command(player.id, room.state.revision, "pass-" + player.id));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.state.awaitingResolutionId).toBeNull();
+    expect(room.state.players[1]?.life).toBe(37);
+    expect(room.state.priorityPlayerId).toBe("p1");
+    expect(room.replay()).toEqual(room.state);
   });
 
   it("journals accepted commands and deterministically replays from its authoritative snapshot", () => {
