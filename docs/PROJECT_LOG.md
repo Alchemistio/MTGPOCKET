@@ -1,5 +1,12 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — Autoriser mulligan après soumission individuelle
+
+- Le serveur répond à chaque deck avec allDecksSubmitted=false jusqu'au quatrième joueur; cette valeur ne signifie pas que le deck de l'appelant a été refusé.
+- Le panneau marque donc le deck localement soumis dès qu'une réponse de soumission contient le champ allDecksSubmitted, quelle que soit sa valeur.
+- Les commandes mulligan peuvent ensuite être envoyées; le serveur reste autoritaire et répond DECKS_NOT_READY tant que les quatre decks ne sont pas reçus.
+
+
 ## 2026-11-14 — UI pré-partie et point de reprise
 
 - Ajout de NetworkPregamePanel: envoi deck, keep/mulligan, sélection du nombre demandé de cartes, start si le serveur confirme readyToStart.

@@ -14,7 +14,7 @@
 - Moteur: tours/phases/priorité/pile de base; PV, pioche, taxes, commandant, élimination.
 - Pré-partie serveur: decks validés, commandants, mains, mulligan, bottom, start.
 - Pré-partie WebSocket: 4 messages, authentifiés, vues unicast.
-- Mobile: plateau paysage, télémétrie, client LAN, 4 commandes pré-partie.
+- Mobile: plateau paysage, télémétrie, client LAN, 4 commandes pré-partie, panneau UI pré-partie réutilisable (pas encore monté).
 - Données: Scryfall, cache SQLite, import MTGJSON Python.
 - CI: typecheck, Vitest, Python.
 

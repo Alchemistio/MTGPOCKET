@@ -41,7 +41,7 @@ export function NetworkPregamePanel({ client, playerId, deck, initialView, onGam
     }
     if (isRecord(event.result)) {
       const result = event.result as ProgressResult;
-      if (result.allDecksSubmitted) setDeckSubmitted(true);
+      if (Object.hasOwn(result, "allDecksSubmitted")) setDeckSubmitted(true);
       if (result.pendingBottomByPlayer) {
         setPendingBottom(result.pendingBottomByPlayer[playerId] ?? 0);
         setSelected([]);
