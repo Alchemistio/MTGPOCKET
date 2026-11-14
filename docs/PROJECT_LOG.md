@@ -5,6 +5,7 @@
 - Sans handler configuré, le serveur conserve l'état resolution-required au lieu d'inventer l'effet d'une carte.
 - Le handler est conservé pendant le rejeu; le test vérifie perte de 3 PV, retrait de la pile, priorité restaurée et égalité du replay.
 - Limite: aucun lancement de sort ni résolution générique de carte Scryfall n'est encore branché; les handlers de cartes doivent être explicitement fournis.
+- Run 43635061737 : `python-data` passe; `validate` échoue au typecheck car l'union locale `outcome` n'incluait pas `stack-resolved`. Le type local est corrigé dans le commit suivant; nouveau run requis.
 - CI à vérifier.
 
 ## 2026-11-14 — Journal mémoire et rejeu déterministe des commandes

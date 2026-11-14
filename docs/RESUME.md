@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : résolution automatique du sommet de pile après passes unanimes via un handler injecté, journal/rejeu versionné; CI à vérifier sur le commit courant.
+- Dernier code : correction du type de résultat `stack-resolved` après le run 43635061737; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman

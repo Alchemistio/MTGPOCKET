@@ -123,7 +123,7 @@ export class GameRoom {
     try {
       const result = passPriority(this.currentState, command.playerId);
       let nextState = result.state;
-      let outcome: "passed" | "step-advanced" | "resolution-required";
+      let outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved";
       if (result.outcome === "step-advance") {
         nextState = advanceAfterAllPass(nextState);
         outcome = "step-advanced";
