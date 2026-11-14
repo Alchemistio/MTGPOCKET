@@ -178,10 +178,10 @@ export class GameRoom {
     const definition = this.resolveCard(card.card_id);
     if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
     if (definition.layout !== "normal") return this.reject(cacheKey, "UNSUPPORTED_CARD_LAYOUT");
-    const isInstant = /\\bInstant\\b/.test(definition.typeLine);
-    const isSorcery = /\\bSorcery\\b/.test(definition.typeLine);
+    const isInstant = /\bInstant\b/.test(definition.typeLine);
+    const isSorcery = /\bSorcery\b/.test(definition.typeLine);
     if (!isInstant && !isSorcery) return this.reject(cacheKey, "UNSUPPORTED_SPELL_TYPE");
-    if (/\\btarget\\b/i.test(definition.oracleText)) return this.reject(cacheKey, "TARGET_SELECTION_NOT_SUPPORTED");
+    if (/\btarget\b/i.test(definition.oracleText)) return this.reject(cacheKey, "TARGET_SELECTION_NOT_SUPPORTED");
     if (isSorcery && (this.currentState.activePlayerId !== command.playerId ||
         (this.currentState.phase !== "precombat-main" && this.currentState.phase !== "postcombat-main") ||
         this.currentState.stack.length > 0 || this.currentState.awaitingResolutionId !== null)) {

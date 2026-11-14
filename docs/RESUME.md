@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : correction du type de résultat `stack-resolved` après le run 43635061737; CI à vérifier sur le commit courant.
+- Dernier code : lancement d’instants/rituels simples (coûts génériques/couleur, sans cible) avec handler serveur injecté; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
@@ -24,7 +24,7 @@
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
-- Partie complète non prouvée; lancement de sorts et handlers de cartes non raccordés, combat et SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
+- Partie complète non prouvée; les permanents, sorts ciblés, coûts hybrides/phyrexians/X/snow et handlers de cartes de production restent non raccordés; combat et SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
 - Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; aucun test sur appareils physiques.
 - Découverte LAN, reconnexion, sécurité production absentes.
 - Ne jamais exposer GameState brut ni mains adverses.

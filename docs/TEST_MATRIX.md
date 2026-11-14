@@ -18,7 +18,7 @@ Dernière revue : 2026-11-14. Cette matrice décrit les tests présents dans le 
 
 | Domaine | Tests | Ce qui est vérifié | Lacunes majeures |
 |---|---|---|---|
-| Salle LAN | `apps/server/test/game-room.test.ts` | démarrage, passage priorité, résolution d’un objet de pile via handler injecté, stale revision, idempotence, autorisation de choix Commander, journal versionné et rejeu déterministe | lancement de sorts, commandes complètes, persistance durable, seed transcript, reconnexion |
+| Salle LAN | `apps/server/test/game-room.test.ts` | démarrage, lancement d’un instant simple avec paiement de mana, résolution via handler injecté, déplacement au cimetière, stale revision, idempotence et replay | permanents, cibles, coûts avancés, tour complet, persistance durable, seed transcript, reconnexion |
 | Pré-partie | `apps/server/test/pregame-coordinator.test.ts`, `apps/server/test/pregame-session-registry.test.ts`, `apps/server/test/server-pregame-transport.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan, transfert au GameRoom, vues privées à quatre sièges et première commande de priorité via WebSocket | tour complet avec sort/réponse/résolution/cleanup, catalogue/banlist de production |
 | Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé, statut explicite `pregame`/`active` | audit complet des champs sensibles et tests fuzz |
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, jetons et authentification de siège | rotation/expiration des jetons |

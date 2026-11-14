@@ -23,6 +23,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
 - [ ] Gestion des erreurs réseau, timeouts, déconnexions et reprise de l'interface pré-partie.
 - [x] Résolution serveur d’un objet de pile après passes unanimes, via un handler d’effet injecté et rejouable.
+- [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, résolution via handler serveur et envoi au cimetière.
+- [ ] Étendre le lancement aux permanents, cibles, coûts alternatifs et handlers d’effets réels.
 - [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
 - [ ] Persistance durable, conservation des graines de pré-partie et rejeu après redémarrage.

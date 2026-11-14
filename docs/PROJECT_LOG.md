@@ -1,3 +1,12 @@
+## 2026-11-14 — Lancement d'instants/rituels simples depuis la main
+
+- Ajout de la commande serveur cast-spell : validation du siège prioritaire, possession en main, catalogue Scryfall serveur, layout normal, type Instant/Sorcery et absence de cible.
+- Paiement limité aux symboles W/U/B/R/G/C et coûts génériques numériques; les coûts hybrides, phyrexians, snow, X et alternatifs sont refusés explicitement.
+- La carte est déplacée de la main à la pile; après passes unanimes, le handler injecté applique l'effet et, si la carte est toujours sur la pile, le sort rejoint le cimetière.
+- Le loader de catalogue expose l'index de cartes au bootstrap serveur; le handler d'effet reste injecté explicitement et n'est pas configuré par défaut.
+- Test: instant bleu, dépense du mana, effet -3 PV, résolution, cimetière et replay déterministe.
+- CI du commit de lancement à vérifier; aucun effet Scryfall arbitraire n'est interprété automatiquement.
+
 ## 2026-11-14 — Résolution de pile côté serveur après passes unanimes
 
 - GameRoom accepte un handler d'effet déterministe injecté par le bootstrap serveur / RoomRegistry.
