@@ -8,6 +8,8 @@ export interface PlayerGameView {
   maxHandSize: number;
   handCount: number;
   hand: readonly string[];
+  hasKeptHand: boolean;
+  pendingBottomCount: number;
   libraryCount: number;
   graveyard: readonly string[];
   exile: readonly string[];
@@ -51,6 +53,8 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     maxHandSize: player.maxHandSize,
     handCount: player.hand.length,
     hand: player.id === viewerId ? [...player.hand] : [],
+    hasKeptHand: player.hasKeptHand,
+    pendingBottomCount: player.pendingBottomCount,
     libraryCount: player.library.length,
     graveyard: [...player.graveyard],
     exile: [...player.exile],

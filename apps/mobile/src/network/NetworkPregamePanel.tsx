@@ -6,7 +6,7 @@ import type { RoomClient, RoomClientEvent } from "./room-client.js";
 interface PregameView {
   revision: number;
   step: string;
-  players: readonly { id: string; name: string; hand: readonly string[]; handCount: number }[];
+  players: readonly { id: string; name: string; hand: readonly string[]; handCount: number; hasKeptHand: boolean; pendingBottomCount: number }[];
 }
 interface Props {
   client: RoomClient;
@@ -31,6 +31,18 @@ export function NetworkPregamePanel({ client, playerId, deck, initialView, onGam
   const [status, setStatus] = useState("En attente du serveur…");
 
   useEffect(() => client.onEvent((event: RoomClientEvent) => {
+    if (event.type === "pregame-view") {
+      if (isRecord(event.view)) {
+        const nextView = event.view as unknown as PregameView;
+        setView(nextView);
+        const ownPlayer = nextView.players.find(player => player.id === playerId);
+        setPendingBottom(ownPlayer?.pendingBottomCount ?? 0);
+        setReadyToStart(nextView.players.every(player => player.hasKeptHand && player.pendingBottomCount === 0));
+        setSelected([]);
+        if (nextView.step !== "pregame") onGameStarted?.(nextView);
+      }
+      return;
+    }
     if (event.type !== "pregame-result") return;
     setBusy(false);
     if (!event.accepted) { setStatus(event.code ?? "Action refusée."); return; }

@@ -1,3 +1,12 @@
+## 2026-11-14 — Synchronisation pré-partie multi-sièges
+
+- Après chaque action pré-partie acceptée, le serveur diffuse une `pregame-view` dédiée à chaque siège connecté; chaque vue est reconstruite par `toPlayerView` pour conserver les mains adverses masquées.
+- `PlayerGameView` expose `hasKeptHand` et `pendingBottomCount` (état de progression public, pas le contenu des mains).
+- Le mobile écoute ces vues, actualise le nombre de cartes à remettre et détecte quand tous les joueurs ont gardé.
+- Ajout d'un test de registre vérifiant quatre vues distinctes et l'isolation des mains.
+- CI du nouveau commit à vérifier. Pas de test appareil.
+- Prochaine étape: catalogue serveur + policy Commander versionnée; sans eux le bootstrap reste `PREGAME_NOT_CONFIGURED`.
+
 ## 2026-11-14 — Validation de l'intégration mobile
 
 - CI run `43606919803`, commit `b8482ae622ae2540d2d161f373a87c4c1506f4f7`: `validate` (typecheck + Vitest) et `python-data` réussis.

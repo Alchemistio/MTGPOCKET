@@ -108,7 +108,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
       }
 
       if (parsed.type.startsWith("pregame-")) {
-        handlePregameMessage(socket, session, parsed, pregame);
+        handlePregameMessage(socket, session, parsed, pregame, clients);
         return;
       }
 
@@ -163,7 +163,8 @@ function handlePregameMessage(
   socket: WebSocket,
   session: ClientSession | null,
   message: Record<string, unknown>,
-  registry: PregameSessionRegistry | null
+  registry: PregameSessionRegistry | null,
+  clients: ReadonlySet<ClientSession>
 ): void {
   if (!session) {
     send(socket, { type: "pregame-result", accepted: false, code: "NOT_JOINED" });
@@ -206,8 +207,18 @@ function handlePregameMessage(
       send(socket, { type: "pregame-result", accepted: false, code: "UNKNOWN_PREGAME_MESSAGE" });
       return;
   }
-  // The projected view is sent only to the authenticated requesting seat.
-  send(socket, { type: "pregame-result", ...asRecord(result) });
+  // Return the action result to the caller, then refresh every seat with its own private projection.
+  const response = asRecord(result);
+  send(socket, { type: "pregame-result", ...response });
+  if (response.accepted === true) {
+    for (const seatView of registry.viewsForGame(session.gameId)) {
+      for (const client of clients) {
+        if (client.gameId === session.gameId && client.playerId === seatView.playerId) {
+          send(client.socket, { type: "pregame-view", view: seatView.view });
+        }
+      }
+    }
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

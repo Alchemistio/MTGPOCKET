@@ -62,6 +62,13 @@ export class PregameSessionRegistry {
     }
   }
 
+  /** Build a distinct privacy-filtered view for every seat after a pregame mutation. */
+  viewsForGame(gameId: string): readonly { playerId: string; view: GameView }[] {
+    const session = this.sessions.get(gameId);
+    if (!session) return [];
+    return session.state.players.map(player => ({ playerId: player.id, view: toPlayerView(session.state, player.id) }));
+  }
+
   start(gameId: string, playerId: string, token: string):
     { accepted: true; revision: number; view: GameView } | { accepted: false; code: string } {
     const session = this.getAuthorizedSession(gameId, playerId, token);

@@ -13,6 +13,7 @@ export type RoomClientEvent =
   | { type: "game-view"; view: unknown }
   | { type: "command-result"; result: unknown }
   | { type: "pregame-result"; accepted: boolean; code?: string; result?: unknown; revision?: number; view?: unknown }
+  | { type: "pregame-view"; view: unknown }
   | { type: "command-rejected"; code: string }
   | { type: "room-error"; code: string }
   | { type: "protocol-error"; code: string }
@@ -192,6 +193,7 @@ function parseRoomEvent(value: unknown): RoomClientEvent | null {
     }
     case "room-joined":
     case "game-view":
+    case "pregame-view":
       return { type: value.type, view: value.view };
     case "command-result":
       return { type: "command-result", result: value.result };
