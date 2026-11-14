@@ -15,7 +15,7 @@
 - Pré-partie serveur + transport: deck, mulligan, bottom, start.
 - Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder minimal + modal pré-partie.
 - Données: cache SQLite mobile; import MTGJSON Python.
-- Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates strictes).
+- Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
 - CI verte; aucun appareil testé.
 

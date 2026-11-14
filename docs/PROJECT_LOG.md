@@ -1,7 +1,7 @@
 ## 2026-11-14 — Correctifs de validation après revue locale du diff
 
 - Revue du commit initial: contrôle de date stricte non appliqué et helper de test manquant, corrigés dans ce commit.
-- CI du commit précédent à ignorer pour validation finale; attendre le run sur le commit correctif.
+- Run 43624148803 sur 407148d: CI verte, typecheck + Vitest + Python. Le run 43624091796 a échoué sur le helper de test manquant, corrigé avant validation.
 
 ## 2026-11-14 — Validation stricte de la policy Commander
 
