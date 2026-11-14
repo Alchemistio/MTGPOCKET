@@ -238,6 +238,60 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
+  it("resolves a supported life-gain instant without treating unknown text as a no-op", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "life-gain-id", oracleId: "life-gain-oracle",
+      name: "Life Gain", layout: "normal", manaCost: "{W}", manaValue: 1,
+      typeLine: "Instant", oracleText: "You gain 3 life.", colors: ["W"], colorIdentity: ["W"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "life-gain-id", oracle_id: "life-gain-oracle", name: "Life Gain", layout: "normal",
+        mana_cost: "{W}", cmc: 1, type_line: "Instant", oracle_text: "You gain 3 life.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "4"
+      }
+    };
+    const base: GameState = {
+      ...advanceAutomaticStep(createGame("room-1", players)),
+      deckSetupComplete: true, phase: "precombat-main", step: "main-1",
+      players: advanceAutomaticStep(createGame("room-1", players)).players.map(player =>
+        player.id === "p1" ? { ...player, manaPool: { W: 1 } } : player)
+    };
+    const initial = addCardInstance(base, {
+      instance_id: "life-gain-instance", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-life-gain",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "life-gain-instance" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "life-gain-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.players[0]?.life).toBe(43);
+    expect(room.state.cards["life-gain-instance"]?.zone).toBe("graveyard");
+    expect(room.replay()).toEqual(room.state);
+
+    const unsupportedDefinition = { ...definition, providerId: "unsupported-id", oracleText: "Scry 2." };
+    const unsupportedState = addCardInstance(base, {
+      instance_id: "unsupported-instance", card_id: unsupportedDefinition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const unsupportedRoom = new GameRoom("room-1", players, unsupportedState, resolveBasicSpellEffect,
+      cardId => cardId === unsupportedDefinition.providerId ? unsupportedDefinition : undefined, supportsBasicSpell);
+    const rejected = unsupportedRoom.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-unsupported",
+      playerId: "p1", expectedRevision: unsupportedRoom.state.revision,
+      type: "cast-spell", payload: { instanceId: "unsupported-instance" }
+    });
+    expect(rejected).toMatchObject({ accepted: false, code: "UNSUPPORTED_SPELL_EFFECT" });
+    expect(unsupportedRoom.state.cards["unsupported-instance"]?.zone).toBe("hand");
+  });
+
   it("resolves the top stack item after all seats pass and replays the resolved state", () => {
     const initial = pushStackItem(advanceAutomaticStep(createGame("room-1", players)), {
       id: "trigger-life", controller_id: "p1", source_instance_id: null,
