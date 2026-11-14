@@ -1,3 +1,9 @@
+## 2026-11-14 — Correctif CI de la synchronisation pré-partie
+
+- Run `43607532811`: `python-data` passe; `validate` échoue au typecheck uniquement dans le test `pregame-session-registry.test.ts` (variable `aliceView` déclarée deux fois et narrowing sur le mauvais résultat).
+- Correctif: renommer la variable de vue privée dans l'assertion multi-sièges; logique serveur/mobile inchangée.
+- Nouveau run CI requis.
+
 ## 2026-11-14 — Synchronisation pré-partie multi-sièges
 
 - Après chaque action pré-partie acceptée, le serveur diffuse une `pregame-view` dédiée à chaque siège connecté; chaque vue est reconstruite par `toPlayerView` pour conserver les mains adverses masquées.

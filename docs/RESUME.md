@@ -6,7 +6,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: `feat/commander-pocket-foundation`
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- HEAD avant tranche: `7647b39` (CI verte: run 43607012633, validate + python-data). Tranche suivante: diffusion multi-sièges des vues pré-partie; CI à vérifier.
+- HEAD: `d83f9c2`; CI run 43607532811: python-data verte, validate échoue au typecheck (nom de variable de test dupliqué), correctif en cours.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman

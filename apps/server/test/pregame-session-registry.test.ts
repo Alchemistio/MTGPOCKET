@@ -68,10 +68,10 @@ describe("PregameSessionRegistry", () => {
     }
     const seatViews = secondSessions.viewsForGame("g2");
     expect(seatViews).toHaveLength(4);
-    const aliceView = seatViews.find(item => item.playerId === "p1")?.view;
+    const alicePrivateView = seatViews.find(item => item.playerId === "p1")?.view;
     const bobSeatView = seatViews.find(item => item.playerId === "p2")?.view;
-    expect(aliceView?.players.find(player => player.id === "p1")?.hand).toHaveLength(7);
-    expect(aliceView?.players.find(player => player.id === "p2")?.hand).toEqual([]);
+    expect(alicePrivateView?.players.find(player => player.id === "p1")?.hand).toHaveLength(7);
+    expect(alicePrivateView?.players.find(player => player.id === "p2")?.hand).toEqual([]);
     expect(bobSeatView?.players.find(player => player.id === "p2")?.hand).toHaveLength(7);
     expect(bobSeatView?.players.find(player => player.id === "p1")?.hand).toEqual([]);
     expect(sessions.declareMulligan("g1", "p2", secondCredentials.find(item => item.playerId === "p2")!.token, "keep"))
