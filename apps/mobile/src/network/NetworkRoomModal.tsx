@@ -22,6 +22,16 @@ export interface MobileStackItemView {
   payload: unknown;
 }
 
+export interface MobileBattlefieldCardView {
+  instanceId: string;
+  cardId: string;
+  name: string;
+  typeLine: string;
+  isTapped: boolean;
+  isCommander: boolean;
+  manaOptions: readonly string[];
+}
+
 export interface MobileGameView {
   id: string;
   revision: number;
@@ -45,6 +55,7 @@ export interface MobileGameView {
     libraryCount: number;
     graveyard: readonly string[];
     battlefield: readonly string[];
+    battlefieldCards: readonly MobileBattlefieldCardView[];
     commanderCastCount: Readonly<Record<string, number>>;
     manaPool: Readonly<Record<string, number>>;
     isEliminated: boolean;

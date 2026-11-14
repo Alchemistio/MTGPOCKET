@@ -1,5 +1,6 @@
 import type { GameState, RuntimeCardState } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
+import { basicLandManaOptions } from "./basic-spell-effects.js";
 
 export interface HandCardView {
   instanceId: string;
@@ -11,6 +12,16 @@ export interface HandCardView {
   layout: string;
   isCommander: boolean;
   isSupportedSpell: boolean;
+}
+
+export interface BattlefieldCardView {
+  instanceId: string;
+  cardId: string;
+  name: string;
+  typeLine: string;
+  isTapped: boolean;
+  isCommander: boolean;
+  manaOptions: readonly string[];
 }
 
 export interface PlayerGameView {
@@ -28,6 +39,7 @@ export interface PlayerGameView {
   graveyard: readonly string[];
   exile: readonly string[];
   battlefield: readonly string[];
+  battlefieldCards: readonly BattlefieldCardView[];
   command: readonly string[];
   commanderCastCount: Readonly<Record<string, number>>;
   commanderDamageReceived: Readonly<Record<string, number>>;
@@ -94,6 +106,20 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
     graveyard: [...player.graveyard],
     exile: [...player.exile],
     battlefield: [...player.battlefield],
+    battlefieldCards: player.battlefield.flatMap(instanceId => {
+      const runtimeCard = state.cards[instanceId];
+      if (!runtimeCard) return [];
+      const definition = resolveCard?.(runtimeCard.card_id);
+      return [{
+        instanceId,
+        cardId: runtimeCard.card_id,
+        name: definition?.name ?? runtimeCard.card_id,
+        typeLine: definition?.typeLine ?? "",
+        isTapped: runtimeCard.is_tapped,
+        isCommander: runtimeCard.is_commander,
+        manaOptions: definition ? basicLandManaOptions(definition) : []
+      }];
+    }),
     command: [...player.command],
     commanderCastCount: { ...player.commanderCastCount },
     commanderDamageReceived: { ...player.commanderDamageReceived },
