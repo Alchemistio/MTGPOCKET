@@ -2,6 +2,7 @@
 
 - Revue du commit initial: contrôle de date stricte non appliqué et helper de test manquant, corrigés dans ce commit.
 - Run 43624148803 sur 407148d: CI verte, typecheck + Vitest + Python. Le run 43624091796 a échoué sur le helper de test manquant, corrigé avant validation.
+- HEAD docs courant: ${head.slice(0,7)}; PR reste draft, non mergée.
 
 ## 2026-11-14 — Validation stricte de la policy Commander
 

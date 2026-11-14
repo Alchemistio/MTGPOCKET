@@ -6,7 +6,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- HEAD: 0f5968e; CI de validation policy en cours, résultat final attendu après correctif. Dernier code CI vert antérieur: 73cca32.
+- HEAD docs: 6afd647; code CI verte sur 407148d, run 43624148803 (typecheck, Vitest, Python).
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
@@ -28,10 +28,9 @@
 - Ne jamais exposer GameState brut ni mains adverses.
 
 ## Prochain
-1. CI du durcissement policy à vérifier.
-2. Générer snapshot réel puis valider provenance.
-3. Curater policy Commander vérifiée et versionnée.
-4. Test 4 sièges + confidentialité; puis appareils iOS/Android.
+1. Générer snapshot réel puis valider provenance.
+2. Curater policy Commander vérifiée et versionnée.
+3. Test 4 sièges + confidentialité; puis appareils iOS/Android.
 
 ## Règles
 - Fetch HEAD avant écriture; update_ref expected SHA, force=false.
