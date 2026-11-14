@@ -1,6 +1,6 @@
 # REPRISE — Commander Pocket
 
-> Lire ici en premier après interruption. État courant seulement. Mettre à jour à chaque avancée.
+> Lire ici en premier après interruption. État courant seulement. Mettre à jour à chaque avancée.\n> Workflow obligatoire : [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
 
 ## Repères
 - Repo: https://github.com/Alchemistio/MTGPOCKET
@@ -33,7 +33,7 @@
 3. Test 4 sièges + confidentialité; puis appareils iOS/Android.
 
 ## Règles
-- Fetch HEAD avant écriture; update_ref expected SHA, force=false.
+- Workflow: DEVELOPMENT_WORKFLOW.md; avant d'attendre CI, vérifier et terminer toutes les actions indépendantes possibles. Ne pas s'arrêter si du travail sûr reste.
 - CI commit exact; codé ≠ CI ≠ appareil testé.
 - Mettre ce fichier à jour après chaque avancée; caveman, état courant seulement.
 - PR draft; pas de merge sans demande.

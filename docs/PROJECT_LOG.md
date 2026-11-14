@@ -1,8 +1,14 @@
+## 2026-11-14 — Workflow de développement et contrôle anti-attente CI
+
+- Création de DEVELOPMENT_WORKFLOW.md: reprise, synchronisation Git, sécurité des écritures, boucle de développement, contrôle obligatoire du travail restant avant attente CI, traitement des échecs, preuve CI par SHA et définition de fin de session.
+- Règle ajoutée: tant qu'une tâche sûre et indépendante peut avancer sans résultat CI, continuer; n'attendre que si le résultat est une vraie dépendance ou si aucune action utile ne reste.
+- Index et RESUME pointent vers le workflow. Aucun changement runtime dans cette tranche.
+
 ## 2026-11-14 — Correctifs de validation après revue locale du diff
 
 - Revue du commit initial: contrôle de date stricte non appliqué et helper de test manquant, corrigés dans ce commit.
 - Run 43624148803 sur 407148d: CI verte, typecheck + Vitest + Python. Le run 43624091796 a échoué sur le helper de test manquant, corrigé avant validation.
-- HEAD docs courant: ${head.slice(0,7)}; PR reste draft, non mergée.
+- HEAD avant ajout workflow: b304057; PR reste draft, non mergée.
 
 ## 2026-11-14 — Validation stricte de la policy Commander
 

@@ -1,6 +1,6 @@
 # Index général — Commander Pocket
 
-> Reprise rapide : [RESUME.md](RESUME.md), état courant canonique.
+> Reprise rapide : [RESUME.md](RESUME.md), état courant canonique.\n> Procédure de travail : [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md), boucle d'exécution et règle anti-attente CI.
 
 > Point d'entrée documentaire. Dernière revue : 2026-11-13. Mettre cet index à jour dès qu'un document, une décision, une référence ou une étape de livraison change.
 
