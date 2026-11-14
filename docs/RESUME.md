@@ -6,34 +6,33 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- HEAD avant cette tranche: c43cfb9; code 74b9f36 CI verte (43607608283). Nouveau commit à contrôler.
+- HEAD code: b3e3c0a; CI 43615546352 verte: typecheck, Vitest, Python.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
-- 4 sièges, salle LAN, jetons, WebSocket, vues privées.
+- 4 sièges, salle LAN, jetons, WebSocket, vues privées par siège.
 - Moteur: tours/phases/priorité/pile de base; PV, pioche, taxes, commandant, élimination.
-- Pré-partie serveur + transport: deck, mulligan, bottom, start; vues privées par siège.
-- Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder local minimal + modal pré-partie.
+- Pré-partie serveur + transport: deck, mulligan, bottom, start.
+- Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder minimal + modal pré-partie.
 - Données: cache SQLite mobile; import MTGJSON Python.
-- Catalogue serveur: loader snapshot Scryfall JSON + policy Commander versionnée; IDs Oracle explicites; bannis, commandants, paires compatibles, exceptions singleton; env bootstrap; fail closed.
-- Tests: snapshots valides, policy invalide, carte mal formée, config env partielle.
+- Catalogue serveur: snapshot Scryfall JSON + policy Commander versionnée; bannis, éligibilité, paires compatibles, exceptions singleton; bootstrap env; validation fail closed.
+- CI code verte; aucun appareil testé.
 
 ## Bloqueurs
-- Aucun snapshot Scryfall ni fichier policy réel provisionné; PREGAME_NOT_CONFIGURED sans env.
-- Éligibilité/paires Commander doivent être maintenues dans la policy, pas inventées.
+- Snapshot Scryfall réel et policy validée non provisionnés; sans env, PREGAME_NOT_CONFIGURED.
 - Partie complète non prouvée; effets, combat, SBA incomplets.
 - Découverte LAN, reconnexion, sécurité production absentes.
-- Pas de test appareils ni de vraie session 4 clients revendiqués.
+- Test transport réel à 4 clients non fait.
 - Ne jamais exposer GameState brut ni mains adverses.
 
 ## Prochain
-1. Générer/provisionner snapshot Scryfall bulk et policy Commander validée.
-2. Tester 4 sièges: deck → mulligan → bottom → start + confidentialité, transport réel.
-3. Valider UI iOS/Android; corriger deckbuilder.
+1. Générer/provisionner snapshot Scryfall bulk + policy Commander vérifiée.
+2. Test 4 sièges: deck → mulligan → bottom → start + confidentialité.
+3. Valider UI iOS/Android.
 4. Tour complet: sort → réponse → résolution → cleanup.
 
 ## Règles
-- Fetch HEAD avant chaque écriture; update_ref avec expected SHA, force=false.
-- Lire CI du commit exact; codé ≠ CI verte ≠ appareil testé.
-- Mettre ce fichier à jour après chaque avancée. Garder seulement l'état courant, pas de récit.
-- PR draft. Pas de merge sans demande.
+- Fetch HEAD avant écriture; update_ref expected SHA, force=false.
+- CI commit exact; codé ≠ CI ≠ appareil testé.
+- Mettre ce fichier à jour après chaque avancée; caveman, état courant seulement.
+- PR draft; pas de merge sans demande.

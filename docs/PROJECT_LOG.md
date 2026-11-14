@@ -1,3 +1,10 @@
+## 2026-11-14 — Loader catalogue serveur: correctifs CI
+
+- Commit initial b7fc358: CI détecte deux erreurs de narrowing TypeScript dans le parseur JSON; Python passe.
+- b9ec1da corrige les tableaux Oracle ID; CI révèle un narrowing manquant sur oracle_id optionnel.
+- b3e3c0a corrige ce dernier contrôle; CI run 43615546352: typecheck, Vitest et python-data réussis.
+- Le loader est branché au bootstrap par variables d'environnement; aucun snapshot réel ni policy réelle n'est provisionné. Aucun test appareil ou session 4 clients.
+
 ## 2026-11-14 — Loader catalogue serveur et policy Commander
 
 - Ajout d'un loader strict pour snapshots JSON Scryfall versionnés et policy Commander explicite (banlist, commandants éligibles, paires compatibles, exceptions singleton, clés de nom).
