@@ -1,3 +1,9 @@
+## 2026-11-14 — Validation de l'intégration mobile
+
+- CI run `43606919803`, commit `b8482ae622ae2540d2d161f373a87c4c1506f4f7`: `validate` (typecheck + Vitest) et `python-data` réussis.
+- Limite repérée à traiter avant un vrai test 4 sièges: les résultats pré-partie sont actuellement unicast au joueur actif; les autres clients ne reçoivent pas encore leur nouvelle main/leur compteur de cartes à bottomer quand le round de mulligan se résout.
+- Le bootstrap serveur n'injecte toujours pas le catalogue ni la policy, donc la pré-partie reste fermée par défaut (`PREGAME_NOT_CONFIGURED`).
+
 ## 2026-11-14 — Constructeur de deck et entrée pré-partie mobile
 
 - Ajout d'un modal réseau pré-partie dans l'app: recherche Scryfall, sélection d'un commandant, liste locale de 100 cartes, retrait d'entrées, puis accès au panneau deck/mulligan/bottom/start.
