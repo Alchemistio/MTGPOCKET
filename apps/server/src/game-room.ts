@@ -107,7 +107,7 @@ export class GameRoom {
       }
       try {
         this.currentState = resolveCommanderReturnChoice(this.currentState, payload.instanceId, payload.choice);
-        const accepted: RoomCommandResult = { accepted: true, revision: this.currentState.revision, outcome: "decision-resolved" };
+        const accepted: AcceptedRoomCommandResult = { accepted: true, revision: this.currentState.revision, outcome: "decision-resolved" };
         this.commandResults.set(cacheKey, accepted);
         this.recordEvent(command, accepted);
         return accepted;
@@ -131,7 +131,7 @@ export class GameRoom {
         outcome = "passed";
       }
       this.currentState = nextState;
-      const accepted: RoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
+      const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
       this.commandResults.set(cacheKey, accepted);
       this.recordEvent(command, accepted);
       return accepted;

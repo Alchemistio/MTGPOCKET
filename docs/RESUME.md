@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : correction du statut de cycle de vie des vues pré-partie, CI à vérifier sur le commit courant.
+- Dernier code : journal mémoire et rejeu déterministe des commandes acceptées; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
@@ -19,21 +19,20 @@
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
-- CI verte; aucun appareil testé.
+- CI du dernier commit à vérifier; aucun appareil testé.
 
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
 - Partie complète non prouvée; effets, combat, SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
-- Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; pas de test 4 clients réel.
+- Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; aucun test sur appareils physiques.
 - Découverte LAN, reconnexion, sécurité production absentes.
-- Test transport sur quatre appareils physiques non fait.
 - Ne jamais exposer GameState brut ni mains adverses.
 
 ## Prochain
-1. Générer snapshot réel puis valider provenance.
-2. Curater policy Commander vérifiée et versionnée.
-3. Test 4 sièges + confidentialité; puis appareils iOS/Android.
+1. Implémenter un cycle sort/réponse/résolution/cleanup avec validation serveur.
+2. Persister le journal, capturer les graines et permettre le rejeu après redémarrage.
+3. Générer le snapshot Scryfall réel et curater la policy Commander officielle.
 
 ## Règles
 - Workflow: DEVELOPMENT_WORKFLOW.md; avant d'attendre CI, vérifier et terminer toutes les actions indépendantes possibles. Ne pas s'arrêter si du travail sûr reste.
