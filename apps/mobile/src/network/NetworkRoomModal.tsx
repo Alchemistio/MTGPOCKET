@@ -2,9 +2,24 @@ import React, { useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { RoomClient, type SeatCredential } from "./room-client.js";
 
+export interface MobileHandCardView {
+  instanceId: string;
+  cardId: string;
+  name: string;
+  manaCost: string | null;
+  typeLine: string;
+  oracleText: string;
+  layout: string;
+  isCommander: boolean;
+  isSupportedSpell: boolean;
+}
+
 export interface MobileGameView {
   id: string;
   revision: number;
+  spellCastingAvailable: boolean;
+  pendingDiscardPlayerId: string | null;
+  pendingDiscardCount: number;
   turnNumber: number;
   phase: string;
   step: string;
@@ -18,6 +33,7 @@ export interface MobileGameView {
     name: string;
     life: number;
     handCount: number;
+    handCards: readonly MobileHandCardView[];
     libraryCount: number;
     graveyard: readonly string[];
     battlefield: readonly string[];
