@@ -17,15 +17,15 @@ export function supportsBasicSpell(definition: CardDefinition): boolean {
 }
 
 export function basicLandManaOptions(definition: CardDefinition): string[] {
-  if (!/\\bBasic\\b.*\\bLand\\b/.test(definition.typeLine)) return [];
+  if (!/\bBasic\b.*\bLand\b/.test(definition.typeLine)) return [];
   const colors: string[] = [];
-  if (/\\bPlains\\b/.test(definition.typeLine)) colors.push("W");
-  if (/\\bIsland\\b/.test(definition.typeLine)) colors.push("U");
-  if (/\\bSwamp\\b/.test(definition.typeLine)) colors.push("B");
-  if (/\\bMountain\\b/.test(definition.typeLine)) colors.push("R");
-  if (/\\bForest\\b/.test(definition.typeLine)) colors.push("G");
+  if (/\bPlains\b/.test(definition.typeLine)) colors.push("W");
+  if (/\bIsland\b/.test(definition.typeLine)) colors.push("U");
+  if (/\bSwamp\b/.test(definition.typeLine)) colors.push("B");
+  if (/\bMountain\b/.test(definition.typeLine)) colors.push("R");
+  if (/\bForest\b/.test(definition.typeLine)) colors.push("G");
   if (colors.length > 0) return colors;
-  return /^\\{T\\}: Add \\{C\\}\\.$/.test(definition.oracleText.trim()) ? ["C"] : [];
+  return /^\{T\}: Add \{C\}\\.$/.test(definition.oracleText.trim()) ? ["C"] : [];
 }
 
 /** Resolves only exact, targetless Oracle-text patterns covered by this first rules slice. */
