@@ -1,3 +1,12 @@
+## 2026-11-14 — Résolution de pile côté serveur après passes unanimes
+
+- GameRoom accepte un handler d'effet déterministe injecté par le bootstrap serveur / RoomRegistry.
+- Quand le dernier joueur passe et que le moteur marque un objet comme prêt à résoudre, le serveur appelle resolveStackItem, applique les SBA, vide la pile et réattribue la priorité.
+- Sans handler configuré, le serveur conserve l'état resolution-required au lieu d'inventer l'effet d'une carte.
+- Le handler est conservé pendant le rejeu; le test vérifie perte de 3 PV, retrait de la pile, priorité restaurée et égalité du replay.
+- Limite: aucun lancement de sort ni résolution générique de carte Scryfall n'est encore branché; les handlers de cartes doivent être explicitement fournis.
+- CI à vérifier.
+
 ## 2026-11-14 — Journal mémoire et rejeu déterministe des commandes
 
 - GameRoom conserve les commandes acceptées sous forme d'événements versionnés (protocolVersion, engineVersion, révision, identifiant d'événement, snapshotRevision).
