@@ -27,7 +27,7 @@ export function resolveBasicSpellEffect(state: GameState, item: StackItem): Game
   const drawMatch = /^Draw (a|two|three) cards\.$/.exec(text);
   if (drawMatch) {
     const count = drawMatch[1] === "a" ? 1 : drawMatch[1] === "two" ? 2 : 3;
-    return drawCards(state, item.controller_id, count);
+    return drawCards(state, item.controller_id, count).state;
   }
   const lifeMatch = /^You gain (\d+) life\.$/.exec(text);
   if (lifeMatch) return changeLife(state, item.controller_id, Number(lifeMatch[1]));
