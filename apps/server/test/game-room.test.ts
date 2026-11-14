@@ -30,6 +30,27 @@ describe("GameRoom", () => {
     expect(room.state.priorityPlayerId).toBe("p1");
   });
 
+  it("automatically skips cleanup when no player needs to discard", () => {
+    const state: GameState = {
+      ...advanceAutomaticStep(createGame("room-1", players)),
+      deckSetupComplete: true,
+      phase: "ending",
+      step: "end"
+    };
+    const room = new GameRoom("room-1", players, state);
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "empty-cleanup-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "step-advanced" });
+    expect(room.state.pendingDiscardCount).toBe(0);
+    expect(room.state.step).toBe("upkeep");
+    expect(room.state.activePlayerId).toBe("p2");
+    expect(room.state.priorityPlayerId).toBe("p2");
+    expect(room.state.turnNumber).toBe(2);
+    expect(room.replay()).toEqual(room.state);
+  });
+
   it("handles cleanup discard and advances to the next player's upkeep", () => {
     let state: GameState = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "ending", step: "end" };
     for (let index = 0; index < 8; index += 1) {

@@ -19,7 +19,7 @@
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
-- CI du dernier commit à vérifier; aucun appareil testé.
+- CI verte sur e9ff0fa (run 43636125150); aucun appareil testé.
 
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.

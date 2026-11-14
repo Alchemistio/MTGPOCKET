@@ -1,3 +1,9 @@
+## 2026-11-14 — CI verte du lancement de sort, réponse et cleanup
+
+- Run 43636125150 sur e9ff0fa : validate (typecheck + Vitest) et python-data réussis.
+- La suite GameRoom vérifie maintenant cast d'un instant, réponse d'un autre joueur, résolution LIFO, paiement du mana, cimetière, discard de cleanup et replay.
+- Le test suivant ajouté couvre le cleanup sans défausse; CI à vérifier sur le commit courant.
+
 ## 2026-11-14 — Défausse de cleanup et transition de tour
 
 - Ajout de la commande discard-cards, autorisée uniquement pour le siège indiqué par pendingDiscardPlayerId; le moteur vérifie le nombre exact de cartes distinctes en main.
