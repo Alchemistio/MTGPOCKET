@@ -76,7 +76,7 @@ def write_snapshot(source_path: Path, output_path: Path, *, updated_at: str,
                 "sourceBulkUri": download_uri,
                 "sourceSha256": checksum,
                 "cards": []
-            }, ensure_ascii=False)[:-2])
+            }, ensure_ascii=False)[:-3])
             target.write("[")
             first = True
             for card in ijson.items(source, "item", use_float=True):
