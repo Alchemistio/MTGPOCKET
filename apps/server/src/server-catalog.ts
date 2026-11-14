@@ -12,7 +12,10 @@ interface CommanderPolicySnapshot {
 export interface LoadedServerPregameConfig { factory: PregameCoordinatorFactory; catalogCardCount: number; policyVersion: string; }
 export function loadServerPregameConfig(catalogPath: string, policyPath: string): LoadedServerPregameConfig {
   const catalog = parseCatalog(readJson(catalogPath), catalogPath);
-  const policy = parsePolicy(readJson(policyPath), policyPath);
+  const catalogOracleIds = new Set(catalog.cards.flatMap(card =>
+    typeof card.oracle_id === "string" ? [card.oracle_id] : []
+  ));
+  const policy = parsePolicy(readJson(policyPath), policyPath, catalogOracleIds);
   const banned = new Set(policy.bannedOracleIds), eligible = new Set(policy.commanderEligibleOracleIds);
   const multipleCopies = new Set(policy.multipleCopiesAllowedOracleIds);
   const compatiblePairs = new Set(policy.compatibleCommanderPairs.map(pairKey));
@@ -68,7 +71,7 @@ function parseCatalog(value: unknown, path: string): CatalogSnapshot {
   });
   return { schemaVersion: 1, source: "scryfall", sourceUpdatedAt: value.sourceUpdatedAt, cards };
 }
-function parsePolicy(value: unknown, path: string): CommanderPolicySnapshot {
+function parsePolicy(value: unknown, path: string, catalogOracleIds: ReadonlySet<string>): CommanderPolicySnapshot {
   if (!isRecord(value) || value.schemaVersion !== 1 || typeof value.version !== "string" ||
       value.version.trim().length === 0 || !isIsoDate(value.effectiveDate) ||
       !isStringArray(value.bannedOracleIds) || !isStringArray(value.commanderEligibleOracleIds) ||
@@ -77,15 +80,31 @@ function parsePolicy(value: unknown, path: string): CommanderPolicySnapshot {
       (value.deckNameKeyByOracleId !== undefined && !isStringRecord(value.deckNameKeyByOracleId))) {
     throw new Error("Invalid versioned Commander policy: " + path);
   }
-  const ids = [
-    ...(value.bannedOracleIds as string[]),
-    ...(value.commanderEligibleOracleIds as string[]),
-    ...(value.multipleCopiesAllowedOracleIds as string[])
-  ];
+  const bannedIds = value.bannedOracleIds as string[];
+  const eligibleIds = value.commanderEligibleOracleIds as string[];
+  const multipleCopyIds = value.multipleCopiesAllowedOracleIds as string[];
+  const ids = [...bannedIds, ...eligibleIds, ...multipleCopyIds];
   if (ids.some(id => !isUuidLike(id))) throw new Error("Commander policy contains an invalid Oracle ID: " + path);
+  if (!hasUniqueValues(bannedIds) || !hasUniqueValues(eligibleIds) || !hasUniqueValues(multipleCopyIds)) {
+    throw new Error("Commander policy contains duplicate Oracle IDs: " + path);
+  }
+  if (bannedIds.some(id => eligibleIds.includes(id))) {
+    throw new Error("Commander policy marks an Oracle ID as both banned and commander-eligible: " + path);
+  }
+  if (ids.some(id => !catalogOracleIds.has(id))) {
+    throw new Error("Commander policy references an Oracle ID missing from the Scryfall catalog: " + path);
+  }
   const pairs = value.compatibleCommanderPairs as string[][];
-  if (pairs.some(pair => pair.some(id => !isUuidLike(id)) || pair[0] === pair[1])) {
+  const pairKeys = pairs.map(pairKey);
+  if (pairs.some(pair => pair.some(id => !isUuidLike(id)) || pair[0] === pair[1] ||
+      pair.some(id => !eligibleIds.includes(id))) || !hasUniqueValues(pairKeys)) {
     throw new Error("Commander policy contains an invalid compatibility pair: " + path);
+  }
+  if (value.deckNameKeyByOracleId !== undefined) {
+    const nameKeys = value.deckNameKeyByOracleId as Record<string, string>;
+    if (Object.entries(nameKeys).some(([id, key]) =>
+      !isUuidLike(id) || !catalogOracleIds.has(id) || key.trim().length === 0
+    )) throw new Error("Commander policy contains an invalid deck name key: " + path);
   }
   return value as unknown as CommanderPolicySnapshot;
 }
@@ -107,6 +126,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(item => typeof item === "string" && item.length > 0);
+}
+function hasUniqueValues(values: readonly string[]): boolean {
+  return new Set(values).size === values.length;
 }
 function isStringRecord(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every(item => typeof item === "string");

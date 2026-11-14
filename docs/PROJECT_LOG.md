@@ -1,3 +1,9 @@
+## 2026-11-14 — Validation stricte de la policy Commander
+
+- Loader: dates ISO calendrier strictes; refuse doublons d'Oracle IDs, conflits banni/éligible, IDs absents du snapshot, paires dupliquées ou non éligibles, clés de nom invalides.
+- Tests ajoutés pour dates impossibles, doublons, références inconnues, conflit ban/éligibilité et paire invalide.
+- Aucun contenu de banlist/éligibilité inventé; données réelles toujours à curater. CI à vérifier.
+
 ## 2026-11-14 — Générateur snapshot Scryfall bulk
 
 - bf7ac8a ajoute scripts/build_scryfall_catalog.py et tests: manifeste Scryfall, bulk default_cards, parsing ijson en streaming, SHA-256, provenance, snapshot écrit atomiquement.

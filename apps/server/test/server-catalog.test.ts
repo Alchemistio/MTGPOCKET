@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -28,6 +28,7 @@ function fixture() {
   }));
   return { catalogPath, policyPath };
 }
+function readPolicyText(path: string): string { return readFileSync(path, "utf8"); }
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 
 describe("server catalog configuration", () => {
@@ -54,6 +55,36 @@ describe("server catalog configuration", () => {
     }));
     expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))
       .toThrow("Invalid Scryfall card");
+  });
+  it("rejects impossible dates, duplicate policy IDs, and policy IDs absent from the catalog", () => {
+    const paths = fixture();
+    const original = JSON.parse(readPolicyText(paths.policyPath)) as Record<string, unknown>;
+
+    writePolicy({ ...original, effectiveDate: "2026-02-30" });
+    expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))
+      .toThrow("Invalid versioned Commander policy");
+
+    writePolicy({ ...original, commanderEligibleOracleIds: [oracleId, oracleId] });
+    expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))
+      .toThrow("duplicate Oracle IDs");
+
+    writePolicy({ ...original, bannedOracleIds: ["33333333-3333-4333-8333-333333333333"] });
+    expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))
+      .toThrow("missing from the Scryfall catalog");
+
+    writePolicy({ ...original, bannedOracleIds: [oracleId], commanderEligibleOracleIds: [oracleId] });
+    expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))
+      .toThrow("both banned and commander-eligible");
+  });
+  it("rejects compatibility pairs unless both commanders are eligible and pairs are unique", () => {
+    const paths = fixture();
+    const policy = JSON.parse(readPolicyText(paths.policyPath)) as Record<string, unknown>;
+    writeFileSync(paths.policyPath, JSON.stringify({
+      ...policy,
+      compatibleCommanderPairs: [[oracleId, "33333333-3333-4333-8333-333333333333"]]
+    }));
+    expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))
+      .toThrow("invalid compatibility pair");
   });
   it("keeps pregame disabled when neither path is configured and rejects partial config", () => {
     expect(loadServerPregameConfigFromEnvironment({})).toBeUndefined();
