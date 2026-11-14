@@ -90,7 +90,10 @@ export class RoomClient {
   }
 
   submitPregameDeck(deck: CommanderDeckList): void {
-    this.sendPregame({ type: "pregame-submit-deck", deck });
+    this.sendPregame({
+      type: "pregame-submit-deck",
+      deck: { commanderIds: [...deck.commanderIds], cards: deck.cards.map(card => ({ ...card })) }
+    });
   }
 
   declareMulligan(action: "keep" | "mulligan"): void {

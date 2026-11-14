@@ -1,5 +1,12 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — Correction de compatibilité readonly dans le client de pré-partie
+
+- Le run CI 43595261312 a détecté que CommanderDeckList expose des tableaux readonly alors que le contrat réseau utilise des tableaux JSON mutables.
+- RoomClient copie maintenant explicitement les identifiants de commandants et les entrées de cartes à la frontière de sérialisation ; les données du deck appelant ne sont pas mutées.
+- Le job Python est passé ; le job validate s'est arrêté au typecheck avant les tests. Nouveau run requis après correction.
+
+
 ## 2026-11-14 — Client mobile : opérations de pré-partie
 
 - RoomClient expose maintenant les quatre messages serveur : soumission du deck, déclaration keep/mulligan, choix des cartes à remettre et demande de démarrage.
