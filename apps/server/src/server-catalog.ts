@@ -9,7 +9,7 @@ interface CommanderPolicySnapshot {
   commanderEligibleOracleIds: string[]; compatibleCommanderPairs: string[][];
   multipleCopiesAllowedOracleIds: string[]; deckNameKeyByOracleId?: Record<string, string>;
 }
-export interface LoadedServerPregameConfig { factory: PregameCoordinatorFactory; catalogCardCount: number; policyVersion: string; }
+export interface LoadedServerPregameConfig { factory: PregameCoordinatorFactory; catalogCardCount: number; policyVersion: string; cardIndex: Readonly<Record<string, CardDefinition>>; }
 export function loadServerPregameConfig(catalogPath: string, policyPath: string): LoadedServerPregameConfig {
   const catalog = parseCatalog(readJson(catalogPath), catalogPath);
   const catalogOracleIds = new Set(catalog.cards.flatMap(card =>
@@ -44,7 +44,7 @@ export function loadServerPregameConfig(catalogPath: string, policyPath: string)
       });
     }
   };
-  return { factory, catalogCardCount: catalog.cards.length, policyVersion: policy.version };
+  return { factory, catalogCardCount: catalog.cards.length, policyVersion: policy.version, cardIndex };
 }
 export function loadServerPregameConfigFromEnvironment(
   environment: Readonly<Record<string, string | undefined>> = process.env

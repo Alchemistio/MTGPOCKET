@@ -37,6 +37,7 @@ describe("server catalog configuration", () => {
     const loaded = loadServerPregameConfig(paths.catalogPath, paths.policyPath);
     expect(loaded.catalogCardCount).toBe(1);
     expect(loaded.policyVersion).toBe("commander-policy-test-1");
+    expect(loaded.cardIndex[cardId]?.providerId).toBe(cardId);
     expect(loaded.factory.create("test-game", [
       { id: "p1", name: "A", seat: 0 }, { id: "p2", name: "B", seat: 1 },
       { id: "p3", name: "C", seat: 2 }, { id: "p4", name: "D", seat: 3 }

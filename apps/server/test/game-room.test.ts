@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GameRoom } from "../src/game-room.js";
 import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
+import type { CardDefinition } from "@commander-pocket/card-data";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -26,6 +27,49 @@ describe("GameRoom", () => {
     expect(d.accepted && d.outcome).toBe("step-advanced");
     expect(room.state.step).toBe("draw");
     expect(room.state.priorityPlayerId).toBe("p1");
+  });
+
+  it("casts a simple instant, pays its mana, resolves its effect and replays", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "test-instant", oracleId: "test-oracle",
+      name: "Test Instant", layout: "normal", manaCost: "{U}", manaValue: 1,
+      typeLine: "Instant", oracleText: "", colors: ["U"], colorIdentity: ["U"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "test-instant", oracle_id: "test-oracle", name: "Test Instant", layout: "normal",
+        mana_cost: "{U}", cmc: 1, type_line: "Instant", oracle_text: "",
+        colors: ["U"], color_identity: ["U"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "2"
+      }
+    };
+    const base = advanceAutomaticStep(createGame("room-1", players));
+    const funded = {
+      ...base,
+      players: base.players.map(player => player.id === "p1" ? { ...player, manaPool: { U: 1 } } : player)
+    };
+    const withCard = addCardInstance(funded, {
+      instance_id: "spell-1", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, withCard,
+      state => changeLife(state, "p2", -3),
+      cardId => cardId === definition.providerId ? definition : undefined
+    );
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-instant",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "spell-1" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    expect(room.state.cards["spell-1"]?.zone).toBe("stack");
+    expect(room.state.players[0]?.manaPool.U).toBe(0);
+    let result;
+    for (const player of players) {
+      result = room.apply(command(player.id, room.state.revision, "spell-pass-" + player.id));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.cards["spell-1"]?.zone).toBe("graveyard");
+    expect(room.state.players[1]?.life).toBe(37);
+    expect(room.replay()).toEqual(room.state);
   });
 
   it("resolves the top stack item after all seats pass and replays the resolved state", () => {

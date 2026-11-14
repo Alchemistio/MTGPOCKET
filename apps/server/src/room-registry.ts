@@ -1,6 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { PlayerSetup } from "@commander-pocket/game-engine";
-import { GameRoom, type StackEffectResolver } from "./game-room.js";
+import { GameRoom, type CardDefinitionResolver, type StackEffectResolver } from "./game-room.js";
 
 interface RoomEntry {
   room: GameRoom;
@@ -15,12 +15,12 @@ export interface SeatCredential {
 export class RoomRegistry {
   private readonly entries = new Map<string, RoomEntry>();
 
-  constructor(private readonly resolveStackEffect?: StackEffectResolver) {}
+  constructor(private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver) {}
 
   create(gameId: string, players: readonly PlayerSetup[]): { room: GameRoom; credentials: SeatCredential[] } {
     validateRoomSetup(gameId, players);
     if (this.entries.has(gameId)) throw new Error("ROOM_ALREADY_EXISTS");
-    const room = new GameRoom(gameId, players, undefined, this.resolveStackEffect);
+    const room = new GameRoom(gameId, players, undefined, this.resolveStackEffect, this.resolveCard);
     const tokens = new Map(players.map(player => [player.id, randomUUID()]));
     this.entries.set(gameId, { room, tokens });
     return {

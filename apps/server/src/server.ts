@@ -5,17 +5,17 @@ import type { CommanderDeckList } from "@commander-pocket/card-data";
 import type { PregameCoordinatorFactory } from "./pregame-session-registry.js";
 import { PregameSessionRegistry } from "./pregame-session-registry.js";
 import { loadServerPregameConfigFromEnvironment } from "./server-catalog.js";
-import type { RoomCommand, StackEffectResolver } from "./game-room.js";
+import type { CardDefinitionResolver, RoomCommand, StackEffectResolver } from "./game-room.js";
 import { RoomRegistry } from "./room-registry.js";
 import { toPlayerView } from "./player-view.js";
 
 interface ClientSession { socket: WebSocket; gameId: string; playerId: string; token: string; }
-export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; }
+export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; resolveCard?: CardDefinitionResolver; }
 export interface CommanderPocketServerRuntime {
   httpServer: Server; websocketServer: WebSocketServer; rooms: RoomRegistry; close(): Promise<void>;
 }
 export function createCommanderPocketServer(options: CommanderPocketServerOptions = {}): CommanderPocketServerRuntime {
-  const rooms = new RoomRegistry(options.resolveStackEffect);
+  const rooms = new RoomRegistry(options.resolveStackEffect, options.resolveCard);
   const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory) : null;
   const clients = new Set<ClientSession>();
   const httpServer = createServer((request, response) => {
@@ -162,7 +162,7 @@ function send(socket: WebSocket, payload: unknown): void {
 const port = Number(process.env.PORT ?? 3000);
 const configuredPregame = loadServerPregameConfigFromEnvironment();
 const runtime = createCommanderPocketServer({
-  port, ...(configuredPregame ? { pregameFactory: configuredPregame.factory } : {})
+  port, ...(configuredPregame ? { pregameFactory: configuredPregame.factory, resolveCard: (cardId: string) => configuredPregame.cardIndex[cardId] } : {})
 });
 runtime.httpServer.listen(port, "0.0.0.0", () => {
   process.stdout.write("Commander Pocket server listening on :" + port + "\n");

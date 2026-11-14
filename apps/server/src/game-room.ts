@@ -1,15 +1,17 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, EngineError, passPriority, resolveCommanderReturnChoice, resolveStackItem,
+  advanceAfterAllPass, advanceAutomaticStep, createGame, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem,
   type GameState, type PlayerSetup, type StackItem
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
+import type { CardDefinition } from "@commander-pocket/card-data";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
+export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
 
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -28,7 +30,7 @@ export class GameRoom {
   private readonly commandResults = new Map<string, RoomCommandResult>();
   private readonly events: RoomEvent[] = [];
 
-  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver) {
+  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver) {
     this.currentState = initialState ?? advanceAutomaticStep(createGame(id, players));
     this.replayBaseState = cloneGameState(this.currentState);
   }
@@ -52,7 +54,7 @@ export class GameRoom {
   /** Rebuilds the current state by replaying accepted commands from the authoritative start snapshot. */
   replay(): GameState {
     const base = cloneGameState(this.replayBaseState);
-    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect);
+    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect, this.resolveCard);
     for (const event of this.events) {
       if (event.protocolVersion !== 1 || event.payload.engineVersion !== GAME_ENGINE_VERSION ||
           event.payload.snapshotRevision !== this.replayBaseState.revision ||
@@ -118,6 +120,7 @@ export class GameRoom {
         return this.reject(cacheKey, code);
       }
     }
+    if (command.type === "cast-spell") return this.castSpell(command, cacheKey);
     if (command.type !== "pass-priority") return this.reject(cacheKey, "UNSUPPORTED_COMMAND");
 
     try {
@@ -129,7 +132,14 @@ export class GameRoom {
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
         if (this.resolveStackEffect) {
-          nextState = resolveStackItem(nextState, result.stackItemId, this.resolveStackEffect);
+          nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
+            const resolved = this.resolveStackEffect!(state, item);
+            if (item.kind === "spell" && item.source_instance_id &&
+                resolved.cards[item.source_instance_id]?.zone === "stack") {
+              return moveCardToZone(resolved, item.source_instance_id, "graveyard");
+            }
+            return resolved;
+          });
           outcome = "stack-resolved";
         } else {
           outcome = "resolution-required";
@@ -139,6 +149,60 @@ export class GameRoom {
       }
       this.currentState = nextState;
       const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
+  }
+
+  private castSpell(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    if (!this.resolveCard) return this.reject(cacheKey, "CARD_CATALOG_NOT_CONFIGURED");
+    if (!this.resolveStackEffect) return this.reject(cacheKey, "SPELL_RESOLVER_NOT_CONFIGURED");
+    if (this.currentState.status !== "active" || !this.currentState.deckSetupComplete) {
+      return this.reject(cacheKey, "GAME_NOT_STARTED");
+    }
+    if (this.currentState.priorityPlayerId !== command.playerId) return this.reject(cacheKey, "NOT_PRIORITY_PLAYER");
+    if (!isRecord(command.payload) || typeof command.payload.instanceId !== "string") {
+      return this.reject(cacheKey, "INVALID_SPELL_PAYLOAD");
+    }
+    const instanceId = command.payload.instanceId;
+    const card = this.currentState.cards[instanceId];
+    const player = this.currentState.players.find(item => item.id === command.playerId);
+    if (!player || !card || card.zone !== "hand" || card.owner_id !== command.playerId ||
+        !player.hand.includes(instanceId) || card.is_commander) {
+      return this.reject(cacheKey, "CARD_NOT_CASTABLE_FROM_HAND");
+    }
+    const definition = this.resolveCard(card.card_id);
+    if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
+    if (definition.layout !== "normal") return this.reject(cacheKey, "UNSUPPORTED_CARD_LAYOUT");
+    const isInstant = /\\bInstant\\b/.test(definition.typeLine);
+    const isSorcery = /\\bSorcery\\b/.test(definition.typeLine);
+    if (!isInstant && !isSorcery) return this.reject(cacheKey, "UNSUPPORTED_SPELL_TYPE");
+    if (/\\btarget\\b/i.test(definition.oracleText)) return this.reject(cacheKey, "TARGET_SELECTION_NOT_SUPPORTED");
+    if (isSorcery && (this.currentState.activePlayerId !== command.playerId ||
+        (this.currentState.phase !== "precombat-main" && this.currentState.phase !== "postcombat-main") ||
+        this.currentState.stack.length > 0 || this.currentState.awaitingResolutionId !== null)) {
+      return this.reject(cacheKey, "SORCERY_TIMING");
+    }
+    const payment = paySimpleManaCost(this.currentState, command.playerId, definition.manaCost);
+    if (!payment.ok) return this.reject(cacheKey, payment.code);
+    try {
+      let nextState = moveCardToZone(payment.state, instanceId, "stack", command.playerId);
+      nextState = pushStackItem(nextState, {
+        id: "spell:" + command.playerId + ":" + command.commandId,
+        controller_id: command.playerId,
+        source_instance_id: instanceId,
+        kind: "spell",
+        payload: {
+          cardId: definition.providerId, oracleId: definition.oracleId, name: definition.name,
+          typeLine: definition.typeLine, oracleText: definition.oracleText, manaCost: definition.manaCost
+        }
+      });
+      this.currentState = nextState;
+      const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome: "spell-cast" };
       this.commandResults.set(cacheKey, accepted);
       this.recordEvent(command, accepted);
       return accepted;
@@ -170,6 +234,45 @@ export class GameRoom {
     this.commandResults.set(cacheKey, rejected);
     return rejected;
   }
+}
+
+
+type ManaPayment = { ok: true; state: GameState } | { ok: false; code: string };
+
+function paySimpleManaCost(state: GameState, playerId: string, manaCost: string | null): ManaPayment {
+  if (manaCost === null) return { ok: false, code: "UNSUPPORTED_MANA_COST" };
+  const symbols = manaCost.match(/\{[^{}]+\}/g) ?? [];
+  if (symbols.join("") !== manaCost) return { ok: false, code: "UNSUPPORTED_MANA_COST" };
+  const colored: Record<string, number> = {};
+  let generic = 0;
+  for (const token of symbols) {
+    const symbol = token.slice(1, -1);
+    if (/^\d+$/.test(symbol)) generic += Number(symbol);
+    else if (/^[WUBRGC]$/.test(symbol)) colored[symbol] = (colored[symbol] ?? 0) + 1;
+    else return { ok: false, code: "UNSUPPORTED_MANA_SYMBOL" };
+  }
+  const player = state.players.find(item => item.id === playerId);
+  if (!player) return { ok: false, code: "UNKNOWN_PLAYER" };
+  const pool: Record<string, number> = { ...player.manaPool };
+  for (const [color, amount] of Object.entries(colored)) {
+    if ((pool[color] ?? 0) < amount) return { ok: false, code: "INSUFFICIENT_MANA" };
+    pool[color] = (pool[color] ?? 0) - amount;
+  }
+  for (const color of Object.keys(pool).sort()) {
+    if (generic === 0) break;
+    const spent = Math.min(generic, pool[color] ?? 0);
+    pool[color] = (pool[color] ?? 0) - spent;
+    generic -= spent;
+  }
+  if (generic > 0) return { ok: false, code: "INSUFFICIENT_MANA" };
+  return {
+    ok: true,
+    state: {
+      ...state,
+      revision: state.revision + 1,
+      players: state.players.map(item => item.id === playerId ? { ...item, manaPool: pool } : item)
+    }
+  };
 }
 
 function cloneGameState(state: GameState): GameState {
