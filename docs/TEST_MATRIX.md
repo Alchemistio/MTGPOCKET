@@ -1,6 +1,6 @@
 # Matrice de tests et couverture
 
-Dernière revue : 2026-11-13. Cette matrice décrit les tests présents dans le dépôt, pas une certification complète des règles Magic.
+Dernière revue : 2026-11-14. Cette matrice décrit les tests présents dans le dépôt, pas une certification complète des règles Magic.
 
 ## Moteur de règles
 
@@ -19,10 +19,10 @@ Dernière revue : 2026-11-13. Cette matrice décrit les tests présents dans le 
 | Domaine | Tests | Ce qui est vérifié | Lacunes majeures |
 |---|---|---|---|
 | Salle LAN | `apps/server/test/game-room.test.ts` | démarrage, passage priorité, stale revision, idempotence, autorisation de choix Commander | commandes de jeu complètes, persistance, reconnexion |
-| Pré-partie | `apps/server/test/pregame-coordinator.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan simultané, cartes bottom, démarrage conditionnel et confidentialité | raccordement WebSocket/mobile, catalogue/banlist versionnés en production, tests d'intégration multi-clients |
-| Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé | audit complet des champs sensibles et tests fuzz |
+| Pré-partie | `apps/server/test/pregame-coordinator.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan simultané, cartes bottom, démarrage conditionnel et confidentialité | tests d'intégration WebSocket multi-clients, catalogue/banlist versionnés en production |
+| Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé, statut explicite `pregame`/`active` | audit complet des champs sensibles et tests fuzz |
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, jetons et authentification de siège | rotation/expiration des jetons |
-| Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées et rejet de message mal formé | reconnexion, timeout, perte réseau et tests appareils |
+| Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées et rejet de message mal formé; le panneau pré-partie consomme les vues privées et attend le statut `active` | tests UI, reconnexion, timeout, perte réseau et tests appareils |
 
 ## Données
 

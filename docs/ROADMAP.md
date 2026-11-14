@@ -18,7 +18,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Validation initiale de decks.
 - [x] Service serveur de pré-partie : validation des quatre listes, création des instances, commandants, mains initiales et mulligans (tests unitaires).
 - [x] Transport WebSocket serveur pour soumission de deck, mulligan, cartes à remettre et démarrage ; réponses de pré-partie projetées en unicast au siège authentifié.
-- [ ] Intégration de ces opérations dans les écrans/flux mobiles et gestion UI des erreurs et de l'état de pré-partie.
+- [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
+- [ ] Gestion des erreurs réseau, timeouts, déconnexions et reprise de l'interface pré-partie.
 - [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.
 - [ ] Journal d'événements et rejeu déterministe.
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.

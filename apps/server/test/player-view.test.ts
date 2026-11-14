@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCardInstance, applyStateBasedActions, createGame, moveCardToZone } from "@commander-pocket/game-engine";
+import { addCardInstance, applyStateBasedActions, createGame, createPregameGame, moveCardToZone } from "@commander-pocket/game-engine";
 import { toPlayerView } from "../src/player-view.js";
 
 const players = [
@@ -8,6 +8,10 @@ const players = [
 ];
 
 describe("toPlayerView", () => {
+  it("exposes the explicit lifecycle status instead of inferring it from the current step", () => {
+    expect(toPlayerView(createPregameGame("pregame-status", players), "p1").status).toBe("pregame");
+    expect(toPlayerView(createGame("active-status", players), "p1").status).toBe("active");
+  });
   it("reveals only the viewer's hand and hides all library identities", () => {
     let game = createGame("privacy", players);
     game = addCardInstance(game, { instance_id: "alice-hand", card_id: "secret-a", owner_id: "p1", zone: "hand" });

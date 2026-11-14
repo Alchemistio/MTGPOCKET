@@ -24,6 +24,7 @@ export interface PlayerGameView {
 export interface GameView {
   id: string;
   revision: number;
+  status: GameState["status"];
   activePlayerId: string | null;
   activePlayerSeat: number;
   result: GameState["result"];
@@ -75,7 +76,7 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     [...visibleIds].flatMap(id => state.cards[id] ? [[id, state.cards[id] as RuntimeCardState]] : [])
   );
   return {
-    id: state.id, revision: state.revision, activePlayerId: state.activePlayerId,
+    id: state.id, revision: state.revision, status: state.status, activePlayerId: state.activePlayerId,
     activePlayerSeat: state.activePlayerSeat, result: state.result,
     turnNumber: state.turnNumber, phase: state.phase, step: state.step,
     priorityPlayerId: state.priorityPlayerId, stack: [...state.stack],

@@ -1,3 +1,9 @@
+## 2026-11-14 — Statut explicite du cycle de vie dans les vues pré-partie
+
+- Défaut confirmé : la vue mobile déduisait la fin de pré-partie de `step !== "pregame"`, alors que `step` est toujours une étape de tour (ex. `untap`) même lorsque `GameState.status` vaut encore `pregame`.
+- La projection `GameView` expose maintenant le statut serveur exact; le mobile attend `status === "active"` avant de fermer le modal et d'afficher le plateau de partie.
+- Test de régression ajouté pour les vues `pregame` et `active`; matrice et roadmap corrigées. CI à vérifier; aucun test appareil ou quatre clients effectué.
+
 ## 2026-11-14 — Workflow de développement et contrôle anti-attente CI
 
 - Création de DEVELOPMENT_WORKFLOW.md: reprise, synchronisation Git, sécurité des écritures, boucle de développement, contrôle obligatoire du travail restant avant attente CI, traitement des échecs, preuve CI par SHA et définition de fin de session.

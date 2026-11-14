@@ -6,6 +6,7 @@ import type { RoomClient, RoomClientEvent } from "./room-client.js";
 interface PregameView {
   revision: number;
   step: string;
+  status: "pregame" | "active" | "finished";
   players: readonly { id: string; name: string; hand: readonly string[]; handCount: number; hasKeptHand: boolean; pendingBottomCount: number }[];
 }
 interface Props {
@@ -39,7 +40,7 @@ export function NetworkPregamePanel({ client, playerId, deck, initialView, onGam
         setPendingBottom(ownPlayer?.pendingBottomCount ?? 0);
         setReadyToStart(nextView.players.every(player => player.hasKeptHand && player.pendingBottomCount === 0));
         setSelected([]);
-        if (nextView.step !== "pregame") onGameStarted?.(nextView);
+        if (nextView.status === "active") onGameStarted?.(nextView);
       }
       return;
     }
@@ -49,7 +50,7 @@ export function NetworkPregamePanel({ client, playerId, deck, initialView, onGam
     if (event.view && isRecord(event.view)) {
       const nextView = event.view as unknown as PregameView;
       setView(nextView);
-      if (nextView.step !== "pregame") onGameStarted?.(nextView);
+      if (nextView.status === "active") onGameStarted?.(nextView);
     }
     if (isRecord(event.result)) {
       const result = event.result as ProgressResult;
