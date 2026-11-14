@@ -70,6 +70,33 @@ describe("RoomClient", () => {
     expect(events).toContain("game-view");
   });
 
+  it("sends all authenticated pregame operations and parses the private result", async () => {
+    const socket = new FakeSocket();
+    const client = new RoomClient(() => socket as unknown as WebSocket);
+    const events: string[] = [];
+    client.onEvent(event => events.push(event.type));
+    const connected = client.connect("ws://127.0.0.1:3000/ws");
+    socket.open();
+    await connected;
+
+    client.submitPregameDeck({
+      commanderIds: ["commander-id"],
+      cards: [{ cardId: "commander-id", quantity: 1 }, { cardId: "land-id", quantity: 99 }]
+    });
+    client.declareMulligan("keep");
+    client.chooseBottomCards(["instance-1"]);
+    client.startPregame();
+
+    expect(socket.sent.map(payload => JSON.parse(payload).type)).toEqual([
+      "pregame-submit-deck", "pregame-mulligan", "pregame-bottom", "pregame-start"
+    ]);
+    socket.message({
+      type: "pregame-result", accepted: true, revision: 4,
+      view: { revision: 4, step: "main1" }
+    });
+    expect(events).toContain("pregame-result");
+  });
+
   it("rejects malformed server messages instead of trusting their shape", async () => {
     const socket = new FakeSocket();
     const client = new RoomClient(() => socket as unknown as WebSocket);
@@ -79,6 +106,7 @@ describe("RoomClient", () => {
     socket.open();
     await connected;
     socket.message({ type: "room-created", gameId: 123, credentials: "bad" });
-    expect(events).toContain("protocol-error");
+    socket.message({ type: "pregame-result", accepted: "yes" });
+    expect(events.filter(type => type === "protocol-error")).toHaveLength(2);
   });
 });

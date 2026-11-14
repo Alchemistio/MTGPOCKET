@@ -1,5 +1,13 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — Client mobile : opérations de pré-partie
+
+- RoomClient expose maintenant les quatre messages serveur : soumission du deck, déclaration keep/mulligan, choix des cartes à remettre et demande de démarrage.
+- Les payloads sont typés avec les contrats CommanderDeckList et PregameClientMessage du monorepo.
+- Le client parse et valide les réponses pregame-result avant de les transmettre aux abonnés ; accepted doit être un booléen.
+- Tests unitaires du client couvrent les quatre types de message et le rejet d'une réponse de pré-partie mal formée.
+- Limite : les appels sont maintenant disponibles dans RoomClient, mais les écrans React Native ne présentent pas encore l'interface deck/mulligan/choix de cartes ; le serveur de production n'injecte toujours pas de catalogue ni de politique Commander, donc répond PREGAME_NOT_CONFIGURED tant que cette configuration n'est pas fournie.
+
 ## 2026-11-14 — Transport WebSocket de la pré-partie
 
 - Refactorisation du bootstrap serveur en factory createCommanderPocketServer, avec injection facultative de PregameCoordinatorFactory.
@@ -9,7 +17,7 @@
 - Validation structurelle des payloads deck/mulligan/bottom et limite de trame WebSocket à 64 Kio.
 - Sans factory injectée, les commandes répondent PREGAME_NOT_CONFIGURED : aucun catalogue ni contrôle de légalité fictif n'est utilisé.
 - Le serveur de production démarre encore sans factory, car le dépôt ne fournit pas encore de catalogue serveur/version de politique Commander câblés au bootstrap.
-- CI à confirmer sur le commit de transport.
+- CI du commit de transport 767c144 : succès (typecheck, tests TypeScript et tests Python).
 
 ## 2026-11-14 — Correction du test d'isolation des salles
 
@@ -29,7 +37,7 @@
 - Tests ajoutés pour les jetons invalides, l'isolation des mains et le refus de démarrage avant que la pré-partie soit prête.
 - CI : à vérifier sur le commit courant.
 - Limite : cet adaptateur de service est testé, mais les messages WebSocket et l'application mobile ne l'appellent pas encore.
-- Prochaine étape : intégrer cet adaptateur au gestionnaire WebSocket avec validation stricte des payloads, réponses par siège et tests d'intégration de transport.
+- Prochaine étape : intégrer cet adaptateur au gestionnaire WebSocket avec validation stricte des payloads, réponses ciblées au joueur et tests d'intégration de transport.
 
 ## 2026-11-14 — Validation atomique de la configuration des salles
 
@@ -47,6 +55,6 @@
 - Les vues existantes masquent toujours l'identité des mains adverses ; tests de non-régression ajoutés pour la confidentialité et les refus de decks invalides.
 - CI GitHub Actions 43475390536, commit 15ce2127251c62f46897ba85994f1436b7dbc7f7 : validate (typecheck + Vitest) et python-data réussis.
 - Limite actuelle : le coordinateur est un service serveur testable, mais il n'est pas encore raccordé aux messages WebSocket/mobile. La politique d'éligibilité Commander reste une dépendance versionnée injectée par le serveur ; aucune légalité client n'est acceptée.
-- Prochaine étape : exposer ces opérations via un protocole de pré-partie authentifié, avec réponses ciblées au joueur et tests d'intégration WebSocket.
+- Prochaine étape : exposer ces opérations via un protocole de pré-partie authentifié, avec réponses ciblées au joueur et tests d'intégration de transport.
 
 Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l'historique.

@@ -1,5 +1,6 @@
 import type { PlayerSetup } from "@commander-pocket/game-engine";
-import type { GameCommandEnvelope } from "@commander-pocket/protocol";
+import type { CommanderDeckList } from "@commander-pocket/card-data";
+import type { GameCommandEnvelope, PregameClientMessage, PregameServerMessage } from "@commander-pocket/protocol";
 
 export interface SeatCredential {
   playerId: string;
@@ -11,6 +12,7 @@ export type RoomClientEvent =
   | { type: "room-joined"; view: unknown }
   | { type: "game-view"; view: unknown }
   | { type: "command-result"; result: unknown }
+  | { type: "pregame-result"; accepted: boolean; code?: string; result?: unknown; revision?: number; view?: unknown }
   | { type: "command-rejected"; code: string }
   | { type: "room-error"; code: string }
   | { type: "protocol-error"; code: string }
@@ -25,7 +27,7 @@ interface PendingHandshake {
   reject: (error: Error) => void;
 }
 
-/** Small typed WebSocket client for the LAN room protocol. */
+/** Small typed WebSocket client for the LAN room and pregame protocols. */
 export class RoomClient {
   private socket: WebSocket | null = null;
   private pendingHandshake: PendingHandshake | null = null;
@@ -87,6 +89,22 @@ export class RoomClient {
     this.send({ type: "command", command });
   }
 
+  submitPregameDeck(deck: CommanderDeckList): void {
+    this.sendPregame({ type: "pregame-submit-deck", deck });
+  }
+
+  declareMulligan(action: "keep" | "mulligan"): void {
+    this.sendPregame({ type: "pregame-mulligan", action });
+  }
+
+  chooseBottomCards(instanceIds: readonly string[]): void {
+    this.sendPregame({ type: "pregame-bottom", instanceIds: [...instanceIds] });
+  }
+
+  startPregame(): void {
+    this.sendPregame({ type: "pregame-start" });
+  }
+
   ping(): void {
     this.send({ type: "ping" });
   }
@@ -94,6 +112,10 @@ export class RoomClient {
   disconnect(): void {
     this.socket?.close();
     this.socket = null;
+  }
+
+  private sendPregame(message: PregameClientMessage): void {
+    this.send(message);
   }
 
   private handshake(
@@ -170,6 +192,18 @@ function parseRoomEvent(value: unknown): RoomClientEvent | null {
       return { type: value.type, view: value.view };
     case "command-result":
       return { type: "command-result", result: value.result };
+    case "pregame-result": {
+      if (typeof value.accepted !== "boolean") return null;
+      const message: PregameServerMessage = {
+        type: "pregame-result",
+        accepted: value.accepted,
+        ...(typeof value.code === "string" ? { code: value.code } : {}),
+        ...(typeof value.revision === "number" ? { revision: value.revision } : {}),
+        ...(Object.hasOwn(value, "result") ? { result: value.result } : {}),
+        ...(Object.hasOwn(value, "view") ? { view: value.view } : {})
+      };
+      return message;
+    }
     case "command-rejected":
     case "room-error":
     case "protocol-error":
