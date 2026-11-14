@@ -1,5 +1,16 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — Transport WebSocket de la pré-partie
+
+- Refactorisation du bootstrap serveur en factory createCommanderPocketServer, avec injection facultative de PregameCoordinatorFactory.
+- Ajout des messages WebSocket pregame-submit-deck, pregame-mulligan, pregame-bottom et pregame-start.
+- Les commandes utilisent les identifiants/jetons de la session de siège authentifiée ; le client ne peut pas choisir un autre joueur.
+- La réponse contenant la GameView projetée est unicast au demandeur, sans diffusion de main privée aux autres connexions.
+- Validation structurelle des payloads deck/mulligan/bottom et limite de trame WebSocket à 64 Kio.
+- Sans factory injectée, les commandes répondent PREGAME_NOT_CONFIGURED : aucun catalogue ni contrôle de légalité fictif n'est utilisé.
+- Le serveur de production démarre encore sans factory, car le dépôt ne fournit pas encore de catalogue serveur/version de politique Commander câblés au bootstrap.
+- CI à confirmer sur le commit de transport.
+
 ## 2026-11-14 — Correction du test d'isolation des salles
 
 - Analyse du run CI 43570125930 : typecheck réussi, tests serveur en échec sur une assertion du test PregameSessionRegistry.
@@ -25,10 +36,9 @@
 - RoomRegistry.create valide le gameId, les quatre joueurs, l'unicité des identifiants, les noms non vides et les sièges exacts 0 à 3 avant de construire ou d'enregistrer une salle.
 - Les configurations invalides échouent avec des codes explicites et ne laissent aucune entrée partielle dans le registre.
 - Tests ajoutés pour les identifiants dupliqués, sièges dupliqués/hors plage, identifiant de salle vide et nombre de joueurs incorrect.
-- Nettoyage d'un marqueur de saut de ligne affiché littéralement dans la roadmap.
-- Tests/CI : run 43569526212 déclenché sur le commit de validation ; résultat à consulter.
+- CI GitHub Actions 43569526212, résultat à consulter.
 - Limite : la pré-partie reste un service non branché au WebSocket/mobile ; la distribution actuelle des jetons reste réservée à un réseau local de confiance.
-- Prochaine étape : exposer les commandes de pré-partie via un flux authentifié et isoler les réponses contenant des informations privées.
+- Prochaine étape : exposer les commandes de pré-partie via un protocole de pré-partie authentifié, avec réponses ciblées au joueur et tests d'intégration WebSocket.
 
 ## 2026-11-13 — Coordinateur de pré-partie autoritaire
 
