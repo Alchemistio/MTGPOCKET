@@ -44,7 +44,7 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
-  it("rejects stale commands and does not apply duplicate command ids twice", () {
+  it("rejects stale commands and does not apply duplicate command ids twice", () => {
     const room = new GameRoom("room-1", players);
     const revision = room.state.revision;
     const first = room.apply(command("p1", revision, "same-id"));

@@ -5,6 +5,7 @@
 - Les commandes rejetées et les retries idempotents ne créent pas de nouvel événement; l'hydratation pré-partie réinitialise la base de rejeu et le journal.
 - Tests: rejeu après deux passes, unicité d'événement en cas de retry, rejeu après hydratation du GameRoom.
 - Limites explicites: journal en mémoire seulement; pas de stockage durable, de seed transcript du mulligan/shuffle, ni de replay complet après redémarrage.
+- Run 43634718230 : `python-data` passe; `validate` s'arrête au typecheck sur un `=>` manquant dans un callback de test. Correction syntaxique appliquée dans le commit suivant; nouveau run requis.
 - CI à vérifier.
 
 ## 2026-11-14 — Intégration WebSocket pré-partie à quatre sièges
