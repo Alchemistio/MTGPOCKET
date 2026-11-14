@@ -59,6 +59,8 @@ describe("server catalog configuration", () => {
   it("rejects impossible dates, duplicate policy IDs, and policy IDs absent from the catalog", () => {
     const paths = fixture();
     const original = JSON.parse(readPolicyText(paths.policyPath)) as Record<string, unknown>;
+    const writePolicy = (policy: Record<string, unknown>) =>
+      writeFileSync(paths.policyPath, JSON.stringify(policy));
 
     writePolicy({ ...original, effectiveDate: "2026-02-30" });
     expect(() => loadServerPregameConfig(paths.catalogPath, paths.policyPath))

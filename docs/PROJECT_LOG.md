@@ -1,3 +1,8 @@
+## 2026-11-14 — Correctifs de validation après revue locale du diff
+
+- Revue du commit initial: contrôle de date stricte non appliqué et helper de test manquant, corrigés dans ce commit.
+- CI du commit précédent à ignorer pour validation finale; attendre le run sur le commit correctif.
+
 ## 2026-11-14 — Validation stricte de la policy Commander
 
 - Loader: dates ISO calendrier strictes; refuse doublons d'Oracle IDs, conflits banni/éligible, IDs absents du snapshot, paires dupliquées ou non éligibles, clés de nom invalides.
