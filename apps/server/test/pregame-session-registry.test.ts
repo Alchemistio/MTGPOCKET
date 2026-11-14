@@ -95,6 +95,25 @@ describe("PregameSessionRegistry", () => {
     for (const credential of credentials) sessions.declareMulligan("g3", credential.playerId, credential.token, "keep");
     const started = sessions.start("g3", "p1", alice.token);
     expect(started.accepted).toBe(true);
-    if (started.accepted) expect(started.view.step).toBeDefined();
+    const room = rooms.get("g3");
+    expect(room).toBeDefined();
+    if (started.accepted && room) {
+      expect(started.view.status).toBe("active");
+      expect(started.view.step).toBe("upkeep");
+      expect(started.view.priorityPlayerId).toBe("p1");
+      expect(room.state.status).toBe("active");
+      expect(room.state.deckSetupComplete).toBe(true);
+      expect(room.state.players.every(player => player.hand.length === 7)).toBe(true);
+      expect(room.state.cards).toEqual(expect.objectContaining({
+        "p1:cmd:0": expect.objectContaining({ zone: "command", is_commander: true })
+      }));
+      const result = room.apply({
+        protocolVersion: 1, gameId: "g3", commandId: "first-priority-pass",
+        playerId: "p1", expectedRevision: room.state.revision,
+        type: "pass-priority", payload: {}
+      });
+      expect(result).toMatchObject({ accepted: true, outcome: "passed" });
+      expect(room.state.priorityPlayerId).toBe("p2");
+    }
   });
 });

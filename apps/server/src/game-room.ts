@@ -22,6 +22,26 @@ export class GameRoom {
     return this.currentState;
   }
 
+  /** Installs the server-validated pregame state as the authoritative LAN room state. */
+  replaceStateFromPregame(state: GameState): void {
+    if (this.currentState.deckSetupComplete) throw new Error("GAME_ALREADY_STARTED");
+    if (state.id !== this.id) throw new Error("GAME_ID_MISMATCH");
+    if (state.status !== "active" || !state.deckSetupComplete ||
+        state.phase !== "beginning" || state.step !== "upkeep" || state.priorityPlayerId === null) {
+      throw new Error("PREGAME_STATE_NOT_READY");
+    }
+    if (state.revision <= this.currentState.revision) throw new Error("STALE_PREGAME_STATE");
+    const currentPlayers = new Map(this.currentState.players.map(player => [player.id, player]));
+    if (state.players.length !== currentPlayers.size || state.players.some(player => {
+      const current = currentPlayers.get(player.id);
+      return !current || current.name !== player.name || current.seat !== player.seat;
+    })) {
+      throw new Error("PREGAME_PLAYER_MISMATCH");
+    }
+    this.currentState = state;
+    this.commandResults.clear();
+  }
+
   apply(command: RoomCommand): RoomCommandResult {
     const cacheKey = `${command.playerId}:${command.commandId}`;
     const previous = this.commandResults.get(cacheKey);

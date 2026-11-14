@@ -74,8 +74,11 @@ export class PregameSessionRegistry {
     const session = this.getAuthorizedSession(gameId, playerId, token);
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
     try {
+      const room = this.rooms.get(gameId);
+      if (!room) return { accepted: false, code: "UNKNOWN_GAME" };
       const state = session.start();
-      return { accepted: true, revision: state.revision, view: toPlayerView(state, playerId) };
+      room.replaceStateFromPregame(state);
+      return { accepted: true, revision: room.state.revision, view: toPlayerView(room.state, playerId) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
     }

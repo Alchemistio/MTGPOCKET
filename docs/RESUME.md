@@ -13,7 +13,7 @@
 ## Fait — caveman
 - 4 sièges, salle LAN, jetons, WebSocket, vues privées par siège.
 - Moteur: tours/phases/priorité/pile de base; PV, pioche, taxes, commandant, élimination.
-- Pré-partie serveur + transport: deck, mulligan, bottom, start.
+- Pré-partie serveur + transport: deck, mulligan, bottom, start; après start, le GameRoom reçoit le même état validé, les mains et instances, et démarre à upkeep avec priorité.
 - Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder minimal + modal pré-partie. La vue réseau expose désormais `status` (`pregame`/`active`/`finished`) ; l'écran ne quitte la pré-partie qu'à `active`.
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
@@ -23,7 +23,7 @@
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
-- Partie complète non prouvée; effets, combat, SBA incomplets.
+- Partie complète non prouvée; effets, combat, SBA incomplets. Le test WebSocket à quatre clients reste à réaliser.
 - Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; pas de test 4 clients réel.
 - Découverte LAN, reconnexion, sécurité production absentes.
 - Test transport réel à 4 clients non fait.

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
-  addCardInstance, chooseMulliganBottomCards, createPregameGame, initializeOpeningHands,
+  addCardInstance, advanceAutomaticStep, chooseMulliganBottomCards, createPregameGame, initializeOpeningHands,
   placeCommandersInCommandZone, resolveMulliganRound, startGame,
   type GameState, type PlayerSetup
 } from "@commander-pocket/game-engine";
@@ -127,7 +127,7 @@ export class PregameCoordinator {
   }
 
   start(): GameState {
-    this.currentState = startGame(this.currentState);
+    this.currentState = advanceAutomaticStep(startGame(this.currentState));
     return this.currentState;
   }
 

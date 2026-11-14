@@ -1,3 +1,11 @@
+## 2026-11-14 — Transfert de l'état pré-partie dans la salle LAN
+
+- Le démarrage serveur hydrate désormais le GameRoom avec le même GameState validé par le coordinateur, au lieu de laisser la salle sur son état vide de création.
+- Le coordinateur avance l'étape automatique initiale untap vers upkeep et donne la première priorité; les mains, commandants, bibliothèques et instances sont conservés.
+- GameRoom.replaceStateFromPregame vérifie l'identifiant de salle, les quatre joueurs/sièges, le statut actif, le setup complet et la révision, puis vide le cache d'idempotence pré-partie.
+- Test de registre: vérifie les mains, le commandant en zone de commandement, upkeep/priorité p1 et l'acceptation d'une première commande de priorité dans le GameRoom hydraté.
+- CI à vérifier. Aucun test WebSocket à quatre clients ni test appareil effectué.
+
 ## 2026-11-14 — Statut explicite du cycle de vie dans les vues pré-partie
 
 - Défaut confirmé : la vue mobile déduisait la fin de pré-partie de `step !== "pregame"`, alors que `step` est toujours une étape de tour (ex. `untap`) même lorsque `GameState.status` vaut encore `pregame`.
