@@ -7,6 +7,7 @@ import type { CardDefinition } from "@commander-pocket/card-data";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
+export type CardSpellSupport = (definition: CardDefinition) => boolean;
 
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
@@ -30,7 +31,7 @@ export class GameRoom {
   private readonly commandResults = new Map<string, RoomCommandResult>();
   private readonly events: RoomEvent[] = [];
 
-  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver) {
+  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver, private readonly supportsSpell?: CardSpellSupport) {
     this.currentState = initialState ?? advanceAutomaticStep(createGame(id, players));
     this.replayBaseState = cloneGameState(this.currentState);
   }
@@ -54,7 +55,7 @@ export class GameRoom {
   /** Rebuilds the current state by replaying accepted commands from the authoritative start snapshot. */
   replay(): GameState {
     const base = cloneGameState(this.replayBaseState);
-    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect, this.resolveCard);
+    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
     for (const event of this.events) {
       if (event.protocolVersion !== 1 || event.payload.engineVersion !== GAME_ENGINE_VERSION ||
           event.payload.snapshotRevision !== this.replayBaseState.revision ||
@@ -207,6 +208,7 @@ export class GameRoom {
     }
     const definition = this.resolveCard(card.card_id);
     if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
+    if (this.supportsSpell && !this.supportsSpell(definition)) return this.reject(cacheKey, "UNSUPPORTED_SPELL_EFFECT");
     if (definition.layout !== "normal") return this.reject(cacheKey, "UNSUPPORTED_CARD_LAYOUT");
     const isInstant = /\bInstant\b/.test(definition.typeLine);
     const isSorcery = /\bSorcery\b/.test(definition.typeLine);
