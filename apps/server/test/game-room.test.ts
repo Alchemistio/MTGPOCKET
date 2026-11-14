@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GameRoom } from "../src/game-room.js";
 import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
+import type { GameState } from "@commander-pocket/game-engine";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -30,7 +31,7 @@ describe("GameRoom", () => {
   });
 
   it("handles cleanup discard and advances to the next player's upkeep", () => {
-    let state = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "ending" as const, step: "end" as const };
+    let state: GameState = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "ending", step: "end" };
     for (let index = 0; index < 8; index += 1) {
       state = addCardInstance(state, {
         instance_id: "hand-" + index, card_id: "test-card", owner_id: "p1", zone: "hand"
@@ -60,7 +61,7 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
-  it("casts a simple instant, pays its mana, resolves its effect and replays", () => {
+  it("casts an instant and a response, resolves LIFO and replays", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "test-instant", oracleId: "test-oracle",
       name: "Test Instant", layout: "normal", manaCost: "{U}", manaValue: 1,
