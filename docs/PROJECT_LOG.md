@@ -5,7 +5,8 @@
 - La carte est déplacée de la main à la pile; après passes unanimes, le handler injecté applique l'effet et, si la carte est toujours sur la pile, le sort rejoint le cimetière.
 - Le loader de catalogue expose l'index de cartes au bootstrap serveur; le handler d'effet reste injecté explicitement et n'est pas configuré par défaut.
 - Test: instant bleu, dépense du mana, effet -3 PV, résolution, cimetière et replay déterministe.
-- CI du commit de lancement à vérifier; aucun effet Scryfall arbitraire n'est interprété automatiquement.
+- Run 43635561584 : typecheck et Python passent; Vitest révèle que le fixture du test cast-spell avait deckSetupComplete=false et que le refus GAME_NOT_STARTED était correct. Le fixture est corrigé dans le commit suivant; nouveau run requis.
+- CI du dernier commit à vérifier; aucun effet Scryfall arbitraire n'est interprété automatiquement.
 
 ## 2026-11-14 — Résolution de pile côté serveur après passes unanimes
 

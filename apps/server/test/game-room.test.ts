@@ -42,7 +42,7 @@ describe("GameRoom", () => {
         set: "tst", collector_number: "2"
       }
     };
-    const base = advanceAutomaticStep(createGame("room-1", players));
+    const base = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true };
     const funded = {
       ...base,
       players: base.players.map(player => player.id === "p1" ? { ...player, manaPool: { U: 1 } } : player)
