@@ -25,7 +25,7 @@ export function basicLandManaOptions(definition: CardDefinition): string[] {
   if (/\bMountain\b/.test(definition.typeLine)) colors.push("R");
   if (/\bForest\b/.test(definition.typeLine)) colors.push("G");
   if (colors.length > 0) return colors;
-  return /^\{T\}: Add \{C\}\\.$/.test(definition.oracleText.trim()) ? ["C"] : [];
+  return /^\{T\}: Add \{C\}\.$/.test(definition.oracleText.trim()) ? ["C"] : [];
 }
 
 /** Resolves only exact, targetless Oracle-text patterns covered by this first rules slice. */
