@@ -1,3 +1,10 @@
+## 2026-11-14 — Générateur snapshot Scryfall bulk
+
+- bf7ac8a ajoute scripts/build_scryfall_catalog.py et tests: manifeste Scryfall, bulk default_cards, parsing ijson en streaming, SHA-256, provenance, snapshot écrit atomiquement.
+- CI 43619379423 détecte une enveloppe JSON invalide; tests Python échouent sur json.loads.
+- 73cca32 corrige l'ouverture du tableau cards; CI 43619439316 verte: typecheck, Vitest et Python.
+- Aucun téléchargement réel Scryfall effectué dans cette étape; snapshot non provisionné. Policy Commander reste manuelle et non validée.
+
 ## 2026-11-14 — Loader catalogue serveur: correctifs CI
 
 - Commit initial b7fc358: CI détecte deux erreurs de narrowing TypeScript dans le parseur JSON; Python passe.

@@ -12,6 +12,17 @@ pnpm --filter @commander-pocket/server dev
 - Health check : GET http://<ip-hôte>:3000/health
 - WebSocket : ws://<ip-hôte>:3000/ws
 
+## Générer le catalogue Scryfall
+
+Installer la dépendance de streaming puis produire un snapshot local (bulk Scryfall complet, téléchargement réseau requis) :
+
+```sh
+python -m pip install -r scripts/requirements.txt
+python scripts/build_scryfall_catalog.py --output ./data/scryfall-catalog.json
+```
+
+Le script utilise le bulk `default_cards`, conserve les objets Scryfall et `card_faces[]`, ajoute provenance + SHA-256, et remplace le fichier de sortie seulement après génération complète. Contrôler le hash et la date avant déploiement. Le bulk peut être volumineux : prévoir espace disque pour le téléchargement temporaire et le snapshot final.
+
 ## Pré-partie serveur
 
 Le démarrage active la pré-partie uniquement si les deux variables suivantes pointent vers des fichiers locaux valides :
