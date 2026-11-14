@@ -1,5 +1,5 @@
 import type { PlayerSetup } from "@commander-pocket/game-engine";
-import type { CommanderDeckList } from "@commander-pocket/card-data";
+import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
 import { PregameCoordinator } from "./pregame-coordinator.js";
 import { RoomRegistry } from "./room-registry.js";
 import { toPlayerView, type GameView } from "./player-view.js";
@@ -23,7 +23,9 @@ export class PregameSessionRegistry {
 
   constructor(
     private readonly rooms: RoomRegistry,
-    private readonly factory: PregameCoordinatorFactory
+    private readonly factory: PregameCoordinatorFactory,
+    private readonly resolveCard?: (cardId: string) => CardDefinition | undefined,
+    private readonly spellCastingAvailable = false
   ) {}
 
   submitDeck(gameId: string, playerId: string, token: string, deck: CommanderDeckList):
@@ -32,7 +34,7 @@ export class PregameSessionRegistry {
       const session = this.getAuthorizedSession(gameId, playerId, token);
       if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
       const result = session.submitDeck(playerId, deck);
-      return { accepted: true, result, view: toPlayerView(session.state, playerId) };
+      return { accepted: true, result, view: toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
     }
@@ -44,7 +46,7 @@ export class PregameSessionRegistry {
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
     try {
       const result = session.declareMulligan(playerId, action);
-      return { accepted: true, result, view: toPlayerView(session.state, playerId) };
+      return { accepted: true, result, view: toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
     }
@@ -56,7 +58,7 @@ export class PregameSessionRegistry {
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
     try {
       const result = session.chooseBottomCards(playerId, instanceIds);
-      return { accepted: true, result, view: toPlayerView(session.state, playerId) };
+      return { accepted: true, result, view: toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
     }
@@ -66,7 +68,7 @@ export class PregameSessionRegistry {
   viewsForGame(gameId: string): readonly { playerId: string; view: GameView }[] {
     const session = this.sessions.get(gameId);
     if (!session) return [];
-    return session.state.players.map(player => ({ playerId: player.id, view: toPlayerView(session.state, player.id) }));
+    return session.state.players.map(player => ({ playerId: player.id, view: toPlayerView(session.state, player.id, this.resolveCard, this.spellCastingAvailable) }));
   }
 
   start(gameId: string, playerId: string, token: string):
@@ -78,7 +80,7 @@ export class PregameSessionRegistry {
       if (!room) return { accepted: false, code: "UNKNOWN_GAME" };
       const state = session.start();
       room.replaceStateFromPregame(state);
-      return { accepted: true, revision: room.state.revision, view: toPlayerView(room.state, playerId) };
+      return { accepted: true, revision: room.state.revision, view: toPlayerView(room.state, playerId, this.resolveCard, this.spellCastingAvailable) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
     }

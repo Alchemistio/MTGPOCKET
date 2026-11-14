@@ -16,7 +16,7 @@ export interface CommanderPocketServerRuntime {
 }
 export function createCommanderPocketServer(options: CommanderPocketServerOptions = {}): CommanderPocketServerRuntime {
   const rooms = new RoomRegistry(options.resolveStackEffect, options.resolveCard);
-  const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory) : null;
+  const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory, options.resolveCard, Boolean(options.resolveStackEffect)) : null;
   const clients = new Set<ClientSession>();
   const httpServer = createServer((request, response) => {
     if (request.method === "GET" && request.url === "/health") {
@@ -48,7 +48,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
           if (!host || !hostCredential) throw new Error("HOST_SEAT_MISSING");
           session = { socket, gameId: parsed.gameId, playerId: host.id, token: hostCredential.token };
           clients.add(session);
-          send(socket, { type: "room-created", gameId: room.id, credentials, view: toPlayerView(room.state, host.id) });
+          send(socket, { type: "room-created", gameId: room.id, credentials, view: toPlayerView(room.state, host.id, options.resolveCard, Boolean(options.resolveStackEffect)) });
         } catch (error) {
           send(socket, { type: "room-error", code: error instanceof Error ? error.message : "ROOM_CREATE_FAILED" });
         }
@@ -62,7 +62,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
         if (!room) { send(socket, { type: "room-error", code: "INVALID_SEAT_CREDENTIALS" }); return; }
         session = { socket, gameId: parsed.gameId, playerId: parsed.playerId, token: parsed.token };
         clients.add(session);
-        send(socket, { type: "room-joined", view: toPlayerView(room.state, parsed.playerId) });
+        send(socket, { type: "room-joined", view: toPlayerView(room.state, parsed.playerId, options.resolveCard, Boolean(options.resolveStackEffect)) });
         return;
       }
       if (parsed.type.startsWith("pregame-")) { handlePregameMessage(socket, session, parsed, pregame, clients); return; }
@@ -78,7 +78,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
         const result = room.apply(parsed.command);
         send(socket, { type: "command-result", result });
         if (result.accepted) for (const client of clients) {
-          if (client.gameId === session.gameId) send(client.socket, { type: "game-view", view: toPlayerView(room.state, client.playerId) });
+          if (client.gameId === session.gameId) send(client.socket, { type: "game-view", view: toPlayerView(room.state, client.playerId, options.resolveCard, Boolean(options.resolveStackEffect)) });
         }
         return;
       }
