@@ -13,6 +13,7 @@ import {
 import { createMobileCardRepository } from "./src/data/card-repository.js";
 import { NetworkRoomModal, type MobileGameView, type RoomSession } from "./src/network/NetworkRoomModal.js";
 import { RoomClient } from "./src/network/room-client.js";
+import { NetworkPregameModal } from "./src/network/NetworkPregameModal.js";
 
 const initialPlayers = [
   { id: "p1", name: "Vous", seat: 0 },
@@ -179,6 +180,7 @@ export default function App() {
   const [roomView, setRoomView] = useState<MobileGameView | null>(null);
   const [roomSession, setRoomSession] = useState<RoomSession | null>(null);
   const [networkVisible, setNetworkVisible] = useState(false);
+  const [pregameVisible, setPregameVisible] = useState(false);
   const [networkMessage, setNetworkMessage] = useState<string | null>(null);
   const [repository, setRepository] = useState<ScryfallRepository | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
@@ -305,6 +307,7 @@ export default function App() {
         <Pressable onPress={() => setNetworkVisible(true)} style={styles.lookupButton} accessibilityRole="button">
           <Text style={styles.lookupButtonText}>{roomView ? "RÉSEAU ✓" : "RÉSEAU"}</Text>
         </Pressable>
+        {roomSession ? <Pressable onPress={() => setPregameVisible(true)} style={styles.lookupButton} accessibilityRole="button"><Text style={styles.lookupButtonText}>PRÉ-PARTIE</Text></Pressable> : null}
         <Pressable onPress={() => setLookupVisible(true)} style={styles.lookupButton} accessibilityRole="button">
           <Text style={styles.lookupButtonText}>CARTES</Text>
         </Pressable>
@@ -320,6 +323,7 @@ export default function App() {
           setNetworkMessage(null);
         }}
       />
+      {roomSession ? <NetworkPregameModal visible={pregameVisible} client={roomClient} playerId={roomSession.playerId} repository={repository} onClose={() => setPregameVisible(false)} onGameStarted={view => { setRoomView(view as MobileGameView); setPregameVisible(false); }} /> : null}
       <CardLookupModal visible={lookupVisible} onClose={() => setLookupVisible(false)} repository={repository} storageWarning={storageWarning} />
     </View>
   );

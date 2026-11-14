@@ -1,3 +1,11 @@
+## 2026-11-14 — Constructeur de deck et entrée pré-partie mobile
+
+- Ajout d'un modal réseau pré-partie dans l'app: recherche Scryfall, sélection d'un commandant, liste locale de 100 cartes, retrait d'entrées, puis accès au panneau deck/mulligan/bottom/start.
+- Le panneau est désormais atteignable depuis le plateau après connexion LAN; le deck reste local jusqu'à soumission et le serveur garde l'autorité de validation.
+- Limites explicites: singleton/identité couleur/éligibilité commandant non pré-validés par le constructeur; le serveur doit appliquer la policy. Le bootstrap serveur actuel n'injecte toujours pas de catalogue/policy, donc les commandes répondent `PREGAME_NOT_CONFIGURED` en l'état.
+- Tests appareil non exécutés. CI du commit à vérifier.
+- Prochaine étape: injecter un catalogue serveur versionné et une policy Commander, puis tests intégration 4 sièges.
+
 # Journal de suivi du projet
 
 ## 2026-11-14 — État de CI de la tranche UI pré-partie

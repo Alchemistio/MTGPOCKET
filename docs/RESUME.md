@@ -6,7 +6,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: `feat/commander-pocket-foundation`
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Début session: `28904d6` (CI verte). Avancées: `cd26820` (panneau + reprise), `adafe27` (soumission deck locale corrigée). CI de `adafe27`: run 43598243291 en attente au dernier contrôle.
+- HEAD avant tranche: `8f23a08` (CI verte: run 43598291958, validate + python-data). Tranche suivante: constructeur deck mobile + pré-partie intégrée; CI à vérifier.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
@@ -14,21 +14,21 @@
 - Moteur: tours/phases/priorité/pile de base; PV, pioche, taxes, commandant, élimination.
 - Pré-partie serveur: decks validés, commandants, mains, mulligan, bottom, start.
 - Pré-partie WebSocket: 4 messages, authentifiés, vues unicast.
-- Mobile: plateau paysage, télémétrie, client LAN, 4 commandes pré-partie, panneau UI pré-partie réutilisable (pas encore monté).
+- Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, constructeur deck local minimal + modal pré-partie/mulligan branchés à la salle.
 - Données: Scryfall, cache SQLite, import MTGJSON Python.
 - CI: typecheck, Vitest, Python.
 
 ## Bloqueurs
 - Serveur sans catalogue carte + policy Commander versionnée injectés: `PREGAME_NOT_CONFIGURED`.
-- Deckbuilder absent; UI pré-partie à brancher.
+- Deckbuilder minimal branché (recherche + liste 100 cartes + commandant); validation serveur bloquée sans catalogue/policy réels.
 - Partie complète non prouvée; effets, combat, SBA incomplets.
 - Découverte LAN, reconnexion, sécurité production absentes.
 - Ne jamais exposer GameState brut ni mains adverses.
 
 ## Prochain
-1. Brancher `NetworkPregamePanel` dans écran réseau.
-2. Injecter catalogue serveur et policy Commander réelle.
-3. Tester 4 sièges: deck → mulligan → bottom → start + confidentialité.
+1. Injecter catalogue serveur + policy Commander versionnée; bootstrap actuel renvoie `PREGAME_NOT_CONFIGURED`.
+2. Tester 4 sièges: deck → mulligan → bottom → start + confidentialité.
+3. Valider UI sur appareils iOS/Android, corriger ergonomie du deckbuilder.
 4. Tour complet: sort → réponse → résolution → cleanup.
 
 ## Règles
