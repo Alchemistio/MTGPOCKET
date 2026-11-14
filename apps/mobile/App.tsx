@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator, FlatList, Modal, Pressable, StatusBar, StyleSheet,
+  ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StatusBar, StyleSheet,
   Text, TextInput, View
 } from "react-native";
 import {
@@ -185,6 +185,7 @@ export default function App() {
   const [repository, setRepository] = useState<ScryfallRepository | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [lookupVisible, setLookupVisible] = useState(false);
+  const [selectedDiscardIds, setSelectedDiscardIds] = useState<string[]>([]);
   const displayPlayers: PlayerPanelData[] = roomView
     ? roomView.players.map(player => ({
         id: player.id, name: player.name, life: player.life, handCount: player.handCount,
@@ -206,17 +207,30 @@ export default function App() {
   const pendingDecisionCount = roomView?.pendingCommanderChoiceCount ?? 0;
   const awaitingResolutionId = roomView ? roomView.awaitingResolutionId : game.awaitingResolutionId;
   const priorityPlayer = displayPlayers.find(player => player.id === priorityPlayerId);
-  const viewerHandCount = displayPlayers.find(player => player.id === (roomSession?.playerId ?? "p1"))?.handCount ?? 0;
+  const viewerId = roomSession?.playerId ?? "p1";
+  const viewerHandCount = displayPlayers.find(player => player.id === viewerId)?.handCount ?? 0;
+  const ownHandCards = roomView?.players.find(player => player.id === viewerId)?.handCards ?? [];
+  const discardPending = Boolean(roomView && roomSession &&
+    roomView.pendingDiscardPlayerId === roomSession.playerId && roomView.pendingDiscardCount > 0);
 
   useEffect(() => {
     const unsubscribe = roomClient.onEvent(event => {
-    if (event.type === "game-view") setRoomView(event.view as MobileGameView);
+    if (event.type === "game-view") {
+      setRoomView(event.view as MobileGameView);
+      setSelectedDiscardIds([]);
+    }
+    if (event.type === "command-result") {
+      const result = event.result as { accepted?: unknown; code?: unknown } | null;
+      if (result?.accepted === false) setNetworkMessage(typeof result.code === "string" ? result.code : "ACTION_REJECTED");
+      else setNetworkMessage(null);
+    }
     if (event.type === "command-rejected" || event.type === "room-error" || event.type === "protocol-error") {
       setNetworkMessage(event.code);
     }
     if (event.type === "disconnected") {
       setRoomView(null);
       setRoomSession(null);
+      setSelectedDiscardIds([]);
       setNetworkMessage("Connexion réseau fermée.");
     }
     });
@@ -246,6 +260,45 @@ export default function App() {
       expectedRevision: roomView.revision,
       type: "resolve-commander-return",
       payload: { instanceId, choice }
+    });
+  }
+
+  function castSpell(instanceId: string) {
+    if (!roomView || !roomSession || !roomView.spellCastingAvailable ||
+        roomView.priorityPlayerId !== roomSession.playerId) return;
+    setNetworkMessage(null);
+    roomClient.sendCommand({
+      protocolVersion: 1,
+      gameId: roomSession.gameId,
+      commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+      playerId: roomSession.playerId,
+      expectedRevision: roomView.revision,
+      type: "cast-spell",
+      payload: { instanceId }
+    });
+  }
+
+  function toggleDiscardCard(instanceId: string) {
+    if (!roomView || !discardPending) return;
+    setSelectedDiscardIds(current => {
+      if (current.includes(instanceId)) return current.filter(id => id !== instanceId);
+      if (current.length >= roomView.pendingDiscardCount) return current;
+      return [...current, instanceId];
+    });
+  }
+
+  function confirmDiscard() {
+    if (!roomView || !roomSession || !discardPending ||
+        selectedDiscardIds.length !== roomView.pendingDiscardCount) return;
+    setNetworkMessage(null);
+    roomClient.sendCommand({
+      protocolVersion: 1,
+      gameId: roomSession.gameId,
+      commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+      playerId: roomSession.playerId,
+      expectedRevision: roomView.revision,
+      type: "discard-cards",
+      payload: { instanceIds: selectedDiscardIds }
     });
   }
 
@@ -300,6 +353,62 @@ export default function App() {
           </Pressable>
         </View>
       ))}
+      {roomView && roomSession ? (
+        <View style={styles.handTray}>
+          <View style={styles.handHeader}>
+            <Text style={styles.handTrayTitle}>MAIN PRIVÉE · {ownHandCards.length}</Text>
+            <Text style={styles.handTrayHint}>
+              {discardPending
+                ? "Choisis " + roomView.pendingDiscardCount + " carte(s) à défausser"
+                : roomView.spellCastingAvailable
+                  ? roomView.priorityPlayerId === roomSession.playerId ? "Sélectionne un instant ou rituel simple" : "En attente de priorité"
+                  : "Effets de cartes serveur non configurés"}
+            </Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScroll}>
+            {ownHandCards.map(card => {
+              const selected = selectedDiscardIds.includes(card.instanceId);
+              const canCast = !discardPending && roomView.spellCastingAvailable &&
+                roomView.priorityPlayerId === roomSession.playerId && card.isSupportedSpell;
+              const disabled = !discardPending && !canCast;
+              const actionLabel = discardPending
+                ? selected ? "À DÉFAUSSER" : "CHOISIR"
+                : canCast ? "JOUER"
+                  : !roomView.spellCastingAvailable ? "EFFETS OFF"
+                    : card.isSupportedSpell ? "ATTENDRE" : "NON PRIS EN CHARGE";
+              return (
+                <Pressable
+                  key={card.instanceId}
+                  disabled={disabled}
+                  onPress={() => discardPending ? toggleDiscardCard(card.instanceId) : castSpell(card.instanceId)}
+                  accessibilityRole="button"
+                  accessibilityLabel={discardPending
+                    ? (selected ? "Retirer " : "Sélectionner ") + card.name + " pour la défausse"
+                    : "Jouer " + card.name}
+                  accessibilityState={{ disabled, selected }}
+                  style={[styles.handCard, selected && styles.handCardSelected, disabled && styles.handCardDisabled]}
+                >
+                  <Text numberOfLines={1} style={styles.handCardName}>{card.name}</Text>
+                  <Text numberOfLines={1} style={styles.handCardMeta}>{card.manaCost ?? "—"} · {card.typeLine || "Type inconnu"}</Text>
+                  <Text style={styles.handCardAction}>{actionLabel}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {discardPending ? (
+            <Pressable
+              disabled={selectedDiscardIds.length !== roomView.pendingDiscardCount}
+              onPress={confirmDiscard}
+              accessibilityRole="button"
+              style={[styles.discardConfirm, selectedDiscardIds.length !== roomView.pendingDiscardCount && styles.handCardDisabled]}
+            >
+              <Text style={styles.discardConfirmText}>
+                CONFIRMER LA DÉFAUSSE · {selectedDiscardIds.length}/{roomView.pendingDiscardCount}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
       <View style={styles.bottomBar}>
         <Text style={styles.drawerTitle}>PILE · {stackCount} OBJET(S)</Text>
         <Text style={styles.drawerHint}>{awaitingResolutionId ? "Résolution en attente" : pendingDecisionCount > 0 ? "Choix du commandant en attente" : roomView ? "Salle LAN connectée" : "Réponses et déclenchements à venir"}</Text>
@@ -320,10 +429,11 @@ export default function App() {
         onConnected={(session, view) => {
           setRoomSession(session);
           setRoomView(view);
+          setSelectedDiscardIds([]);
           setNetworkMessage(null);
         }}
       />
-      {roomSession ? <NetworkPregameModal visible={pregameVisible} client={roomClient} playerId={roomSession.playerId} repository={repository} onClose={() => setPregameVisible(false)} onGameStarted={view => { setRoomView(view as MobileGameView); setPregameVisible(false); }} /> : null}
+      {roomSession ? <NetworkPregameModal visible={pregameVisible} client={roomClient} playerId={roomSession.playerId} repository={repository} onClose={() => setPregameVisible(false)} onGameStarted={view => { setRoomView(view as MobileGameView); setSelectedDiscardIds([]); setPregameVisible(false); }} /> : null}
       <CardLookupModal visible={lookupVisible} onClose={() => setLookupVisible(false)} repository={repository} storageWarning={storageWarning} />
     </View>
   );
@@ -357,6 +467,19 @@ const styles = StyleSheet.create({
   pendingChoiceText: { color: "#f0dfb8", fontSize: 9, flex: 1, fontWeight: "700" },
   choiceButton: { backgroundColor: "#46513e", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 6 },
   choiceButtonText: { color: "#f4f7ed", fontSize: 8, fontWeight: "900" },
+  handTray: { minHeight: 82, marginTop: 5, borderRadius: 8, backgroundColor: "#111b28", borderWidth: 1, borderColor: "#29384b", paddingHorizontal: 7, paddingVertical: 5 },
+  handHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 3, marginBottom: 4 },
+  handTrayTitle: { color: "#e6edf5", fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },
+  handTrayHint: { color: "#91a2b7", fontSize: 9, fontWeight: "600" },
+  handScroll: { flexDirection: "row", gap: 6, paddingBottom: 1 },
+  handCard: { width: 132, minHeight: 54, borderRadius: 6, backgroundColor: "#243448", borderWidth: 1, borderColor: "#526b83", paddingHorizontal: 7, paddingVertical: 5, justifyContent: "space-between" },
+  handCardSelected: { borderColor: "#e4bd72", backgroundColor: "#3a3325" },
+  handCardDisabled: { opacity: 0.48 },
+  handCardName: { color: "#f2f6fb", fontSize: 10, fontWeight: "900" },
+  handCardMeta: { color: "#b3c1d1", fontSize: 8 },
+  handCardAction: { color: "#a7dfbf", fontSize: 8, fontWeight: "900", textAlign: "right" },
+  discardConfirm: { alignSelf: "flex-end", backgroundColor: "#8b6730", borderRadius: 5, paddingHorizontal: 10, paddingVertical: 6, marginTop: 4 },
+  discardConfirmText: { color: "#fff3dc", fontSize: 9, fontWeight: "900" },
   bottomBar: { minHeight: 48, marginTop: 6, borderRadius: 8, backgroundColor: "#151f2d", paddingHorizontal: 10, paddingVertical: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   drawerTitle: { color: "#e6edf5", fontSize: 11, fontWeight: "900" },
   drawerHint: { color: "#8998aa", fontSize: 10 },

@@ -45,7 +45,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Plateau paysage quatre joueurs et télémétrie compacte.
 - [x] Recherche Scryfall, détail multi-face et cache SQLite.
 - [ ] Deckbuilder, collection et sélection de commandant.
-- [ ] Main réelle, piles compactées, badges et attachements.
+- [x] Projection privée de la main avec nom/coût/type et UI compacte pour lancer les sorts supportés ou sélectionner la défausse de cleanup.
+- [ ] Main réelle complète, piles compactées, badges et attachements.
 - [ ] Tiroir de pile interactif, réponses rapides, auto-yield.
 - [ ] Radar/gaze gesture et motifs géométriques WUBRG.
 - [ ] Tests VoiceOver/TalkBack, tailles de texte et appareils 5,5–6,7 pouces.

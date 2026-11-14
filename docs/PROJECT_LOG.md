@@ -1,3 +1,12 @@
+## 2026-11-14 — Main privée et commandes mobiles de base
+
+- GameView expose pour le seul propriétaire de la main les résumés lisibles des cartes (nom, coût, type, texte Oracle, layout) et un indicateur serveur des sorts supportés.
+- La projection conserve les identités de main adverses masquées; les tests vérifient les deux sens de vue.
+- L'App mobile ajoute un ruban horizontal compact en paysage : lancer un instant/rituel simple quand la priorité et le handler serveur sont disponibles, ou sélectionner exactement les cartes à défausser pendant cleanup.
+- Les résultats de commande refusés sont désormais visibles dans le message réseau.
+- Limites: le serveur de production n'injecte pas encore de handler d'effet par défaut; les cartes non prises en charge restent désactivées. UI non testée sur appareil.
+- CI à vérifier.
+
 ## 2026-11-14 — Parcours de tour serveur jusqu'au cleanup
 
 - Extension du test de GameRoom pour démarrer en main 1, lancer un instant, passer la priorité à p2, lancer une réponse, résoudre les deux objets LIFO et traverser les étapes de combat sans attaquant.
