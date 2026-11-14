@@ -1,3 +1,11 @@
+## 2026-11-14 — Défausse de cleanup et transition de tour
+
+- Ajout de la commande discard-cards, autorisée uniquement pour le siège indiqué par pendingDiscardPlayerId; le moteur vérifie le nombre exact de cartes distinctes en main.
+- Après la dernière défausse, GameRoom avance automatiquement cleanup → untap du joueur suivant → upkeep et lui attribue la priorité.
+- Si aucun discard n'est requis, la transition cleanup est également automatique après les passes unanimes.
+- Test: huit cartes en main, quatre passes, une défausse, cimetière, tour 2/upkeep p2 et replay déterministe.
+- CI à vérifier; aucun test de dispositif mobile effectué.
+
 ## 2026-11-14 — Réponse instantanée et résolution LIFO
 
 - Le test de GameRoom lance un instant depuis p1, transmet la priorité à p2, lance une réponse instantanée depuis p2, puis fait passer les quatre sièges.

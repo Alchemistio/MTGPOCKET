@@ -25,6 +25,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Résolution serveur d’un objet de pile après passes unanimes, via un handler d’effet injecté et rejouable.
 - [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, réponse d’un autre joueur, résolution LIFO via handler serveur et envoi au cimetière.
 - [ ] Étendre le lancement aux permanents, cibles, coûts alternatifs et handlers d’effets réels.
+- [x] Cleanup serveur : défausse de fin de tour contrôlée par le siège concerné, puis progression automatique vers l'upkeep du joueur suivant.
 - [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
 - [ ] Persistance durable, conservation des graines de pré-partie et rejeu après redémarrage.

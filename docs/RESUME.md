@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : test d’un instant suivi d’une réponse instant adverse, résolution LIFO et replay; CI à vérifier sur le commit courant.
+- Dernier code : réponse instant adverse avec résolution LIFO, défausse de cleanup et transition vers l'upkeep suivant; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman

@@ -1,5 +1,5 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem,
+  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem,
   type GameState, type PlayerSetup, type StackItem
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
@@ -121,6 +121,7 @@ export class GameRoom {
       }
     }
     if (command.type === "cast-spell") return this.castSpell(command, cacheKey);
+    if (command.type === "discard-cards") return this.discardPendingCards(command, cacheKey);
     if (command.type !== "pass-priority") return this.reject(cacheKey, "UNSUPPORTED_COMMAND");
 
     try {
@@ -129,6 +130,10 @@ export class GameRoom {
       let outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved";
       if (result.outcome === "step-advance") {
         nextState = advanceAfterAllPass(nextState);
+        if (nextState.step === "cleanup" && nextState.pendingDiscardCount === 0) {
+          nextState = advanceAutomaticStep(nextState);
+          nextState = advanceAutomaticStep(nextState);
+        }
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
         if (this.resolveStackEffect) {
@@ -154,6 +159,31 @@ export class GameRoom {
       return accepted;
     } catch (error) {
       const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
+  }
+
+  private discardPendingCards(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    if (!isRecord(command.payload) || !Array.isArray(command.payload.instanceIds) ||
+        !command.payload.instanceIds.every(item => typeof item === "string" && item.length > 0)) {
+      return this.reject(cacheKey, "INVALID_DISCARD_PAYLOAD");
+    }
+    if (this.currentState.pendingDiscardPlayerId !== command.playerId) {
+      return this.reject(cacheKey, "NOT_PENDING_DISCARD_PLAYER");
+    }
+    try {
+      let nextState = discardCards(this.currentState, command.playerId, command.payload.instanceIds as string[]);
+      if (nextState.step === "cleanup" && nextState.pendingDiscardCount === 0) {
+        nextState = advanceAutomaticStep(nextState);
+        nextState = advanceAutomaticStep(nextState);
+      }
+      this.currentState = nextState;
+      const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome: "decision-resolved" };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "INVALID_DISCARD";
       return this.reject(cacheKey, code);
     }
   }

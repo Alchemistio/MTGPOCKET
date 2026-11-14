@@ -29,6 +29,37 @@ describe("GameRoom", () => {
     expect(room.state.priorityPlayerId).toBe("p1");
   });
 
+  it("handles cleanup discard and advances to the next player's upkeep", () => {
+    let state = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "ending" as const, step: "end" as const };
+    for (let index = 0; index < 8; index += 1) {
+      state = addCardInstance(state, {
+        instance_id: "hand-" + index, card_id: "test-card", owner_id: "p1", zone: "hand"
+      });
+    }
+    const room = new GameRoom("room-1", players, state);
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "end-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "step-advanced" });
+    expect(room.state.step).toBe("cleanup");
+    expect(room.state.pendingDiscardPlayerId).toBe("p1");
+    expect(room.state.pendingDiscardCount).toBe(1);
+
+    const discard = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cleanup-discard",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "discard-cards", payload: { instanceIds: ["hand-0"] }
+    });
+    expect(discard).toMatchObject({ accepted: true, outcome: "decision-resolved" });
+    expect(room.state.cards["hand-0"]?.zone).toBe("graveyard");
+    expect(room.state.step).toBe("upkeep");
+    expect(room.state.activePlayerId).toBe("p2");
+    expect(room.state.priorityPlayerId).toBe("p2");
+    expect(room.state.turnNumber).toBe(2);
+    expect(room.replay()).toEqual(room.state);
+  });
+
   it("casts a simple instant, pays its mana, resolves its effect and replays", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "test-instant", oracleId: "test-oracle",
