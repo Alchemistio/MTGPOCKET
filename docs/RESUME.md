@@ -23,10 +23,10 @@
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
-- Partie complète non prouvée; effets, combat, SBA incomplets. Le test WebSocket à quatre clients reste à réaliser.
+- Partie complète non prouvée; effets, combat, SBA incomplets. Un test automatisé à quatre clients WebSocket couvre désormais la pré-partie et la première passe; aucun test sur quatre appareils physiques.
 - Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; pas de test 4 clients réel.
 - Découverte LAN, reconnexion, sécurité production absentes.
-- Test transport réel à 4 clients non fait.
+- Test transport sur quatre appareils physiques non fait.
 - Ne jamais exposer GameState brut ni mains adverses.
 
 ## Prochain

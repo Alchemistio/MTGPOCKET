@@ -19,6 +19,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Service serveur de pré-partie : validation des quatre listes, création des instances, commandants, mains initiales et mulligans (tests unitaires).
 - [x] Transport WebSocket serveur pour soumission de deck, mulligan, cartes à remettre et démarrage ; réponses de pré-partie projetées au siège authentifié.
 - [x] Transfert de l'état pré-partie validé vers le GameRoom autoritaire et ouverture de la première priorité (upkeep).
+- [x] Test d'intégration WebSocket automatisé à quatre sièges : decks, keep, démarrage, mains privées et première passe de priorité.
 - [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
 - [ ] Gestion des erreurs réseau, timeouts, déconnexions et reprise de l'interface pré-partie.
 - [ ] Jouer un tour complet, avec au moins un sort, une réponse, une résolution et un cleanup.

@@ -1,3 +1,10 @@
+## 2026-11-14 — Intégration WebSocket pré-partie à quatre sièges
+
+- Ajout d'un test d'intégration avec quatre connexions WebSocket distinctes : création/rejoindre par jetons de siège, soumission des quatre decks, déclarations keep, démarrage, vues privées et première commande pass-priority.
+- Le test vérifie que chaque client reçoit uniquement sa propre main (7 cartes), voit le compteur adverse sans identité, puis observe la priorité passer de p1 à p2 après la commande.
+- Le catalogue et la policy sont des fixtures de test injectées; aucun catalogue Scryfall réel ni policy Commander de production n'est provisionné.
+- CI à vérifier. Ce test automatisé ne remplace pas un test sur quatre téléphones et ne couvre pas encore sort/réponse/résolution/cleanup.
+
 ## 2026-11-14 — Transfert de l'état pré-partie dans la salle LAN
 
 - Le démarrage serveur hydrate désormais le GameRoom avec le même GameState validé par le coordinateur, au lieu de laisser la salle sur son état vide de création.
