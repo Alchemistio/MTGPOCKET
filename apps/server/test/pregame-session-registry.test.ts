@@ -85,6 +85,6 @@ describe("PregameSessionRegistry", () => {
     for (const credential of credentials) sessions.declareMulligan("g3", credential.playerId, credential.token, "keep");
     const started = sessions.start("g3", "p1", alice.token);
     expect(started.accepted).toBe(true);
-    if (started.accepted) expect(started.state.status).toBe("active");
+    if (started.accepted) expect(started.view.step).toBeDefined();
   });
 });

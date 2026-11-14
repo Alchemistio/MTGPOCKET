@@ -1,4 +1,4 @@
-import type { PlayerSetup, GameState } from "@commander-pocket/game-engine";
+import type { PlayerSetup } from "@commander-pocket/game-engine";
 import type { CommanderDeckList } from "@commander-pocket/card-data";
 import { PregameCoordinator } from "./pregame-coordinator.js";
 import { RoomRegistry } from "./room-registry.js";
@@ -59,12 +59,12 @@ export class PregameSessionRegistry {
   }
 
   start(gameId: string, playerId: string, token: string):
-    { accepted: true; state: GameState; view: GameView } | { accepted: false; code: string } {
+    { accepted: true; revision: number; view: GameView } | { accepted: false; code: string } {
     const session = this.getAuthorizedSession(gameId, playerId, token);
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
     try {
       const state = session.start();
-      return { accepted: true, state, view: toPlayerView(state, playerId) };
+      return { accepted: true, revision: state.revision, view: toPlayerView(state, playerId) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
     }
