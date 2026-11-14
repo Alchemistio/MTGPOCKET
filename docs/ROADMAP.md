@@ -46,7 +46,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Plateau paysage quatre joueurs et télémétrie compacte.
 - [x] Recherche Scryfall, détail multi-face et cache SQLite.
 - [ ] Deckbuilder, collection et sélection de commandant.
-- [x] Projection privée de la main avec nom/coût/type et UI compacte pour lancer les sorts supportés ou sélectionner la défausse de cleanup.
+- [x] Projection privée de la main avec nom/coût/type et UI compacte pour lancer les sorts supportés, sélectionner la défausse de cleanup et engager les terrains de base pour du mana.
 - [ ] Main réelle complète, piles compactées, badges et attachements.
 - [x] Tiroir de pile compact avec contrôleur, carte/coût, ordre LIFO et toggle auto-yield conditionnel.
 - [ ] Réponses rapides complètes, auto-yield avec toutes les capacités activées.

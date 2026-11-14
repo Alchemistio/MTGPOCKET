@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : résolveur de base pour pioche 1/2/3 et gain de vie exact, refus des textes inconnus, UI main privée/pile/auto-yield; CI verte sur c58b963 (run 43638209930).
+- Dernier code : terrains de base engageables pour produire W/U/B/R/G/C, main privée enrichie et UI mana/cast/discard; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
@@ -19,7 +19,7 @@
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
-- CI verte sur c58b963 (run 43638209930); aucun appareil testé.
+- CI verte sur c58b963 (run 43638209930); CI courante à vérifier; aucun appareil testé.
 
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.

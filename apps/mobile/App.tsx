@@ -213,6 +213,7 @@ export default function App() {
   const viewerId = roomSession?.playerId ?? "p1";
   const viewerHandCount = displayPlayers.find(player => player.id === viewerId)?.handCount ?? 0;
   const ownHandCards = roomView?.players.find(player => player.id === viewerId)?.handCards ?? [];
+  const ownManaSources = roomView?.players.find(player => player.id === viewerId)?.battlefieldCards.filter(card => !card.isTapped && card.manaOptions.length > 0) ?? [];
   const discardPending = Boolean(roomView && roomSession &&
     roomView.pendingDiscardPlayerId === roomSession.playerId && roomView.pendingDiscardCount > 0);
 
@@ -293,6 +294,20 @@ export default function App() {
       expectedRevision: roomView.revision,
       type: "resolve-commander-return",
       payload: { instanceId, choice }
+    });
+  }
+
+  function tapLandForMana(instanceId: string, color: string) {
+    if (!roomView || !roomSession || roomView.priorityPlayerId !== roomSession.playerId) return;
+    setNetworkMessage(null);
+    roomClient.sendCommand({
+      protocolVersion: 1,
+      gameId: roomSession.gameId,
+      commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+      playerId: roomSession.playerId,
+      expectedRevision: roomView.revision,
+      type: "tap-for-mana",
+      payload: { instanceId, color }
     });
   }
 
@@ -441,6 +456,22 @@ export default function App() {
                   : "Effets de cartes serveur non configurés"}
             </Text>
           </View>
+          {ownManaSources.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.manaSourcesRow}>
+              {ownManaSources.flatMap(card => card.manaOptions.map(color => (
+                <Pressable
+                  key={card.instanceId + "-" + color}
+                  onPress={() => tapLandForMana(card.instanceId, color)}
+                  disabled={roomView.priorityPlayerId !== roomSession.playerId}
+                  accessibilityRole="button"
+                  accessibilityLabel={"Engager " + card.name + " pour ajouter " + color}
+                  style={[styles.manaSourceButton, roomView.priorityPlayerId !== roomSession.playerId && styles.handCardDisabled]}
+                >
+                  <Text style={styles.manaSourceText}>{card.name} · +{color}</Text>
+                </Pressable>
+              )))}
+            </ScrollView>
+          ) : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScroll}>
             {ownHandCards.map(card => {
               const selected = selectedDiscardIds.includes(card.instanceId);
@@ -562,6 +593,9 @@ const styles = StyleSheet.create({
   handHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 3, marginBottom: 4 },
   handTrayTitle: { color: "#e6edf5", fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },
   handTrayHint: { color: "#91a2b7", fontSize: 9, fontWeight: "600" },
+  manaSourcesRow: { flexDirection: "row", gap: 5, paddingBottom: 4 },
+  manaSourceButton: { borderRadius: 5, borderWidth: 1, borderColor: "#536d85", backgroundColor: "#1b2c3d", paddingHorizontal: 8, paddingVertical: 4 },
+  manaSourceText: { color: "#d8e7f5", fontSize: 8, fontWeight: "800" },
   handScroll: { flexDirection: "row", gap: 6, paddingBottom: 1 },
   handCard: { width: 132, minHeight: 54, borderRadius: 6, backgroundColor: "#243448", borderWidth: 1, borderColor: "#526b83", paddingHorizontal: 7, paddingVertical: 5, justifyContent: "space-between" },
   handCardSelected: { borderColor: "#e4bd72", backgroundColor: "#3a3325" },

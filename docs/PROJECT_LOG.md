@@ -1,3 +1,11 @@
+## 2026-11-14 — Engagement des terrains de base pour mana
+
+- GameRoom accepte tap-for-mana uniquement sur un terrain de base contrôlé, dégagé, et lorsque le joueur a la priorité.
+- Le type de terrain détermine les couleurs W/U/B/R/G; Wastes est reconnu via son texte Oracle exact pour produire C. Le permanent est engagé et le pool de mana incrémenté atomiquement.
+- Le PlayerView expose les cartes du champ de bataille (zone publique) avec leurs options de mana; l'UI ajoute des actions compactes dans le ruban inférieur.
+- Tests: Island ajoute U, second tap rejeté, Wastes expose C, replay déterministe.
+- CI à vérifier; dual/nonbasic lands et capacités de mana non standard non supportés.
+
 ## 2026-11-14 — Résolveur de base validé par CI
 
 - Run 43638209930 sur c58b963 : validate (typecheck + Vitest) et python-data réussis.
