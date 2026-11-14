@@ -1,3 +1,10 @@
+## 2026-11-14 — Réponse instantanée et résolution LIFO
+
+- Le test de GameRoom lance un instant depuis p1, transmet la priorité à p2, lance une réponse instantanée depuis p2, puis fait passer les quatre sièges.
+- Il vérifie que la réponse se résout avant le premier sort, que chaque carte rejoint le cimetière après résolution, que le mana est payé et que l'état rejoué correspond.
+- Limite: le handler d'effet est une fixture de test; les cartes ciblées, contres, permanents et les effets génériques Scryfall ne sont pas interprétés automatiquement.
+- CI à vérifier.
+
 ## 2026-11-14 — Lancement d'instants/rituels simples depuis la main
 
 - Ajout de la commande serveur cast-spell : validation du siège prioritaire, possession en main, catalogue Scryfall serveur, layout normal, type Instant/Sorcery et absence de cible.

@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : correction du fixture cast-spell après le refus correct GAME_NOT_STARTED du run 43635561584; CI à vérifier sur le commit courant.
+- Dernier code : test d’un instant suivi d’une réponse instant adverse, résolution LIFO et replay; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman

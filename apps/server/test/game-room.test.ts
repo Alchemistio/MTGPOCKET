@@ -45,13 +45,20 @@ describe("GameRoom", () => {
     const base = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true };
     const funded = {
       ...base,
-      players: base.players.map(player => player.id === "p1" ? { ...player, manaPool: { U: 1 } } : player)
+      players: base.players.map(player => player.id === "p1" || player.id === "p2"
+        ? { ...player, manaPool: { U: 1 } }
+        : player)
     };
-    const withCard = addCardInstance(funded, {
+    const withFirstSpell = addCardInstance(funded, {
       instance_id: "spell-1", card_id: definition.providerId, owner_id: "p1", zone: "hand"
     });
-    const room = new GameRoom("room-1", players, withCard,
-      state => changeLife(state, "p2", -3),
+    const withBothSpells = addCardInstance(withFirstSpell, {
+      instance_id: "response-1", card_id: definition.providerId, owner_id: "p2", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, withBothSpells,
+      (state, item) => item.source_instance_id === "response-1"
+        ? changeLife(state, "p2", 5)
+        : changeLife(state, "p2", -3),
       cardId => cardId === definition.providerId ? definition : undefined
     );
     const cast = room.apply({
@@ -62,13 +69,32 @@ describe("GameRoom", () => {
     expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
     expect(room.state.cards["spell-1"]?.zone).toBe("stack");
     expect(room.state.players[0]?.manaPool.U).toBe(0);
+
+    room.apply(command("p1", room.state.revision, "pass-to-response"));
+    const response = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-response",
+      playerId: "p2", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "response-1" }
+    });
+    expect(response).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    expect(room.state.stack.map(item => item.source_instance_id)).toEqual(["spell-1", "response-1"]);
+    expect(room.state.players[1]?.manaPool.U).toBe(0);
+
     let result;
-    for (const player of players) {
-      result = room.apply(command(player.id, room.state.revision, "spell-pass-" + player.id));
+    for (const playerId of ["p2", "p3", "p4", "p1"]) {
+      result = room.apply(command(playerId, room.state.revision, "response-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.cards["response-1"]?.zone).toBe("graveyard");
+    expect(room.state.cards["spell-1"]?.zone).toBe("stack");
+    expect(room.state.players[1]?.life).toBe(45);
+
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "spell-pass-" + playerId));
     }
     expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
     expect(room.state.cards["spell-1"]?.zone).toBe("graveyard");
-    expect(room.state.players[1]?.life).toBe(37);
+    expect(room.state.players[1]?.life).toBe(42);
     expect(room.replay()).toEqual(room.state);
   });
 
