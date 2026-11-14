@@ -77,7 +77,11 @@ function parsePolicy(value: unknown, path: string): CommanderPolicySnapshot {
       (value.deckNameKeyByOracleId !== undefined && !isStringRecord(value.deckNameKeyByOracleId))) {
     throw new Error("Invalid versioned Commander policy: " + path);
   }
-  const ids = [...value.bannedOracleIds, ...value.commanderEligibleOracleIds, ...value.multipleCopiesAllowedOracleIds];
+  const ids = [
+    ...(value.bannedOracleIds as string[]),
+    ...(value.commanderEligibleOracleIds as string[]),
+    ...(value.multipleCopiesAllowedOracleIds as string[])
+  ];
   if (ids.some(id => !isUuidLike(id))) throw new Error("Commander policy contains an invalid Oracle ID: " + path);
   const pairs = value.compatibleCommanderPairs as string[][];
   if (pairs.some(pair => pair.some(id => !isUuidLike(id)) || pair[0] === pair[1])) {
