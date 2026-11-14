@@ -6,7 +6,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- HEAD docs: 6afd647; code CI verte sur 407148d, run 43624148803 (typecheck, Vitest, Python).
+- Latest code: 407148d; CI run 43624148803 verte (typecheck, Vitest, Python). Les commits docs peuvent avancer indépendamment.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
