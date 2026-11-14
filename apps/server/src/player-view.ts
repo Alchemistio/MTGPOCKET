@@ -1,4 +1,17 @@
 import type { GameState, RuntimeCardState } from "@commander-pocket/game-engine";
+import type { CardDefinition } from "@commander-pocket/card-data";
+
+export interface HandCardView {
+  instanceId: string;
+  cardId: string;
+  name: string;
+  manaCost: string | null;
+  typeLine: string;
+  oracleText: string;
+  layout: string;
+  isCommander: boolean;
+  isSupportedSpell: boolean;
+}
 
 export interface PlayerGameView {
   id: string;
@@ -8,6 +21,7 @@ export interface PlayerGameView {
   maxHandSize: number;
   handCount: number;
   hand: readonly string[];
+  handCards: readonly HandCardView[];
   hasKeptHand: boolean;
   pendingBottomCount: number;
   libraryCount: number;
@@ -25,6 +39,7 @@ export interface GameView {
   id: string;
   revision: number;
   status: GameState["status"];
+  spellCastingAvailable: boolean;
   activePlayerId: string | null;
   activePlayerSeat: number;
   result: GameState["result"];
@@ -43,7 +58,7 @@ export interface GameView {
 }
 
 /** Hides opponents' hand identities and every library's card order/content. */
-export function toPlayerView(state: GameState, viewerId: string): GameView {
+export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (cardId: string) => CardDefinition | undefined, spellCastingAvailable = false): GameView {
   const viewer = state.players.find(player => player.id === viewerId);
   if (!viewer) throw new Error("UNKNOWN_VIEWER");
   const players = state.players.map(player => ({
@@ -54,6 +69,25 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     maxHandSize: player.maxHandSize,
     handCount: player.hand.length,
     hand: player.id === viewerId ? [...player.hand] : [],
+    handCards: player.id === viewerId ? player.hand.flatMap(instanceId => {
+      const runtimeCard = state.cards[instanceId];
+      if (!runtimeCard) return [];
+      const definition = resolveCard?.(runtimeCard.card_id);
+      const layout = definition?.layout ?? "unknown";
+      const manaCost = definition?.manaCost ?? null;
+      const typeLine = definition?.typeLine ?? "";
+      const oracleText = definition?.oracleText ?? "";
+      const symbols = manaCost?.match(/\{[^{}]+\}/g) ?? [];
+      const simpleManaCost = manaCost !== null && symbols.join("") === manaCost &&
+        symbols.every(symbol => /^\{(?:\d+|[WUBRGC])\}$/.test(symbol));
+      const isSupportedSpell = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
+        (/\bInstant\b/.test(typeLine) || /\bSorcery\b/.test(typeLine)) &&
+        !/\btarget\b/i.test(oracleText) && simpleManaCost);
+      return [{
+        instanceId, cardId: runtimeCard.card_id, name: definition?.name ?? runtimeCard.card_id,
+        manaCost, typeLine, oracleText, layout, isCommander: runtimeCard.is_commander, isSupportedSpell
+      }];
+    }) : [],
     hasKeptHand: player.hasKeptHand,
     pendingBottomCount: player.pendingBottomCount,
     libraryCount: player.library.length,
@@ -76,7 +110,7 @@ export function toPlayerView(state: GameState, viewerId: string): GameView {
     [...visibleIds].flatMap(id => state.cards[id] ? [[id, state.cards[id] as RuntimeCardState]] : [])
   );
   return {
-    id: state.id, revision: state.revision, status: state.status, activePlayerId: state.activePlayerId,
+    id: state.id, revision: state.revision, status: state.status, spellCastingAvailable: spellCastingAvailable && Boolean(resolveCard), activePlayerId: state.activePlayerId,
     activePlayerSeat: state.activePlayerSeat, result: state.result,
     turnNumber: state.turnNumber, phase: state.phase, step: state.step,
     priorityPlayerId: state.priorityPlayerId, stack: [...state.stack],
