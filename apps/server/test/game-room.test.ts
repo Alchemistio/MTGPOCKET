@@ -82,7 +82,7 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
-  it("casts an instant and a response, resolves LIFO and replays", () => {
+  it("casts an instant and a response, completes the turn through cleanup, and replays", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "test-instant", oracleId: "test-oracle",
       name: "Test Instant", layout: "normal", manaCost: "{U}", manaValue: 1,
@@ -95,14 +95,21 @@ describe("GameRoom", () => {
         set: "tst", collector_number: "2"
       }
     };
-    const base = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true };
+    const base: GameState = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "precombat-main", step: "main-1" };
     const funded = {
       ...base,
       players: base.players.map(player => player.id === "p1" || player.id === "p2"
         ? { ...player, manaPool: { U: 1 } }
         : player)
     };
-    const withFirstSpell = addCardInstance(funded, {
+    let withFiller: GameState = funded;
+    const fillerIds = Array.from({ length: 8 }, (_, index) => "filler-" + index);
+    for (const instanceId of fillerIds) {
+      withFiller = addCardInstance(withFiller, {
+        instance_id: instanceId, card_id: "filler-card", owner_id: "p1", zone: "hand"
+      });
+    }
+    const withFirstSpell = addCardInstance(withFiller, {
       instance_id: "spell-1", card_id: definition.providerId, owner_id: "p1", zone: "hand"
     });
     const withBothSpells = addCardInstance(withFirstSpell, {
@@ -148,6 +155,34 @@ describe("GameRoom", () => {
     expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
     expect(room.state.cards["spell-1"]?.zone).toBe("graveyard");
     expect(room.state.players[1]?.life).toBe(42);
+
+    let phaseIndex = 0;
+    while (room.state.step !== "end") {
+      for (const playerId of ["p1", "p2", "p3", "p4"]) {
+        const phaseResult = room.apply(command(playerId, room.state.revision, "phase-" + phaseIndex + "-" + playerId));
+        expect(phaseResult.accepted).toBe(true);
+      }
+      phaseIndex += 1;
+      if (phaseIndex > 10) throw new Error("Turn did not reach the end step.");
+    }
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      room.apply(command(playerId, room.state.revision, "end-" + playerId));
+    }
+    expect(room.state.step).toBe("cleanup");
+    expect(room.state.pendingDiscardPlayerId).toBe("p1");
+    expect(room.state.pendingDiscardCount).toBe(1);
+    const discard = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "full-turn-discard",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "discard-cards", payload: { instanceIds: ["filler-0"] }
+    });
+    expect(discard).toMatchObject({ accepted: true, outcome: "decision-resolved" });
+    expect(room.state.players[0]?.hand).toHaveLength(7);
+    expect(room.state.players[0]?.graveyard).toContain("filler-0");
+    expect(room.state.step).toBe("upkeep");
+    expect(room.state.activePlayerId).toBe("p2");
+    expect(room.state.priorityPlayerId).toBe("p2");
+    expect(room.state.turnNumber).toBe(2);
     expect(room.replay()).toEqual(room.state);
   });
 

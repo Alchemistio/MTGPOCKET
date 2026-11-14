@@ -1,3 +1,11 @@
+## 2026-11-14 — Parcours de tour serveur jusqu'au cleanup
+
+- Extension du test de GameRoom pour démarrer en main 1, lancer un instant, passer la priorité à p2, lancer une réponse, résoudre les deux objets LIFO et traverser les étapes de combat sans attaquant.
+- Le tour continue jusqu'à end/cleanup; p1 défausse une carte, puis le serveur avance à l'upkeep du joueur p2 au tour 2.
+- Le test vérifie les zones finales, la main à sept cartes, les points de vie et le replay du journal.
+- Portée: scénario serveur contrôlé avec mana/effets injectés; UI mobile et appareils réels non testés.
+- CI à vérifier.
+
 ## 2026-11-14 — CI verte du lancement de sort, réponse et cleanup
 
 - Run 43636125150 sur e9ff0fa : validate (typecheck + Vitest) et python-data réussis.
