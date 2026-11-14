@@ -198,6 +198,9 @@ describe("GameRoom", () => {
         colors: [], color_identity: [], legalities: { commander: "legal" }, set: "tst", collector_number: "5" }
     };
     expect(basicLandManaOptions(island)).toEqual(["U"]);
+    expect(basicLandManaOptions({
+      ...island, providerId: "wastes-id", typeLine: "Basic Land", oracleText: "{T}: Add {C}."
+    })).toEqual(["C"]);
     const base: GameState = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "precombat-main", step: "main-1" };
     const initial = addCardInstance(base, {
       instance_id: "island-instance", card_id: island.providerId, owner_id: "p1", zone: "battlefield"
