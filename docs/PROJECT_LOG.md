@@ -1,5 +1,14 @@
 # Journal de suivi du projet
 
+## 2026-11-14 — Correction du test d'isolation des salles
+
+- Analyse du run CI 43570125930 : typecheck réussi, tests serveur en échec sur une assertion du test PregameSessionRegistry.
+- Le test réutilisait par erreur un jeton valide de la salle g1 pour un scénario supposé non authentifié ; le contrôle d'accès fonctionnait correctement.
+- Correction : le scénario inter-salles utilise maintenant le jeton p2 émis pour g2 et vérifie le rejet sur g1 ; le jeton p2 de g1 reste accepté.
+- La soumission de deck capture désormais aussi les erreurs levées pendant l'authentification/création de session, avec le même format d'erreur que les autres opérations.
+- Nouveau run CI à confirmer sur ce commit.
+- Limite inchangée : le registre de pré-partie n'est pas encore raccordé au gestionnaire WebSocket/mobile ; le catalogue et la politique de légalité sont injectés côté serveur.
+
 ## 2026-11-14 — Adaptateur authentifié du pré-game
 
 - Ajout de PregameSessionRegistry, qui relie le coordinateur de pré-partie aux jetons de siège émis par RoomRegistry.

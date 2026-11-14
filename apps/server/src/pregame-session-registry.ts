@@ -28,10 +28,14 @@ export class PregameSessionRegistry {
 
   submitDeck(gameId: string, playerId: string, token: string, deck: CommanderDeckList):
     AuthenticatedPregameResult<ReturnType<PregameCoordinator["submitDeck"]>> | { accepted: false; code: string } {
-    const session = this.getAuthorizedSession(gameId, playerId, token);
-    if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
-    const result = session.submitDeck(playerId, deck);
-    return { accepted: true, result, view: toPlayerView(session.state, playerId) };
+    try {
+      const session = this.getAuthorizedSession(gameId, playerId, token);
+      if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
+      const result = session.submitDeck(playerId, deck);
+      return { accepted: true, result, view: toPlayerView(session.state, playerId) };
+    } catch (error) {
+      return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
+    }
   }
 
   declareMulligan(gameId: string, playerId: string, token: string, action: "keep" | "mulligan"):

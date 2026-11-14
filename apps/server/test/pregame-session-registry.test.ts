@@ -51,7 +51,7 @@ describe("PregameSessionRegistry", () => {
     const aliceView = sessions.submitDeck("g1", "p1", alice.token, deck);
     expect(aliceView).toMatchObject({ accepted: true, result: { accepted: false, code: "DUPLICATE_SUBMISSION" } });
 
-    // Use a fresh game for view privacy assertions.
+    // A token issued for another room must not authenticate against this room.
     const secondRooms = new RoomRegistry();
     const secondCredentials = secondRooms.create("g2", players).credentials;
     const secondSessions = new PregameSessionRegistry(secondRooms, {
@@ -66,7 +66,9 @@ describe("PregameSessionRegistry", () => {
       expect(bobResult.view.players.find(player => player.id === "p2")?.hand).toHaveLength(7);
       expect(bobResult.view.players.find(player => player.id === "p1")?.hand).toEqual([]);
     }
-    expect(sessions.declareMulligan("g1", "p2", bob.token, "keep").accepted).toBe(false);
+    expect(sessions.declareMulligan("g1", "p2", secondCredentials.find(item => item.playerId === "p2")!.token, "keep"))
+      .toEqual({ accepted: false, code: "UNAUTHENTICATED" });
+    expect(sessions.declareMulligan("g1", "p2", bob.token, "keep").accepted).toBe(true);
   });
 
   it("does not start until the coordinator confirms all players kept and bottomed", () => {
