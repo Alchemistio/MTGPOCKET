@@ -91,8 +91,9 @@ function parsePolicy(value: unknown, path: string): CommanderPolicySnapshot {
 }
 function isScryfallCard(value: unknown): value is ScryfallCard {
   if (!isRecord(value)) return false;
+  const oracleId = value.oracle_id;
   return typeof value.id === "string" && isUuidLike(value.id) &&
-    (value.oracle_id === undefined || value.oracle_id === null || isUuidLike(value.oracle_id)) &&
+    (oracleId === undefined || oracleId === null || (typeof oracleId === "string" && isUuidLike(oracleId))) &&
     typeof value.name === "string" && value.name.length > 0 && typeof value.layout === "string" &&
     typeof value.cmc === "number" && Number.isFinite(value.cmc) && typeof value.type_line === "string" &&
     isStringArray(value.colors) && isStringArray(value.color_identity) && isStringRecord(value.legalities) &&
