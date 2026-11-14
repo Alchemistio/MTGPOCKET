@@ -82,7 +82,7 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
         symbols.every(symbol => /^\{(?:\d+|[WUBRGC])\}$/.test(symbol));
       const isSupportedSpell = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
         (/\bInstant\b/.test(typeLine) || /\bSorcery\b/.test(typeLine)) &&
-        !/\btarget\b/i.test(oracleText) && simpleManaCost);
+        !/\btarget\b/i.test(oracleText) && simpleManaCost && (!supportsSpell || supportsSpell(definition)));
       return [{
         instanceId, cardId: runtimeCard.card_id, name: definition?.name ?? runtimeCard.card_id,
         manaCost, typeLine, oracleText, layout, isCommander: runtimeCard.is_commander, isSupportedSpell
