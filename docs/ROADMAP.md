@@ -27,7 +27,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Étendre le lancement aux permanents, cibles, coûts alternatifs et handlers d’effets réels.
 - [x] Cleanup serveur : défausse de fin de tour contrôlée par le siège concerné, puis progression automatique vers l'upkeep du joueur suivant.
 - [x] Test serveur d'un tour de p1 depuis main 1 jusqu'à l'upkeep p2 : instant, réponse adverse, résolution LIFO, passes des étapes de combat, cleanup et défausse.
-- [ ] Raccorder les mêmes commandes à l'UI mobile et tester une partie sur appareils.
+- [x] Raccorder à l'UI mobile la main privée, les sorts serveur supportés et la défausse de cleanup.
+- [ ] Tester une partie complète sur appareils physiques.
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
 - [ ] Persistance durable, conservation des graines de pré-partie et rejeu après redémarrage.
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.

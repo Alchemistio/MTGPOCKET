@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : tiroir de pile compact et auto-yield explicite quand aucun instant/rituel supporté n'est en main; CI à vérifier sur le commit courant.
+- Dernier code : premier résolveur d'effets réel (pioche 1/2/3, gain de vie exact), validation de support branchée au lancement et aux vues; CI à vérifier sur le commit courant.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
@@ -19,18 +19,18 @@
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
-- CI verte sur 3ef99d1 (run 43637312018); aucun appareil testé.
+- CI verte sur 8d1195f (run 43637594076); run courant 9afad7f à vérifier; aucun appareil testé.
 
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
-- Partie complète non prouvée; les permanents, sorts ciblés, coûts hybrides/phyrexians/X/snow et handlers de cartes de production restent non raccordés; combat et SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
+- Partie complète non prouvée. Le bootstrap active un sous-ensemble d'effets uniquement si catalogue + policy sont provisionnés : instant/rituel normal, coûts simples, sans cible, texte Oracle exact « Draw a card/two/three cards » ou « You gain N life ». Permanents, cibles, coûts hybrides/phyrexians/X/snow, autres textes, combat détaillé et SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
 - Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; aucun test sur appareils physiques.
 - Découverte LAN, reconnexion, sécurité production absentes.
 - Ne jamais exposer GameState brut ni mains adverses.
 
 ## Prochain
-1. Implémenter un cycle sort/réponse/résolution/cleanup avec validation serveur.
+1. Étendre prudemment le registre d'effets avec des cartes et cas de test vérifiés; ajouter génération de mana/terrains et commandes de capacités.
 2. Persister le journal, capturer les graines et permettre le rejeu après redémarrage.
 3. Générer le snapshot Scryfall réel et curater la policy Commander officielle.
 

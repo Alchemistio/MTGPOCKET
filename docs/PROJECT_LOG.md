@@ -1,3 +1,12 @@
+## 2026-11-14 — Premier résolveur d'effets de cartes explicite
+
+- Ajout de basic-spell-effects.ts : seuls les textes Oracle exacts « Draw a card. », « Draw two cards. », « Draw three cards. » et « You gain N life. » sont pris en charge.
+- Le support vérifie aussi layout normal, Instant/Sorcery et coût simple; les textes ciblés ou non reconnus sont refusés avant le lancement quand ce prédicat est configuré.
+- Le bootstrap serveur injecte ce résolveur et son prédicat uniquement lorsque le catalogue Scryfall et la policy Commander sont configurés.
+- Test GameRoom : Divination (coût {2}{U}) paie trois mana bleus, résout la pioche de deux cartes, va au cimetière et se rejoue.
+- Run 43637921973 : Python passe; typecheck échoue car drawCards retourne DrawResult. Corrigé dans 9afad7f en retournant DrawResult.state; CI de ce commit à vérifier.
+- Aucun texte Oracle arbitraire n'est interprété; les cartes inconnues ne sont pas résolues comme des no-op.
+
 ## 2026-11-14 — Tiroir de pile et auto-yield mobile
 
 - Le drawer de pile est maintenant repliable et affiche le sommet en premier, le nom de carte, le contrôleur, le type et le coût quand disponibles.

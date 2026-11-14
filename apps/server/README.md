@@ -42,6 +42,10 @@ pnpm --filter @commander-pocket/server start
 
 Ne pas committer de dump bulk, de données utilisateur ou de secrets. Provisionner les snapshots hors bande, contrôler provenance/checksum et réviser la policy avant chaque mise à jour. Aucun contrôle de légalité ne fait confiance aux métadonnées envoyées par le mobile.
 
+## Effets de cartes pris en charge
+
+Lorsque catalogue et policy sont tous deux configurés, le bootstrap injecte un résolveur volontairement limité aux cartes de layout `normal`, type Instant/Sorcery, coût simple (symboles W/U/B/R/G/C et générique numérique), sans cible, et texte Oracle exact : `Draw a card.`, `Draw two cards.`, `Draw three cards.` ou `You gain N life.`. Les autres textes ne sont pas interprétés et ne doivent pas être traités comme des effets résolus. Étendre cette liste seulement avec un handler et des tests dédiés.
+
 ## Messages réseau
 
 Créer une salle avec create-room et quatre sièges, rejoindre avec join-room et jeton personnel, puis envoyer command pour les actions de jeu. Les vues sont projetées par joueur : les mains adverses et identités de bibliothèque ne sont pas envoyées.
