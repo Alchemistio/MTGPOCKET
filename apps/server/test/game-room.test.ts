@@ -3,6 +3,7 @@ import { GameRoom } from "../src/game-room.js";
 import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
 import type { GameState } from "@commander-pocket/game-engine";
+import { resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -183,6 +184,57 @@ describe("GameRoom", () => {
     expect(room.state.activePlayerId).toBe("p2");
     expect(room.state.priorityPlayerId).toBe("p2");
     expect(room.state.turnNumber).toBe(2);
+    expect(room.replay()).toEqual(room.state);
+  });
+
+  it("casts Divination through the default basic resolver and draws two cards", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "divination-id", oracleId: "divination-oracle",
+      name: "Divination", layout: "normal", manaCost: "{2}{U}", manaValue: 3,
+      typeLine: "Sorcery", oracleText: "Draw two cards.", colors: ["U"], colorIdentity: ["U"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "divination-id", oracle_id: "divination-oracle", name: "Divination", layout: "normal",
+        mana_cost: "{2}{U}", cmc: 3, type_line: "Sorcery", oracle_text: "Draw two cards.",
+        colors: ["U"], color_identity: ["U"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "3"
+      }
+    };
+    expect(supportsBasicSpell(definition)).toBe(true);
+    expect(supportsBasicSpell({ ...definition, oracleText: "Target player draws two cards." })).toBe(false);
+    const base: GameState = {
+      ...advanceAutomaticStep(createGame("room-1", players)),
+      deckSetupComplete: true,
+      phase: "precombat-main",
+      step: "main-1",
+      players: advanceAutomaticStep(createGame("room-1", players)).players.map(player =>
+        player.id === "p1" ? { ...player, manaPool: { U: 3 } } : player)
+    };
+    let initial = addCardInstance(base, {
+      instance_id: "divination-instance", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    initial = addCardInstance(initial, {
+      instance_id: "draw-one", card_id: "draw-card-one", owner_id: "p1", zone: "library"
+    });
+    initial = addCardInstance(initial, {
+      instance_id: "draw-two", card_id: "draw-card-two", owner_id: "p1", zone: "library"
+    });
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-divination",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "divination-instance" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    expect(room.state.players[0]?.manaPool.U).toBe(0);
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "divination-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.players[0]?.hand).toEqual(expect.arrayContaining(["draw-one", "draw-two"]));
+    expect(room.state.cards["divination-instance"]?.zone).toBe("graveyard");
     expect(room.replay()).toEqual(room.state);
   });
 
