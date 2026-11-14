@@ -58,7 +58,7 @@ export interface GameView {
 }
 
 /** Hides opponents' hand identities and every library's card order/content. */
-export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (cardId: string) => CardDefinition | undefined, spellCastingAvailable = false): GameView {
+export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (cardId: string) => CardDefinition | undefined, spellCastingAvailable = false, supportsSpell?: (definition: CardDefinition) => boolean): GameView {
   const viewer = state.players.find(player => player.id === viewerId);
   if (!viewer) throw new Error("UNKNOWN_VIEWER");
   const players = state.players.map(player => ({

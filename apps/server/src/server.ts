@@ -5,18 +5,19 @@ import type { CommanderDeckList } from "@commander-pocket/card-data";
 import type { PregameCoordinatorFactory } from "./pregame-session-registry.js";
 import { PregameSessionRegistry } from "./pregame-session-registry.js";
 import { loadServerPregameConfigFromEnvironment } from "./server-catalog.js";
-import type { CardDefinitionResolver, RoomCommand, StackEffectResolver } from "./game-room.js";
+import type { CardDefinitionResolver, CardSpellSupport, RoomCommand, StackEffectResolver } from "./game-room.js";
+import { resolveBasicSpellEffect, supportsBasicSpell } from "./basic-spell-effects.js";
 import { RoomRegistry } from "./room-registry.js";
 import { toPlayerView } from "./player-view.js";
 
 interface ClientSession { socket: WebSocket; gameId: string; playerId: string; token: string; }
-export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; resolveCard?: CardDefinitionResolver; }
+export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; resolveCard?: CardDefinitionResolver; supportsSpell?: CardSpellSupport; }
 export interface CommanderPocketServerRuntime {
   httpServer: Server; websocketServer: WebSocketServer; rooms: RoomRegistry; close(): Promise<void>;
 }
 export function createCommanderPocketServer(options: CommanderPocketServerOptions = {}): CommanderPocketServerRuntime {
-  const rooms = new RoomRegistry(options.resolveStackEffect, options.resolveCard);
-  const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory, options.resolveCard, Boolean(options.resolveStackEffect)) : null;
+  const rooms = new RoomRegistry(options.resolveStackEffect, options.resolveCard, options.supportsSpell);
+  const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) : null;
   const clients = new Set<ClientSession>();
   const httpServer = createServer((request, response) => {
     if (request.method === "GET" && request.url === "/health") {
@@ -48,7 +49,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
           if (!host || !hostCredential) throw new Error("HOST_SEAT_MISSING");
           session = { socket, gameId: parsed.gameId, playerId: host.id, token: hostCredential.token };
           clients.add(session);
-          send(socket, { type: "room-created", gameId: room.id, credentials, view: toPlayerView(room.state, host.id, options.resolveCard, Boolean(options.resolveStackEffect)) });
+          send(socket, { type: "room-created", gameId: room.id, credentials, view: toPlayerView(room.state, host.id, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) });
         } catch (error) {
           send(socket, { type: "room-error", code: error instanceof Error ? error.message : "ROOM_CREATE_FAILED" });
         }
@@ -62,7 +63,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
         if (!room) { send(socket, { type: "room-error", code: "INVALID_SEAT_CREDENTIALS" }); return; }
         session = { socket, gameId: parsed.gameId, playerId: parsed.playerId, token: parsed.token };
         clients.add(session);
-        send(socket, { type: "room-joined", view: toPlayerView(room.state, parsed.playerId, options.resolveCard, Boolean(options.resolveStackEffect)) });
+        send(socket, { type: "room-joined", view: toPlayerView(room.state, parsed.playerId, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) });
         return;
       }
       if (parsed.type.startsWith("pregame-")) { handlePregameMessage(socket, session, parsed, pregame, clients); return; }
@@ -78,7 +79,7 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
         const result = room.apply(parsed.command);
         send(socket, { type: "command-result", result });
         if (result.accepted) for (const client of clients) {
-          if (client.gameId === session.gameId) send(client.socket, { type: "game-view", view: toPlayerView(room.state, client.playerId, options.resolveCard, Boolean(options.resolveStackEffect)) });
+          if (client.gameId === session.gameId) send(client.socket, { type: "game-view", view: toPlayerView(room.state, client.playerId, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) });
         }
         return;
       }
@@ -162,7 +163,7 @@ function send(socket: WebSocket, payload: unknown): void {
 const port = Number(process.env.PORT ?? 3000);
 const configuredPregame = loadServerPregameConfigFromEnvironment();
 const runtime = createCommanderPocketServer({
-  port, ...(configuredPregame ? { pregameFactory: configuredPregame.factory, resolveCard: (cardId: string) => configuredPregame.cardIndex[cardId] } : {})
+  port, ...(configuredPregame ? { pregameFactory: configuredPregame.factory, resolveCard: (cardId: string) => configuredPregame.cardIndex[cardId], resolveStackEffect: resolveBasicSpellEffect, supportsSpell: supportsBasicSpell } : {})
 });
 runtime.httpServer.listen(port, "0.0.0.0", () => {
   process.stdout.write("Commander Pocket server listening on :" + port + "\n");
