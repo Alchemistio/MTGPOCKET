@@ -34,6 +34,23 @@ export function addCardInstance(state: GameState, setup: CardInstanceSetup): Gam
   return { ...state, revision: state.revision + 1, cards, players };
 }
 
+export function tapPermanentForMana(state: GameState, playerId: PlayerId, instanceId: InstanceId, color: string): GameState {
+  if (!/^[WUBRGC]$/.test(color)) throw new EngineError("INVALID_MANA_COLOR", "Couleur de mana invalide.");
+  const player = state.players.find(item => item.id === playerId);
+  if (!player) throw new EngineError("UNKNOWN_PLAYER", "Joueur inconnu.");
+  const card = state.cards[instanceId];
+  if (!card || card.zone !== "battlefield") throw new EngineError("INVALID_ZONE_MOVE", "La source de mana doit être sur le champ de bataille.");
+  if (card.controller_id !== playerId) throw new EngineError("NOT_CONTROLLER", "Seul le contrôleur peut engager ce permanent.");
+  if (card.is_tapped) throw new EngineError("PERMANENT_TAPPED", "Ce permanent est déjà engagé.");
+  const manaPool = { ...player.manaPool, [color]: (player.manaPool[color] ?? 0) + 1 };
+  return {
+    ...state,
+    revision: state.revision + 1,
+    cards: { ...state.cards, [instanceId]: { ...card, is_tapped: true } },
+    players: state.players.map(item => item.id === playerId ? { ...item, manaPool } : item)
+  };
+}
+
 export function moveCardToZone(
   state: GameState,
   instanceId: InstanceId,

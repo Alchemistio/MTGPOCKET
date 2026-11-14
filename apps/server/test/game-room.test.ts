@@ -3,7 +3,7 @@ import { GameRoom } from "../src/game-room.js";
 import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
 import type { GameState } from "@commander-pocket/game-engine";
-import { resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
+import { basicLandManaOptions, resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -184,6 +184,40 @@ describe("GameRoom", () => {
     expect(room.state.activePlayerId).toBe("p2");
     expect(room.state.priorityPlayerId).toBe("p2");
     expect(room.state.turnNumber).toBe(2);
+    expect(room.replay()).toEqual(room.state);
+  });
+
+  it("taps an untapped basic land for mana and rejects a second tap", () => {
+    const island: CardDefinition = {
+      provider: "scryfall", providerId: "island-id", oracleId: "island-oracle",
+      name: "Island", layout: "normal", manaCost: "", manaValue: 0,
+      typeLine: "Basic Land — Island", oracleText: "", colors: [], colorIdentity: [],
+      legalities: { commander: "legal" }, faces: [],
+      raw: { id: "island-id", oracle_id: "island-oracle", name: "Island", layout: "normal",
+        mana_cost: "", cmc: 0, type_line: "Basic Land — Island", oracle_text: "",
+        colors: [], color_identity: [], legalities: { commander: "legal" }, set: "tst", collector_number: "5" }
+    };
+    expect(basicLandManaOptions(island)).toEqual(["U"]);
+    const base: GameState = { ...advanceAutomaticStep(createGame("room-1", players)), deckSetupComplete: true, phase: "precombat-main", step: "main-1" };
+    const initial = addCardInstance(base, {
+      instance_id: "island-instance", card_id: island.providerId, owner_id: "p1", zone: "battlefield"
+    });
+    const room = new GameRoom("room-1", players, initial, undefined,
+      cardId => cardId === island.providerId ? island : undefined);
+    const tap = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "tap-island",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "tap-for-mana", payload: { instanceId: "island-instance", color: "U" }
+    });
+    expect(tap).toMatchObject({ accepted: true, outcome: "mana-added" });
+    expect(room.state.cards["island-instance"]?.is_tapped).toBe(true);
+    expect(room.state.players[0]?.manaPool.U).toBe(1);
+    const secondTap = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "tap-island-again",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "tap-for-mana", payload: { instanceId: "island-instance", color: "U" }
+    });
+    expect(secondTap).toMatchObject({ accepted: false, code: "PERMANENT_TAPPED" });
     expect(room.replay()).toEqual(room.state);
   });
 

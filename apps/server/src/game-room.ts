@@ -1,9 +1,10 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem,
+  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
   type GameState, type PlayerSetup, type StackItem
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
+import { basicLandManaOptions } from "./basic-spell-effects.js";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
@@ -12,7 +13,7 @@ export type CardSpellSupport = (definition: CardDefinition) => boolean;
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" | "mana-added" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -123,6 +124,7 @@ export class GameRoom {
     }
     if (command.type === "cast-spell") return this.castSpell(command, cacheKey);
     if (command.type === "discard-cards") return this.discardPendingCards(command, cacheKey);
+    if (command.type === "tap-for-mana") return this.tapForMana(command, cacheKey);
     if (command.type !== "pass-priority") return this.reject(cacheKey, "UNSUPPORTED_COMMAND");
 
     try {
@@ -155,6 +157,32 @@ export class GameRoom {
       }
       this.currentState = nextState;
       const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
+  }
+
+  private tapForMana(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    if (!this.resolveCard) return this.reject(cacheKey, "CARD_CATALOG_NOT_CONFIGURED");
+    if (this.currentState.status !== "active" || !this.currentState.deckSetupComplete) return this.reject(cacheKey, "GAME_NOT_STARTED");
+    if (this.currentState.priorityPlayerId !== command.playerId) return this.reject(cacheKey, "NOT_PRIORITY_PLAYER");
+    if (!isRecord(command.payload) || typeof command.payload.instanceId !== "string" ||
+        typeof command.payload.color !== "string") return this.reject(cacheKey, "INVALID_MANA_PAYLOAD");
+    const card = this.currentState.cards[command.payload.instanceId];
+    if (!card || card.zone !== "battlefield" || card.controller_id !== command.playerId) {
+      return this.reject(cacheKey, "MANA_SOURCE_NOT_CONTROLLED");
+    }
+    const definition = this.resolveCard(card.card_id);
+    if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
+    if (!basicLandManaOptions(definition).includes(command.payload.color)) return this.reject(cacheKey, "MANA_SOURCE_NOT_SUPPORTED");
+    try {
+      const nextState = tapPermanentForMana(this.currentState, command.playerId, command.payload.instanceId, command.payload.color);
+      this.currentState = nextState;
+      const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome: "mana-added" };
       this.commandResults.set(cacheKey, accepted);
       this.recordEvent(command, accepted);
       return accepted;
