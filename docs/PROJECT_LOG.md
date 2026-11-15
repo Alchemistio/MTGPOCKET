@@ -1,3 +1,9 @@
+## 2026-11-15 — Correction de test et CI verte pour le timeout pré-partie
+
+- Le run `43689223964` a correctement détecté que le test client envoyait plusieurs actions pré-partie sans attendre leurs ACK, comportement désormais interdit pour empêcher les requêtes simultanées non corrélées.
+- Le test a été corrigé pour simuler un ACK après chaque action; le test de timeout vérifie aussi qu'un ACK tardif est ignoré et qu'une reconnexion est requise avant une nouvelle action.
+- Run `43689300902` sur `8e9d3058016227f428168f033b16ce80bc7ee4c1`: `validate` (typecheck + Vitest) et `python-data` réussis.
+
 ## 2026-11-15 — Timeout des actions pré-partie mobiles
 
 - Le panneau pouvait rester bloqué si le serveur ne répondait jamais à une action pré-partie alors que la socket restait ouverte.

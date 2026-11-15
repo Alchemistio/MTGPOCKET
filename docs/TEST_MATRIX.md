@@ -22,7 +22,7 @@ Dernière revue : 2026-11-15. Cette matrice décrit les tests présents dans le 
 | Pré-partie | `apps/server/test/pregame-coordinator.test.ts`, `apps/server/test/pregame-session-registry.test.ts`, `apps/server/test/server-pregame-transport.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan, transfert au GameRoom, vues privées à quatre sièges et première commande de priorité via WebSocket | tour complet avec sort/réponse/résolution/cleanup, catalogue/banlist de production |
 | Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé, statut explicite `pregame`/`active` | audit complet des champs sensibles et tests fuzz |
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, jetons et authentification de siège | rotation/expiration des jetons |
-| Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées, rejet de message mal formé, fermeture avant ouverture, timeout connexion/handshake et fermeture explicite pendant un handshake | timeout des actions pré-partie, reconnexion/réauthentification, tests UI et appareils |
+| Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées, rejet de message mal formé, fermeture avant ouverture, timeouts de connexion/handshake/action pré-partie, fermeture explicite et rejet d'un ACK tardif | reconnexion/réauthentification automatique, tests UI et appareils |
 
 ## Données
 
@@ -40,7 +40,7 @@ Workflow `.github/workflows/ci.yml` :
 - `pnpm test` (Vitest sur les packages)
 - `python -m unittest discover -s scripts -p "test_*.py"`
 
-Dernier run complet vérifié : **43689028907**, commit `337e51d3e93d0fb8357346306648320823c09b07`, jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+Dernier run complet vérifié : **43689300902**, commit `8e9d3058016227f428168f033b16ce80bc7ee4c1`, jobs `validate` (typecheck + Vitest) et `python-data` réussis.
 
 ## Validation non automatisée — non encore réalisée
 

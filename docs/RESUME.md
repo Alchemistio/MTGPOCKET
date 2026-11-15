@@ -7,7 +7,7 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : 337e51d ajoute des délais bornés de connexion/handshake et corrige la fermeture explicite du client réseau; CI run 43689028907 verte sur ce SHA (typecheck, Vitest, Python). Les fonctionnalités mana/cast/discard sont présentes dans les commits précédents.
+- Dernier code : 8e9d305 ajoute le timeout des actions pré-partie (10 s) et bloque les renvois jusqu'à reconnexion pour éviter de confondre un ACK tardif; CI run 43689300902 verte sur ce SHA (typecheck, Vitest, Python). Les fonctionnalités mana/cast/discard sont présentes dans les commits précédents.
 - PR #1 toujours draft; aucun merge.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
@@ -20,7 +20,7 @@
 - Données: cache SQLite mobile; import MTGJSON Python.
 - Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
-- CI verte sur c58b963 (run 43638209930); CI courante à vérifier; aucun appareil testé.
+- Dernière CI complète : run 43689300902 sur 8e9d305, verte; aucun appareil testé.
 
 ## Bloqueurs
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
