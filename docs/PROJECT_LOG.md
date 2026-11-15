@@ -1,3 +1,9 @@
+## 2026-11-15 — Validation CI des délais réseau mobiles
+
+- Run 43689028907 sur le commit 337e51d3e93d0fb8357346306648320823c09b07: jobs validate (pnpm typecheck + pnpm test) et python-data réussis.
+- Les tests couvrent fermeture avant ouverture, timeout de connexion, timeout de handshake et disconnect explicite pendant un handshake.
+- Aucun test de reconnexion réelle, de timeout d'action pré-partie, de build natif ou d'appareil physique n'est revendiqué.
+
 ## 2026-11-15 — Délais réseau et état de déconnexion pré-partie
 
 - Le client WebSocket rejetait une connexion fermée avant ouverture sans résoudre la promesse de connexion; les handshakes pouvaient aussi attendre indéfiniment.

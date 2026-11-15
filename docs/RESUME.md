@@ -7,7 +7,8 @@
 - Repo: https://github.com/Alchemistio/MTGPOCKET
 - Branche: feat/commander-pocket-foundation
 - PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : terrains de base engageables pour produire W/U/B/R/G/C, main privée enrichie et UI mana/cast/discard; CI à vérifier sur le commit courant.
+- Dernier code : 337e51d ajoute des délais bornés de connexion/handshake et corrige la fermeture explicite du client réseau; CI run 43689028907 verte sur ce SHA (typecheck, Vitest, Python). Les fonctionnalités mana/cast/discard sont présentes dans les commits précédents.
+- PR #1 toujours draft; aucun merge.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Fait — caveman
