@@ -1,3 +1,10 @@
+## 2026-11-15 — Timeout des actions pré-partie mobiles
+
+- Le panneau pouvait rester bloqué si le serveur ne répondait jamais à une action pré-partie alors que la socket restait ouverte.
+- Ajout d'un timeout configurable (10 s par défaut), d'un événement local de timeout et d'un verrouillage des actions suivantes jusqu'à reconnexion, afin de ne pas confondre un ACK tardif avec une nouvelle commande (le protocole ne porte pas encore d'identifiant de requête).
+- Le panneau libère l'état occupé et demande une reconnexion; test du timeout, du verrouillage et du rétablissement après nouvelle connexion.
+- Reconnexion/réauthentification automatique et tests appareils restent à faire; CI à vérifier.
+
 ## 2026-11-15 — Validation CI des délais réseau mobiles
 
 - Run 43689028907 sur le commit 337e51d3e93d0fb8357346306648320823c09b07: jobs validate (pnpm typecheck + pnpm test) et python-data réussis.

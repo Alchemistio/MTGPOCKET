@@ -14,6 +14,7 @@ export type RoomClientEvent =
   | { type: "command-result"; result: unknown }
   | { type: "pregame-result"; accepted: boolean; code?: string; result?: unknown; revision?: number; view?: unknown }
   | { type: "pregame-view"; view: unknown }
+  | { type: "pregame-timeout" }
   | { type: "command-rejected"; code: string }
   | { type: "room-error"; code: string }
   | { type: "protocol-error"; code: string }
@@ -33,6 +34,9 @@ interface PendingHandshake {
 export class RoomClient {
   private socket: WebSocket | null = null;
   private pendingHandshake: PendingHandshake | null = null;
+  private pendingPregameTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pregameTimedOut = false;
+  private ignoreLatePregameResult = false;
   private readonly listeners = new Set<(event: RoomClientEvent) => void>();
 
   constructor(
@@ -53,6 +57,8 @@ export class RoomClient {
       throw new Error("Une connexion est déjà en cours.");
     }
     const socket = this.createSocket(url);
+    this.pregameTimedOut = false;
+    this.ignoreLatePregameResult = false;
     this.socket = socket;
     socket.addEventListener("message", event => this.handleMessage(String(event.data)));
     socket.addEventListener("close", event => this.handleSocketClose(socket, event));
@@ -144,7 +150,19 @@ export class RoomClient {
   }
 
   private sendPregame(message: PregameClientMessage): void {
+    if (this.pregameTimedOut) {
+      throw new Error("Le délai de réponse pré-partie a expiré. Reconnectez-vous avant de réessayer.");
+    }
+    if (this.pendingPregameTimeout !== null) {
+      throw new Error("Une action de pré-partie est déjà en attente.");
+    }
     this.send(message);
+    this.pendingPregameTimeout = setTimeout(() => {
+      this.pendingPregameTimeout = null;
+      this.pregameTimedOut = true;
+      this.ignoreLatePregameResult = true;
+      this.emit({ type: "pregame-timeout" });
+    }, this.timeoutMs);
   }
 
   private handshake(
@@ -192,6 +210,16 @@ export class RoomClient {
       this.emit({ type: "protocol-error", code: "INVALID_ENVELOPE" });
       return;
     }
+    if (event.type === "pregame-result") {
+      if (this.ignoreLatePregameResult) {
+        this.ignoreLatePregameResult = false;
+        return;
+      }
+      if (this.pendingPregameTimeout !== null) {
+        clearTimeout(this.pendingPregameTimeout);
+        this.pendingPregameTimeout = null;
+      }
+    }
     if (this.pendingHandshake) {
       if (event.type === this.pendingHandshake.expected) {
         const pending = this.pendingHandshake;
@@ -214,6 +242,10 @@ export class RoomClient {
   private handleSocketClose(socket: WebSocket, event: CloseEvent): void {
     if (this.socket !== socket) return;
     this.socket = null;
+    if (this.pendingPregameTimeout !== null) {
+      clearTimeout(this.pendingPregameTimeout);
+      this.pendingPregameTimeout = null;
+    }
     if (this.pendingHandshake) {
       const pending = this.pendingHandshake;
       this.pendingHandshake = null;

@@ -55,4 +55,4 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 
 ## Complément — Client mobile réseau (2026-11-15)
 
-- Tests ajoutés pour fermeture avant ouverture et délais de connexion/handshake; le timeout par action pré-partie et la reconnexion restent hors couverture.
+- Tests ajoutés pour fermeture avant ouverture, délais de connexion/handshake, fermeture explicite pendant handshake et timeout d'action pré-partie avec verrouillage jusqu'à reconnexion. Reconnexion automatique et UI native restent hors couverture.

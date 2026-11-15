@@ -32,6 +32,11 @@ export function NetworkPregamePanel({ client, playerId, deck, initialView, onGam
   const [status, setStatus] = useState("En attente du serveur…");
 
   useEffect(() => client.onEvent((event: RoomClientEvent) => {
+    if (event.type === "pregame-timeout") {
+      setBusy(false);
+      setStatus("Le serveur ne répond pas. Reconnecte-toi avant de réessayer.");
+      return;
+    }
     if (event.type === "disconnected") {
       setBusy(false);
       setStatus(`Connexion perdue : ${event.reason}`);

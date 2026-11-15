@@ -135,6 +135,33 @@ describe("RoomClient", () => {
     expect(events).toContain("disconnected");
   });
 
+  it("times out a pregame action and requires a new connection before retrying", async () => {
+    const firstSocket = new FakeSocket();
+    const secondSocket = new FakeSocket();
+    const sockets = [firstSocket, secondSocket];
+    const client = new RoomClient(() => sockets.shift() as unknown as WebSocket, 10);
+    let timeouts = 0;
+    client.onEvent(event => { if (event.type === "pregame-timeout") timeouts += 1; });
+
+    const firstConnection = client.connect("ws://127.0.0.1:3000/ws");
+    firstSocket.open();
+    await firstConnection;
+    client.submitPregameDeck({
+      commanderIds: ["commander-id"],
+      cards: [{ cardId: "commander-id", quantity: 1 }, { cardId: "land-id", quantity: 99 }]
+    });
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(timeouts).toBe(1);
+    expect(() => client.declareMulligan("keep")).toThrow("Reconnectez-vous");
+
+    client.disconnect();
+    const secondConnection = client.connect("ws://127.0.0.1:3000/ws");
+    secondSocket.open();
+    await secondConnection;
+    client.declareMulligan("keep");
+    client.disconnect();
+  });
+
   it("rejects malformed server messages instead of trusting their shape", async () => {
     const socket = new FakeSocket();
     const client = new RoomClient(() => socket as unknown as WebSocket);
