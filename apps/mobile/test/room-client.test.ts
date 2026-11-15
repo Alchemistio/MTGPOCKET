@@ -107,8 +107,11 @@ describe("RoomClient", () => {
       commanderIds: ["commander-id"],
       cards: [{ cardId: "commander-id", quantity: 1 }, { cardId: "land-id", quantity: 99 }]
     });
+    socket.message({ type: "pregame-result", accepted: true });
     client.declareMulligan("keep");
+    socket.message({ type: "pregame-result", accepted: true });
     client.chooseBottomCards(["instance-1"]);
+    socket.message({ type: "pregame-result", accepted: true });
     client.startPregame();
 
     expect(socket.sent.map(payload => JSON.parse(payload).type)).toEqual([
@@ -141,7 +144,11 @@ describe("RoomClient", () => {
     const sockets = [firstSocket, secondSocket];
     const client = new RoomClient(() => sockets.shift() as unknown as WebSocket, 10);
     let timeouts = 0;
-    client.onEvent(event => { if (event.type === "pregame-timeout") timeouts += 1; });
+    let pregameResults = 0;
+    client.onEvent(event => {
+      if (event.type === "pregame-timeout") timeouts += 1;
+      if (event.type === "pregame-result") pregameResults += 1;
+    });
 
     const firstConnection = client.connect("ws://127.0.0.1:3000/ws");
     firstSocket.open();
@@ -152,6 +159,8 @@ describe("RoomClient", () => {
     });
     await new Promise(resolve => setTimeout(resolve, 20));
     expect(timeouts).toBe(1);
+    firstSocket.message({ type: "pregame-result", accepted: true });
+    expect(pregameResults).toBe(0);
     expect(() => client.declareMulligan("keep")).toThrow("Reconnectez-vous");
 
     client.disconnect();
