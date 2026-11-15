@@ -32,6 +32,11 @@ export function NetworkPregamePanel({ client, playerId, deck, initialView, onGam
   const [status, setStatus] = useState("En attente du serveur…");
 
   useEffect(() => client.onEvent((event: RoomClientEvent) => {
+    if (event.type === "disconnected") {
+      setBusy(false);
+      setStatus(`Connexion perdue : ${event.reason}`);
+      return;
+    }
     if (event.type === "pregame-view") {
       if (isRecord(event.view)) {
         const nextView = event.view as unknown as PregameView;

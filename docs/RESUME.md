@@ -25,7 +25,7 @@
 - Snapshot réel non généré/provisionné; policy Commander réelle non validée.
 - Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
 - Partie complète non prouvée. Le bootstrap active un sous-ensemble d'effets uniquement si catalogue + policy sont provisionnés : instant/rituel normal, coûts simples, sans cible, texte Oracle exact « Draw a card/two/three cards » ou « You gain N life ». Permanents, cibles, coûts hybrides/phyrexians/X/snow, autres textes, combat détaillé et SBA incomplets. Le journal n'est pas encore persistant, ne capture pas les graines de pré-partie et ne survit pas à un redémarrage. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
-- Le flux mobile pré-partie n'a pas encore de reprise robuste après timeout/déconnexion; aucun test sur appareils physiques.
+- Le client réseau borne les délais de connexion et de handshake; le panneau pré-partie déverrouille l'UI et signale la déconnexion. Pas de reprise/réauthentification automatique ni de timeout des actions pré-partie; aucun test sur appareils physiques.
 - Découverte LAN, reconnexion, sécurité production absentes.
 - Ne jamais exposer GameState brut ni mains adverses.
 

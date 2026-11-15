@@ -21,7 +21,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Transfert de l'état pré-partie validé vers le GameRoom autoritaire et ouverture de la première priorité (upkeep).
 - [x] Test d'intégration WebSocket automatisé à quatre sièges : decks, keep, démarrage, mains privées et première passe de priorité.
 - [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
-- [ ] Gestion des erreurs réseau, timeouts, déconnexions et reprise de l'interface pré-partie.
+- [x] État de déconnexion visible dans le panneau pré-partie; délais bornés sur l'ouverture WebSocket et les handshakes de salle.
+- [ ] Reprise/réauthentification après reconnexion et timeout des actions pré-partie individuelles.
 - [x] Résolution serveur d’un objet de pile après passes unanimes, via un handler d’effet injecté et rejouable.
 - [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, réponse d’un autre joueur, résolution LIFO via handler serveur et envoi au cimetière.
 - [ ] Étendre le lancement aux permanents, cibles, coûts alternatifs et handlers d’effets réels.

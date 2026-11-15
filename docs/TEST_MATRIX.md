@@ -51,3 +51,8 @@ Dernier run complet vérifié : **43475390536**, commit `15ce2127251c62f46897ba8
 - Profilage mémoire, CPU, consommation batterie et import bulk sur appareil cible.
 
 Ne jamais déduire la validation native de la seule réussite de TypeScript ou Vitest.
+
+
+## Complément — Client mobile réseau (2026-11-15)
+
+- Tests ajoutés pour fermeture avant ouverture et délais de connexion/handshake; le timeout par action pré-partie et la reconnexion restent hors couverture.

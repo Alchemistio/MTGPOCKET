@@ -39,6 +39,30 @@ const players = [
 ];
 
 describe("RoomClient", () => {
+  it("rejects a connection that closes before opening", async () => {
+    const socket = new FakeSocket();
+    const client = new RoomClient(() => socket as unknown as WebSocket, 50);
+    const connected = client.connect("ws://127.0.0.1:3000/ws");
+    socket.close();
+    await expect(connected).rejects.toThrow("Connexion fermée avant son ouverture");
+  });
+
+  it("times out a connection attempt that never opens", async () => {
+    const socket = new FakeSocket();
+    const client = new RoomClient(() => socket as unknown as WebSocket, 5);
+    await expect(client.connect("ws://127.0.0.1:3000/ws")).rejects.toThrow("Délai dépassé");
+    expect(socket.readyState).toBe(3);
+  });
+
+  it("times out a room handshake when the server never replies", async () => {
+    const socket = new FakeSocket();
+    const client = new RoomClient(() => socket as unknown as WebSocket, 5);
+    const connected = client.connect("ws://127.0.0.1:3000/ws");
+    socket.open();
+    await connected;
+    await expect(client.createRoom("local-game", players)).rejects.toThrow("Délai dépassé");
+  });
+
   it("connects, creates a room, validates the response and sends versioned commands", async () => {
     const socket = new FakeSocket();
     const client = new RoomClient(() => socket as unknown as WebSocket);

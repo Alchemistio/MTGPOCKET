@@ -1,3 +1,10 @@
+## 2026-11-15 — Délais réseau et état de déconnexion pré-partie
+
+- Le client WebSocket rejetait une connexion fermée avant ouverture sans résoudre la promesse de connexion; les handshakes pouvaient aussi attendre indéfiniment.
+- Ajout d'un délai configurable (10 s par défaut) pour l'ouverture et les handshakes, nettoyage des timers, rejet sur fermeture et protection contre les événements d'une ancienne socket.
+- Le panneau pré-partie libère son état occupé et affiche la déconnexion. Tests de fermeture précoce et des deux timeouts ajoutés.
+- Pas de reconnexion/réauthentification automatique, pas de timeout par action pré-partie et pas de test appareil; CI à vérifier.
+
 ## 2026-11-14 — Engagement des terrains de base pour mana
 
 - GameRoom accepte tap-for-mana uniquement sur un terrain de base contrôlé, dégagé, et lorsque le joueur a la priorité.

@@ -26,6 +26,7 @@ interface PendingHandshake {
   expected: "room-created" | "room-joined";
   resolve: (event: RoomClientEvent) => void;
   reject: (error: Error) => void;
+  timeout: ReturnType<typeof setTimeout>;
 }
 
 /** Small typed WebSocket client for the LAN room and pregame protocols. */
@@ -34,7 +35,12 @@ export class RoomClient {
   private pendingHandshake: PendingHandshake | null = null;
   private readonly listeners = new Set<(event: RoomClientEvent) => void>();
 
-  constructor(private readonly createSocket: SocketFactory = url => new WebSocket(url)) {}
+  constructor(
+    private readonly createSocket: SocketFactory = url => new WebSocket(url),
+    private readonly timeoutMs = 10_000
+  ) {
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new RangeError("timeoutMs must be a positive finite number.");
+  }
 
   onEvent(listener: (event: RoomClientEvent) => void): () => void {
     this.listeners.add(listener);
@@ -48,27 +54,47 @@ export class RoomClient {
     }
     const socket = this.createSocket(url);
     this.socket = socket;
+    socket.addEventListener("message", event => this.handleMessage(String(event.data)));
+    socket.addEventListener("close", event => this.handleSocketClose(socket, event));
     await new Promise<void>((resolve, reject) => {
-      const onOpen = () => {
+      let settled = false;
+      const cleanup = () => {
+        clearTimeout(timeout);
         socket.removeEventListener("open", onOpen);
         socket.removeEventListener("error", onError);
+        socket.removeEventListener("close", onCloseBeforeOpen);
+      };
+      const onOpen = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
         resolve();
       };
       const onError = () => {
-        this.socket = null;
-        socket.removeEventListener("open", onOpen);
-        socket.removeEventListener("error", onError);
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (this.socket === socket) this.socket = null;
         reject(new Error("Impossible d’ouvrir la connexion au serveur."));
       };
+      const onCloseBeforeOpen = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (this.socket === socket) this.socket = null;
+        reject(new Error("Connexion fermée avant son ouverture."));
+      };
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (this.socket === socket) this.socket = null;
+        try { socket.close(); } catch { /* Ignore a close failure after the timeout. */ }
+        reject(new Error("Délai dépassé pendant l’ouverture de la connexion."));
+      }, this.timeoutMs);
       socket.addEventListener("open", onOpen);
       socket.addEventListener("error", onError);
-      socket.addEventListener("message", event => this.handleMessage(String(event.data)));
-      socket.addEventListener("close", event => {
-        this.socket = null;
-        this.pendingHandshake?.reject(new Error("Connexion fermée avant la fin de l’opération."));
-        this.pendingHandshake = null;
-        this.emit({ type: "disconnected", reason: event.reason || "Connexion fermée." });
-      });
+      socket.addEventListener("close", onCloseBeforeOpen);
     });
   }
 
@@ -128,10 +154,19 @@ export class RoomClient {
   ): Promise<RoomClientEvent> {
     if (this.pendingHandshake) return Promise.reject(new Error("Une opération de salle est déjà en cours."));
     return new Promise((resolve, reject) => {
-      this.pendingHandshake = { expected, resolve, reject };
+      const pending: PendingHandshake = {
+        expected, resolve, reject,
+        timeout: setTimeout(() => {
+          if (this.pendingHandshake !== pending) return;
+          this.pendingHandshake = null;
+          reject(new Error("Délai dépassé en attendant la réponse du serveur."));
+        }, this.timeoutMs)
+      };
+      this.pendingHandshake = pending;
       try {
         this.send(payload);
       } catch (error) {
+        clearTimeout(pending.timeout);
         this.pendingHandshake = null;
         reject(error instanceof Error ? error : new Error("Échec d’envoi."));
       }
@@ -162,6 +197,7 @@ export class RoomClient {
       if (event.type === this.pendingHandshake.expected) {
         const pending = this.pendingHandshake;
         this.pendingHandshake = null;
+        clearTimeout(pending.timeout);
         pending.resolve(event);
         this.emit(event);
         return;
@@ -169,10 +205,23 @@ export class RoomClient {
       if (event.type === "room-error" || event.type === "protocol-error") {
         const pending = this.pendingHandshake;
         this.pendingHandshake = null;
+        clearTimeout(pending.timeout);
         pending.reject(new Error(event.code));
       }
     }
     this.emit(event);
+  }
+
+  private handleSocketClose(socket: WebSocket, event: CloseEvent): void {
+    if (this.socket !== socket) return;
+    this.socket = null;
+    if (this.pendingHandshake) {
+      const pending = this.pendingHandshake;
+      this.pendingHandshake = null;
+      clearTimeout(pending.timeout);
+      pending.reject(new Error("Connexion fermée avant la fin de l’opération."));
+    }
+    this.emit({ type: "disconnected", reason: event.reason || "Connexion fermée." });
   }
 
   private emit(event: RoomClientEvent): void {
