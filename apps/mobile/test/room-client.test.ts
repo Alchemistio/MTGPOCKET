@@ -121,6 +121,20 @@ describe("RoomClient", () => {
     expect(events).toContain("pregame-result");
   });
 
+  it("rejects an in-flight room handshake when explicitly disconnected", async () => {
+    const socket = new FakeSocket();
+    const client = new RoomClient(() => socket as unknown as WebSocket, 100);
+    const events: string[] = [];
+    client.onEvent(event => events.push(event.type));
+    const connected = client.connect("ws://127.0.0.1:3000/ws");
+    socket.open();
+    await connected;
+    const handshake = client.createRoom("local-game", players);
+    client.disconnect();
+    await expect(handshake).rejects.toThrow("Connexion fermée avant la fin de l’opération");
+    expect(events).toContain("disconnected");
+  });
+
   it("rejects malformed server messages instead of trusting their shape", async () => {
     const socket = new FakeSocket();
     const client = new RoomClient(() => socket as unknown as WebSocket);

@@ -141,7 +141,6 @@ export class RoomClient {
 
   disconnect(): void {
     this.socket?.close();
-    this.socket = null;
   }
 
   private sendPregame(message: PregameClientMessage): void {
