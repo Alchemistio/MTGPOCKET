@@ -1,3 +1,8 @@
+## 2026-11-15 — Validation CI de la capture des graines de pré-partie
+
+- Run `43689458355` sur `7d6b320983270638d829ec51995ca593cfa65f79`: `validate` (typecheck + Vitest) et `python-data` réussis.
+- La capture des graines est testée côté serveur; aucune donnée aléatoire n'est transmise aux vues privées. Persistance durable et restauration après redémarrage non réalisées.
+
 ## 2026-11-15 — Capture serveur des graines de pré-partie
 
 - PregameCoordinator conserve désormais un journal chronologique des graines utilisées pour les mains initiales et chaque mulligan, avec séquence, joueur et finalité.
