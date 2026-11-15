@@ -1,3 +1,10 @@
+## 2026-11-15 — Capture serveur des graines de pré-partie
+
+- PregameCoordinator conserve désormais un journal chronologique des graines utilisées pour les mains initiales et chaque mulligan, avec séquence, joueur et finalité.
+- Les graines ne sont exposées ni dans GameView ni dans les vues privées; le getter retourne des copies défensives.
+- Tests couvrent l'ordre des graines, les mulligans répétés, l'isolation des vues et l'absence de mutation du journal par le consommateur.
+- Cette capture est uniquement en mémoire : la persistance durable et le rejeu après redémarrage restent à faire. CI à vérifier.
+
 ## 2026-11-15 — Correction de test et CI verte pour le timeout pré-partie
 
 - Le run `43689223964` a correctement détecté que le test client envoyait plusieurs actions pré-partie sans attendre leurs ACK, comportement désormais interdit pour empêcher les requêtes simultanées non corrélées.

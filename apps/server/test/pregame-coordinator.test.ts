@@ -56,6 +56,13 @@ describe("PregameCoordinator", () => {
     expect(room.state.players.every(player => player.hand.length === 7)).toBe(true);
     expect(room.state.players.every(player => player.library.length === 92)).toBe(true);
     expect(room.state.players.every(player => player.command.length === 1)).toBe(true);
+    expect(room.seedLog).toEqual(players.map((player, index) => ({
+      sequence: index, purpose: "opening-hand", playerId: player.id, seed: `server-seed-${index + 1}`
+    })));
+    expect(JSON.stringify(toPlayerView(room.state, "p1"))).not.toContain("server-seed");
+    const copiedLog = room.seedLog as Array<{ sequence: number; purpose: "opening-hand" | "mulligan"; playerId: string; seed: string }>;
+    copiedLog[0]!.seed = "tampered";
+    expect(room.seedLog[0]?.seed).toBe("server-seed-1");
     expect(toPlayerView(room.state, "p1").players[1]?.hand).toEqual([]);
     expect(toPlayerView(room.state, "p1").players[1]?.handCount).toBe(7);
   });
@@ -70,10 +77,16 @@ describe("PregameCoordinator", () => {
     const firstRound = room.declareMulligan("p4", "keep");
     expect(firstRound.roundResolved).toBe(true);
     expect(room.state.players[0]?.mulliganCount).toBe(1);
+    expect(room.seedLog[4]).toEqual({
+      sequence: 4, purpose: "mulligan", playerId: "p1", seed: "server-seed-5"
+    });
     expect(room.state.players.slice(1).every(player => player.hasKeptHand)).toBe(true);
 
     expect(room.declareMulligan("p1", "mulligan").roundResolved).toBe(true);
     expect(room.state.players[0]?.pendingBottomCount).toBe(1);
+    expect(room.seedLog[5]).toEqual({
+      sequence: 5, purpose: "mulligan", playerId: "p1", seed: "server-seed-6"
+    });
     const playerHand = room.state.players[0]?.hand ?? [];
     const bottomed = room.chooseBottomCards("p1", [playerHand[0]!]);
     expect(bottomed.pendingBottomByPlayer).toEqual({});

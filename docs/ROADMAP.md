@@ -32,7 +32,8 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Raccorder à l'UI mobile la main privée, les sorts serveur supportés et la défausse de cleanup.
 - [ ] Tester une partie complète sur appareils physiques.
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
-- [ ] Persistance durable, conservation des graines de pré-partie et rejeu après redémarrage.
+- [x] Capture serveur en mémoire des graines d'ouverture et de mulligan, hors vues client.
+- [ ] Persistance durable du snapshot, du journal et des graines; rejeu après redémarrage.
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.
 
 ## M2 — Fidélité du moteur ([issue #3](https://github.com/Alchemistio/MTGPOCKET/issues/3))

@@ -14,6 +14,13 @@ export type DeckSubmissionResult =
   | { accepted: true; allDecksSubmitted: boolean; revision: number }
   | { accepted: false; code: "UNKNOWN_PLAYER" | "DUPLICATE_SUBMISSION" | "INVALID_DECK"; issues?: readonly DeckIssue[] };
 
+export interface PregameSeedRecord {
+  sequence: number;
+  purpose: "opening-hand" | "mulligan";
+  playerId: string;
+  seed: string;
+}
+
 export interface MulliganProgress {
   roundResolved: boolean;
   readyToStart: boolean;
@@ -28,6 +35,7 @@ export class PregameCoordinator {
   private currentState: GameState;
   private readonly submittedDecks = new Map<string, CommanderDeckList>();
   private readonly mulliganDeclarations = new Map<string, "keep" | "mulligan">();
+  private readonly generatedSeeds: PregameSeedRecord[] = [];
 
   constructor(
     gameId: string,
@@ -41,6 +49,27 @@ export class PregameCoordinator {
 
   get state(): GameState {
     return this.currentState;
+  }
+
+  /** Server-only deterministic replay material; never included in player views. */
+  get seedLog(): readonly PregameSeedRecord[] {
+    return this.generatedSeeds.map(record => ({ ...record }));
+  }
+
+  private createSeeds(purpose: PregameSeedRecord["purpose"], playerIds: readonly string[]) {
+    const records = playerIds.map((playerId, index): PregameSeedRecord => ({
+      sequence: this.generatedSeeds.length + index,
+      purpose,
+      playerId,
+      seed: this.seedFactory()
+    }));
+    if (records.some(record => record.seed.trim().length === 0)) {
+      throw new Error("INVALID_RANDOM_SEED");
+    }
+    return {
+      records,
+      seeds: Object.fromEntries(records.map(record => [record.playerId, record.seed]))
+    };
   }
 
   submitDeck(playerId: string, deck: CommanderDeckList): DeckSubmissionResult {
@@ -86,8 +115,9 @@ export class PregameCoordinator {
         });
       }
       next = placeCommandersInCommandZone(next, commandersByPlayer);
-      const seeds = Object.fromEntries(this.players.map(player => [player.id, this.seedFactory()]));
-      next = initializeOpeningHands(next, seeds);
+      const generated = this.createSeeds("opening-hand", this.players.map(player => player.id));
+      next = initializeOpeningHands(next, generated.seeds);
+      this.generatedSeeds.push(...generated.records);
     }
 
     this.currentState = next;
@@ -112,11 +142,13 @@ export class PregameCoordinator {
       playerId: item.id,
       action: this.mulliganDeclarations.get(item.id) as "keep" | "mulligan"
     }));
-    const seeds = Object.fromEntries(decisions
+    const mulliganPlayerIds = decisions
       .filter(decision => decision.action === "mulligan")
-      .map(decision => [decision.playerId, this.seedFactory()]));
-    const result = resolveMulliganRound(this.currentState, decisions, seeds);
+      .map(decision => decision.playerId);
+    const generated = this.createSeeds("mulligan", mulliganPlayerIds);
+    const result = resolveMulliganRound(this.currentState, decisions, generated.seeds);
     this.currentState = result.state;
+    this.generatedSeeds.push(...generated.records);
     this.mulliganDeclarations.clear();
     return this.progress(true);
   }
