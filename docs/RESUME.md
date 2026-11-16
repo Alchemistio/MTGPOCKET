@@ -5,38 +5,53 @@
 
 ## Repères
 - Repo: https://github.com/Alchemistio/MTGPOCKET
-- Branche: feat/commander-pocket-foundation
-- PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft; ne pas merger sans demande.
-- Dernier code : 7d6b320 capture côté serveur les graines d'ouverture et de mulligan en mémoire, sans les exposer aux vues client. CI run 43689458355 verte sur ce SHA (typecheck, Vitest, Python). Les délais réseau mobiles sont couverts par le commit précédent 8e9d305 et son run 43689300902.
-- PR #1 toujours draft; aucun merge.
+- Branche de travail: `feat/commander-pocket-foundation`
+- PR #1: https://github.com/Alchemistio/MTGPOCKET/pull/1 — draft, non mergée. Stabiliser avant merge ; aucun merge sans demande explicite.
 - Stack: pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
+- Décision produit/process: merger la fondation après une courte stabilisation. La couverture exhaustive des Comprehensive Rules n'est pas un prérequis ; elle reste incrémentale dans M2.
 
-## Fait — caveman
+## Dernier état connu
+- CI antérieure verte : run `43689458355` sur SHA `7d6b320983270638d829ec51995ca593cfa65f79`, jobs `validate` (typecheck + Vitest) et `python-data`. Ce run ne couvre PAS les commits de persistance ajoutés ensuite.
+- Dernière tranche de code ajoutée :
+  - `GameRoom.checkpoint` exporte une copie du snapshot autoritaire et du journal versionné.
+  - `GameRoom.restore` reconstruit la salle en rejouant chaque commande acceptée et vérifie versions, révisions et résultats.
+  - `JsonFileRoomPersistence` écrit des enregistrements JSON versionnés par écriture temporaire + fsync + rename ; répertoire 0700, fichiers 0600.
+  - Les jetons de siège sont stockés uniquement sous forme de hash SHA-256 ; les jetons bruts restent remis aux clients à la création et ne sont pas persistés.
+  - `RoomRegistry` restaure les salles au démarrage, persiste les commandes acceptées avant l'ACK WebSocket et restaure l'ancien checkpoint si l'écriture échoue.
+  - Au démarrage de la partie, le snapshot validé et le seed log de pré-partie sont persistés. Les seeds ne sont jamais projetés dans les vues joueur.
+  - Répertoire par défaut : `data/server-rooms`, exclu de Git.
+- Tests ajoutés pour restauration/rejeu du checkpoint, idempotence après redémarrage, intégrité du journal, stockage atomique, permissions, hash des jetons, persistance des seeds et rollback si le disque échoue. Résultat CI de ces nouveaux tests à vérifier.
+
+## Fait précédemment
 - 4 sièges, salle LAN, jetons, WebSocket, vues privées par siège.
 - Moteur: tours/phases/priorité/pile de base; PV, pioche, taxes, commandant, élimination.
 - Pré-partie serveur + transport: deck, mulligan, bottom, start; après start, le GameRoom reçoit le même état validé, les mains et instances, et démarre à upkeep avec priorité.
-- Journal mémoire des commandes acceptées et replay déterministe depuis le snapshot de départ; chaque entrée porte les versions moteur/protocole. Le GameRoom résout la pile après passes unanimes si un handler serveur déterministe est configuré.
-- Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder minimal + modal pré-partie. La vue réseau expose désormais `status` (`pregame`/`active`/`finished`) ; l'écran ne quitte la pré-partie qu'à `active`.
+- Test WebSocket automatisé à quatre sièges : decks, keep, démarrage, mains privées et première passe.
+- Mobile: plateau paysage, télémétrie, client LAN, recherche Scryfall, deckbuilder minimal + modal pré-partie.
 - Données: cache SQLite mobile; import MTGJSON Python.
-- Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed (IDs, références catalogue, doublons, paires, dates calendaires strictes).
+- Catalogue serveur: loader snapshot Scryfall + policy Commander versionnée; validation fail closed.
 - Générateur bulk Scryfall streaming: manifeste, default_cards, SHA-256, provenance, écriture atomique, tests.
-- Dernière CI complète : run 43689458355 sur 7d6b320, verte; aucun appareil testé.
 
-## Bloqueurs
-- Snapshot réel non généré/provisionné; policy Commander réelle non validée.
-- Policy éligibilité/banlist/partenaires doit être maintenue explicitement; pas de source officielle importée automatiquement.
-- Partie complète non prouvée. Le bootstrap active un sous-ensemble d'effets uniquement si catalogue + policy sont provisionnés : instant/rituel normal, coûts simples, sans cible, texte Oracle exact « Draw a card/two/three cards » ou « You gain N life ». Permanents, cibles, coûts hybrides/phyrexians/X/snow, autres textes, combat détaillé et SBA incomplets. Le journal n'est pas encore persistant et ne survit pas à un redémarrage; les graines d'ouverture/mulligan sont capturées en mémoire côté serveur mais pas encore persistées. Un test WebSocket à quatre clients couvre la pré-partie et la première passe; aucun test sur quatre appareils physiques.
-- Le client réseau borne les délais de connexion et de handshake; le panneau pré-partie déverrouille l'UI et signale la déconnexion. Les actions pré-partie expirent après 10 s et imposent une reconnexion avant nouvel envoi; pas de reprise/réauthentification automatique. Aucun test sur appareils physiques.
-- Découverte LAN, reconnexion, sécurité production absentes.
-- Ne jamais exposer GameState brut ni mains adverses.
+## Bloqueurs et limites
+- La persistance est nouvellement câblée mais pas encore validée par CI sur le SHA courant.
+- L'état intermédiaire de pré-partie (decks soumis, déclarations keep/mulligan, bottom choices) n'est pas encore persisté. Le seed log est durablement écrit au démarrage de la partie, pas avant.
+- La restauration des sorts/effets exige que le serveur redémarre avec le même catalogue et les mêmes handlers déterministes ; en cas de mismatch de version/résultat, la restauration échoue volontairement.
+- La reconnexion/réauthentification automatique mobile n'est pas implémentée.
+- Snapshot réel Scryfall non provisionné ; policy Commander réelle non validée.
+- Le jeu n'est pas complet : seuls quelques effets exacts sont pris en charge ; permanents, cibles, coûts avancés, combat détaillé et SBA générales restent incomplets.
+- Aucun test sur appareils physiques ; aucun test LAN à quatre téléphones.
 
-## Prochain
-1. Étendre prudemment le registre d'effets avec des cartes et cas de test vérifiés; ajouter génération de mana/terrains et commandes de capacités.
-2. Persister durablement le snapshot, le journal de commandes et le seed log; permettre le rejeu après redémarrage.
-3. Générer le snapshot Scryfall réel et curater la policy Commander officielle.
+## Prochaines actions — ordre recommandé
+1. Lire les logs CI du dernier commit de code et corriger toute erreur de typecheck/test.
+2. Compléter un test de redémarrage de serveur réel : création de salle, commande acceptée, arrêt, nouveau registre, réauthentification par token et rejeu exact.
+3. Persister les transitions de pré-partie et leurs seeds au fil des actions, sans exposer de données privées.
+4. Implémenter reconnexion/réauthentification mobile et synchronisation depuis la vue serveur restaurée.
+5. Test physique minimum à deux appareils sur le même Wi-Fi ; viser quatre appareils.
+6. Revoir le diff et les critères M0.5, puis demander le merge de PR #1 lorsque le gate est satisfait.
 
 ## Règles
-- Workflow: DEVELOPMENT_WORKFLOW.md; avant d'attendre CI, vérifier et terminer toutes les actions indépendantes possibles. Ne pas s'arrêter si du travail sûr reste.
+- Workflow: DEVELOPMENT_WORKFLOW.md; avant d'attendre CI, vérifier et terminer toutes les actions indépendantes possibles.
 - CI commit exact; codé ≠ CI ≠ appareil testé.
-- Mettre ce fichier à jour après chaque avancée; caveman, état courant seulement.
-- PR draft; pas de merge sans demande.
+- Mettre ce fichier à jour après chaque avancée; état courant seulement.
+- PR #1 reste draft et non mergée sans demande explicite.
+- Ne jamais exposer GameState brut, les mains adverses, les hashes/jetons de siège ou les seeds aux clients.
