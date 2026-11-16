@@ -78,19 +78,27 @@ export class GameRoom {
     resolveCard?: CardDefinitionResolver,
     supportsSpell?: CardSpellSupport
   ): GameRoom {
-    if (checkpoint.schemaVersion !== 1 || checkpoint.gameId !== checkpoint.snapshot.id ||
-        !Array.isArray(checkpoint.events)) {
+    if (!isRecord(checkpoint) || checkpoint.schemaVersion !== 1 ||
+        typeof checkpoint.gameId !== "string" || !isRecord(checkpoint.snapshot) ||
+        checkpoint.gameId !== checkpoint.snapshot.id ||
+        !Array.isArray(checkpoint.snapshot.players) || !Array.isArray(checkpoint.events)) {
       throw new Error("INVALID_ROOM_CHECKPOINT");
     }
     const snapshot = cloneGameState(checkpoint.snapshot);
     const players = snapshot.players.map(({ id, name, seat }) => ({ id, name, seat }));
     const room = new GameRoom(checkpoint.gameId, players, snapshot, resolveStackEffect, resolveCard, supportsSpell);
-    for (const event of checkpoint.events) {
+    for (const rawEvent of checkpoint.events as readonly unknown[]) {
+      if (!isRecord(rawEvent) || !isRecord(rawEvent.payload) ||
+          !isRecord(rawEvent.payload.command) || !isRecord(rawEvent.payload.result)) {
+        throw new Error("INVALID_ROOM_EVENT");
+      }
+      const event = rawEvent as unknown as PersistedRoomEvent;
       if (event.protocolVersion !== 1 || event.gameId !== checkpoint.gameId ||
           event.type !== "command-applied" || event.payload.engineVersion !== GAME_ENGINE_VERSION ||
           event.payload.snapshotRevision !== snapshot.revision ||
           event.payload.command.protocolVersion !== event.protocolVersion ||
-          event.payload.command.gameId !== checkpoint.gameId) {
+          event.payload.command.gameId !== checkpoint.gameId ||
+          event.eventId !== `${event.payload.command.playerId}:${event.payload.command.commandId}`) {
         throw new Error("UNSUPPORTED_EVENT_LOG_VERSION");
       }
       const result = room.apply(event.payload.command);
@@ -107,9 +115,11 @@ export class GameRoom {
     const base = cloneGameState(this.replayBaseState);
     const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
     for (const event of this.events) {
-      if (event.protocolVersion !== 1 || event.payload.engineVersion !== GAME_ENGINE_VERSION ||
+      if (event.protocolVersion !== 1 || event.gameId !== this.id || event.type !== "command-applied" ||
+          event.payload.engineVersion !== GAME_ENGINE_VERSION ||
           event.payload.snapshotRevision !== this.replayBaseState.revision ||
-          event.payload.command.protocolVersion !== event.protocolVersion) {
+          event.payload.command.protocolVersion !== event.protocolVersion ||
+          event.eventId !== `${event.payload.command.playerId}:${event.payload.command.commandId}`) {
         throw new Error("UNSUPPORTED_EVENT_LOG_VERSION");
       }
       const result = replayRoom.apply(event.payload.command);
