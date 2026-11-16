@@ -289,7 +289,10 @@ describe("GameRoom", () => {
       }
     };
     expect(supportsBasicSpell(definition)).toBe(true);
+    expect(supportsBasicSpell({ ...definition, typeLine: "Artifact" })).toBe(true);
+    expect(supportsBasicSpell({ ...definition, typeLine: "Enchantment" })).toBe(true);
     expect(supportsBasicSpell({ ...definition, oracleText: "Flying" })).toBe(false);
+    expect(supportsBasicSpell({ ...definition, layout: "transform" })).toBe(false);
 
     const initialGame = advanceAutomaticStep(createGame("room-1", players));
     const base: GameState = {
