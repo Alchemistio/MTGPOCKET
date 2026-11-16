@@ -13,6 +13,7 @@ export interface MobileHandCardView {
   isCommander: boolean;
   isSupportedSpell: boolean;
   isSupportedPermanent: boolean;
+  isSupportedLand: boolean;
 }
 
 export interface MobileStackItemView {
@@ -60,6 +61,7 @@ export interface MobileGameView {
     battlefieldCards: readonly MobileBattlefieldCardView[];
     commanderCastCount: Readonly<Record<string, number>>;
     manaPool: Readonly<Record<string, number>>;
+    landsPlayedThisTurn: number;
     isEliminated: boolean;
   }[];
 }
