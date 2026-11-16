@@ -117,4 +117,4 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Le sort permanent résout vers le champ de bataille ; le trigger est ensuite ajouté comme `triggered-ability` distinct, avant la priorité, avec source et contrôleur conservés.
 - La résolution du trigger pioche une carte ; tests de pile, ordre, rejeu déterministe et restauration checkpoint.
 - `player-view.test.ts` : l'ETB supporté est signalé jouable dans la main privée du propriétaire ; aucune main adverse n'est exposée.
-- Limites : un seul trigger simple, sans cible ni choix ; APNAP, triggers simultanés et déclenchements d'autres événements non couverts. CI à confirmer sur le SHA de cette tranche.
+- Limites : un seul trigger simple, sans cible ni choix ; APNAP, triggers simultanés et déclenchements d'autres événements non couverts. CI verte : run `43872357368`, SHA `76151c7` ; typecheck, 55 tests serveur, 30 moteur, 10 mobile et `python-data` réussis. Le test WebSocket quatre sièges couvre aussi l'empilement et la résolution du trigger ETB.
