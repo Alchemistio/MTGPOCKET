@@ -560,7 +560,11 @@ describe("GameRoom", () => {
     const checkpoint = room.checkpoint;
     const legacySnapshot = {
       ...checkpoint.snapshot,
-      players: checkpoint.snapshot.players.map(({ landsPlayedThisTurn: _ignored, ...player }) => player)
+      players: checkpoint.snapshot.players.map(player => {
+        const legacyPlayer = { ...player } as Record<string, unknown>;
+        delete legacyPlayer.landsPlayedThisTurn;
+        return legacyPlayer;
+      })
     };
     const legacyCheckpoint = { ...checkpoint, snapshot: legacySnapshot } as unknown as typeof checkpoint;
     const restored = GameRoom.restore(legacyCheckpoint);
