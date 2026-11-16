@@ -13,6 +13,7 @@ export interface HandCardView {
   isCommander: boolean;
   isSupportedSpell: boolean;
   isSupportedPermanent: boolean;
+  isSupportedLand: boolean;
 }
 
 export interface BattlefieldCardView {
@@ -45,6 +46,7 @@ export interface PlayerGameView {
   commanderCastCount: Readonly<Record<string, number>>;
   commanderDamageReceived: Readonly<Record<string, number>>;
   manaPool: Readonly<Record<string, number>>;
+  landsPlayedThisTurn: number;
   isEliminated: boolean;
 }
 
@@ -100,10 +102,13 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
         !/\b(?:Instant|Sorcery)\b/.test(typeLine) &&
         /\b(?:Creature|Artifact|Enchantment)\b/.test(typeLine) &&
         oracleText.trim().length === 0 && simpleManaCost && (!supportsSpell || supportsSpell(definition)));
+      const isSupportedLand = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
+        /\bBasic\b.*\bLand\b/.test(typeLine) &&
+        (manaCost === null || manaCost === "") && basicLandManaOptions(definition).length > 0);
       return [{
         instanceId, cardId: runtimeCard.card_id, name: definition?.name ?? runtimeCard.card_id,
         manaCost, typeLine, oracleText, layout, isCommander: runtimeCard.is_commander,
-        isSupportedSpell, isSupportedPermanent
+        isSupportedSpell, isSupportedPermanent, isSupportedLand
       }];
     }) : [],
     hasKeptHand: player.hasKeptHand,
@@ -130,6 +135,7 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
     commanderCastCount: { ...player.commanderCastCount },
     commanderDamageReceived: { ...player.commanderDamageReceived },
     manaPool: { ...player.manaPool },
+    landsPlayedThisTurn: player.landsPlayedThisTurn,
     isEliminated: player.isEliminated
   }));
   const visibleIds = new Set<string>();
