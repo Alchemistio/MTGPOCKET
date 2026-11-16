@@ -1,3 +1,12 @@
+## 2026-11-16 — Première tranche de lancement des permanents
+
+- Le serveur autorise désormais les créatures, artefacts et enchantements vanilla de layout normal, coût simple et texte Oracle vide.
+- Le lancement reste soumis à la priorité et au timing de rituel ; les permanents ne sont jouables que par le joueur actif en phase principale, pile vide.
+- Le sort passe par la pile ; après résolution, l'instance rejoint le champ de bataille sous le contrôle du lanceur au lieu d'aller au cimetière.
+- La vue privée expose `isSupportedPermanent` ; l'UI permet le lancement, respecte le timing de rituel et n'empêche pas l'auto-yield pour des permanents non jouables en réponse. Les permanents publics sont affichés en chips compacts dans chaque panneau.
+- Tests ajoutés pour lancement/paiement/résolution/rejeu, timing négatif et projection privée/publique. CI de ce HEAD à confirmer ; aucune validation appareil revendiquée.
+- Hors périmètre : capacités/ETB, commandants, terrains comme action spéciale, cibles, coûts avancés, layouts multi-face et combat.
+
 ## 2026-11-16 — CI verte du redémarrage OS et de la reprise complète
 
 - Run `43827956587`, SHA `1747a4a0540b62560efc58b8b626e7c4bea0f347` : `validate` et `python-data` réussis.
