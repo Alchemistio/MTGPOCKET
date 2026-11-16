@@ -52,6 +52,38 @@ describe("toPlayerView", () => {
     expect(toPlayerView(game, "p1").spellCastingAvailable).toBe(false);
   });
 
+  it("marks vanilla permanents as playable only in their owner's private hand view", () => {
+    let game = createGame("hand-permanent-view", players);
+    game = addCardInstance(game, {
+      instance_id: "private-creature", card_id: "scryfall-creature", owner_id: "p1", zone: "hand"
+    });
+    game = addCardInstance(game, {
+      instance_id: "public-creature", card_id: "scryfall-creature", owner_id: "p2", zone: "battlefield"
+    });
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "scryfall-creature", oracleId: "oracle-creature",
+      name: "Vanilla Creature", layout: "normal", manaCost: "{1}{G}", manaValue: 2,
+      typeLine: "Creature — Beast", oracleText: "", colors: ["G"], colorIdentity: ["G"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "scryfall-creature", name: "Vanilla Creature", layout: "normal", mana_cost: "{1}{G}",
+        cmc: 2, type_line: "Creature — Beast", oracle_text: "", colors: ["G"], color_identity: ["G"],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "8"
+      }
+    };
+    const resolveCard = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const ownerView = toPlayerView(game, "p1", resolveCard, true, () => true);
+    const opponentView = toPlayerView(game, "p2", resolveCard, true, () => true);
+    expect(ownerView.players[0]?.handCards[0]).toMatchObject({
+      instanceId: "private-creature", isSupportedSpell: false, isSupportedPermanent: true
+    });
+    expect(ownerView.players[1]?.handCards).toEqual([]);
+    expect(opponentView.players[0]?.handCards).toEqual([]);
+    expect(opponentView.players[1]?.battlefieldCards).toMatchObject([{
+      instanceId: "public-creature", name: "Vanilla Creature", isTapped: false
+    }]);
+  });
+
   it("shows a pending commander-return choice only to its owner", () => {
     let game = createGame("commander-choice-view", players);
     game = addCardInstance(game, { instance_id: "cmd1", card_id: "commander", owner_id: "p1", zone: "command", is_commander: true });
