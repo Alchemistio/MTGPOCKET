@@ -277,11 +277,24 @@ describe("WebSocket pregame transport", () => {
         set: "tst", collector_number: "13"
       }
     };
+    const missionary: CardDefinition = {
+      ...card("ws-lone-missionary", "Lone Missionary", "Creature — Kor Monk", ["W"]),
+      manaCost: "", manaValue: 0,
+      oracleText: "When Lone Missionary enters the battlefield, you gain 4 life.",
+      raw: {
+        id: "ws-lone-missionary", name: "Lone Missionary", layout: "normal", mana_cost: "",
+        cmc: 0, type_line: "Creature — Kor Monk",
+        oracle_text: "When Lone Missionary enters the battlefield, you gain 4 life.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "14"
+      }
+    };
     const libraryCard = card("ws-library-card", "Library Card", "Sorcery");
     const definitions = new Map([
       [plains.providerId, plains],
       [scout.providerId, scout],
       [wall.providerId, wall],
+      [missionary.providerId, missionary],
       [libraryCard.providerId, libraryCard]
     ]);
     const runtime = createCommanderPocketServer({
@@ -320,6 +333,9 @@ describe("WebSocket pregame transport", () => {
       });
       state = addCardInstance(state, {
         instance_id: "wall-instance", card_id: wall.providerId, owner_id: "p1", zone: "hand"
+      });
+      state = addCardInstance(state, {
+        instance_id: "missionary-instance", card_id: missionary.providerId, owner_id: "p1", zone: "hand"
       });
       state = addCardInstance(state, {
         instance_id: "library-instance", card_id: libraryCard.providerId, owner_id: "p1", zone: "library"
@@ -430,6 +446,25 @@ describe("WebSocket pregame transport", () => {
           expect(player.handCards).toEqual([]);
         }
       }
+
+      const missionaryCastViews = await sendCommand(0, "cast-missionary", "cast-spell", {
+        instanceId: "missionary-instance"
+      });
+      expect(missionaryCastViews.every(view => view.stack.length === 1)).toBe(true);
+      let lifeTriggerViews: TransportView[] = [];
+      for (const [index, playerId] of [0, 1, 2, 3].entries()) {
+        lifeTriggerViews = await sendCommand(playerId, "resolve-missionary-spell-" + index, "pass-priority");
+      }
+      expect(room.state.players[0]?.life).toBe(40);
+      expect(room.state.stack).toMatchObject([{
+        kind: "triggered-ability", controller_id: "p1", source_instance_id: "missionary-instance",
+        payload: { effect: "etb-gain-life", amount: 4, sourceName: "Lone Missionary" }
+      }]);
+      expect(lifeTriggerViews.every(view => view.stack.length === 1)).toBe(true);
+      for (const [index, playerId] of [0, 1, 2, 3].entries()) {
+        await sendCommand(playerId, "resolve-missionary-trigger-" + index, "pass-priority");
+      }
+      expect(room.state.players[0]?.life).toBe(44);
     } finally {
       await Promise.all(clients.map(client => new Promise<void>(resolve => {
         if (client.readyState === WebSocket.CLOSED) resolve();
