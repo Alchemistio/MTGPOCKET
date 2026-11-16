@@ -15,6 +15,8 @@
 - Les runs antérieurs `43826473231` et `43826793567` ont révélé deux assertions erronées dans le nouveau test mulligan ; elles ont été corrigées (premier mulligan gratuit, second mulligan, six cartes après bottom). Le run `43826978349` a validé la reprise pré-partie, `43827536943` la reconnexion mobile, puis `43827956587` l'ensemble avec le test OS.
 - Les commits après le SHA CI sont documentaires uniquement. Aucun test local n'a été exécuté depuis cet environnement.
 
+- Permanents vanilla : première tranche implémentée (créatures, artefacts, enchantements sans texte Oracle), paiement simple, timing de phase principale, pile puis champ de bataille ; UI mobile et projection publique/privée ajoutées. CI initiale `43867439926` a passé typecheck/Python mais échoué sur un fixture de test incomplet (`deckSetupComplete` manquant), corrigé dans `7601209`/`c8ff02a`. CI du HEAD corrigé à obtenir.
+
 ## État du code
 - Moteur initial Commander : setup, mulligan de Londres, phases/priorité/pile, pioche, mana basique, cleanup, pertes, taxe et quelques sorts supportés.
 - Pré-partie serveur + WebSocket/mobile : soumission des decks, validation par catalogue/policy serveur, mains privées, keep/mulligan, choix bottom, démarrage et première priorité.
