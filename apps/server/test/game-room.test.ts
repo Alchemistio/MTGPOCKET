@@ -275,6 +275,91 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
+  it("casts a vanilla creature during a main phase and puts it onto its controller's battlefield", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "vanilla-creature", oracleId: "vanilla-creature-oracle",
+      name: "Vanilla Scout", layout: "normal", manaCost: "{1}{W}", manaValue: 2,
+      typeLine: "Creature — Human Soldier", oracleText: "", colors: ["W"], colorIdentity: ["W"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "vanilla-creature", oracle_id: "vanilla-creature-oracle", name: "Vanilla Scout",
+        layout: "normal", mana_cost: "{1}{W}", cmc: 2, type_line: "Creature — Human Soldier",
+        oracle_text: "", colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "6"
+      }
+    };
+    expect(supportsBasicSpell(definition)).toBe(true);
+    expect(supportsBasicSpell({ ...definition, oracleText: "Flying" })).toBe(false);
+
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = {
+      ...initialGame, deckSetupComplete: true, phase: "precombat-main", step: "main-1",
+      players: initialGame.players.map(player => player.id === "p1"
+        ? { ...player, manaPool: { W: 1, C: 1 } }
+        : player)
+    };
+    const initial = addCardInstance(base, {
+      instance_id: "vanilla-scout", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-vanilla-creature",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "vanilla-scout" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    expect(room.state.cards["vanilla-scout"]?.zone).toBe("stack");
+    expect(room.state.players[0]?.manaPool).toEqual({ W: 0, C: 0 });
+
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "vanilla-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.cards["vanilla-scout"]).toMatchObject({
+      zone: "battlefield", owner_id: "p1", controller_id: "p1", is_tapped: false
+    });
+    expect(room.state.players[0]?.battlefield).toContain("vanilla-scout");
+    expect(room.state.players[0]?.graveyard).not.toContain("vanilla-scout");
+    expect(room.replay()).toEqual(room.state);
+  });
+
+  it("rejects a permanent spell outside its controller's main phase without spending mana", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "timing-creature", oracleId: "timing-creature-oracle",
+      name: "Timing Creature", layout: "normal", manaCost: "{W}", manaValue: 1,
+      typeLine: "Creature — Soldier", oracleText: "", colors: ["W"], colorIdentity: ["W"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "timing-creature", name: "Timing Creature", layout: "normal", mana_cost: "{W}", cmc: 1,
+        type_line: "Creature — Soldier", oracle_text: "", colors: ["W"], color_identity: ["W"],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "7"
+      }
+    };
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = {
+      ...initialGame,
+      players: initialGame.players.map(player => player.id === "p1"
+        ? { ...player, manaPool: { W: 1 } }
+        : player)
+    };
+    const initial = addCardInstance(base, {
+      instance_id: "timing-creature-instance", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const result = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-at-upkeep",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "timing-creature-instance" }
+    });
+    expect(result).toMatchObject({ accepted: false, code: "PERMANENT_TIMING" });
+    expect(room.state.players[0]?.manaPool.W).toBe(1);
+    expect(room.state.cards["timing-creature-instance"]?.zone).toBe("hand");
+  });
+
   it("resolves a supported life-gain instant without treating unknown text as a no-op", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "life-gain-id", oracleId: "life-gain-oracle",
