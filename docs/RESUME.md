@@ -37,6 +37,8 @@
 
 - Tranche suivante en cours : lancement des permanents vanilla (créatures, artefacts, enchantements sans texte Oracle), timing de phase principale, paiement générique/coloré, passage par la pile et arrivée sur le champ de bataille. UI mobile : action de jeu et affichage compact des permanents publics. Tests ajoutés ; CI de ce nouveau code à confirmer.
 
+- Action spéciale « jouer un terrain de base » ajoutée : un par tour, joueur actif en phase principale avec priorité et pile vide ; déplacement direct sur le champ de bataille sans pile/paiement. Compteur visible et UI mobile mis à jour. Migrations rétrocompatibles des checkpoints salle/pré-partie. CI de cette tranche en cours ; tests physiques non effectués.
+
 ## Limites et blocages
 - Aucun test sur appareils physiques ni LAN réel à deux/quatre téléphones.
 - Découverte LAN et TLS/gestion de secrets de production non implémentées.
