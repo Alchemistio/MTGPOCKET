@@ -171,7 +171,7 @@ def main() -> None:
             "term": term,
             "summary": summary,
             "definition": definition,
-            "keywords": list(dict.fromkeys(words(term + " " + definition)))[:10],
+            "keywords": list(dict.fromkeys([term.lower()] + words(term + " " + definition)))[:10],
             "referenced_rule_ids": sorted(set(REFERENCE_RE.findall(definition))),
             "source_location": {
                 "line_start": start + 1,
