@@ -10,7 +10,7 @@
 - Stack : pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Dernière validation connue
-- CI verte du HEAD documentaire précédent : run `43869851686`, SHA `649e56390b48b27a499d38a1a2b9711f8c00da2e` (`validate` + `python-data`). La tranche ETB ajoutée dans le commit suivant attend sa propre CI.
+- Dernière CI verte sur le code ETB + intégration WebSocket : run `43872357368`, SHA `76151c79384ca6018e81b47fdc1534d51eeb18ff` (`validate` + `python-data`). Typecheck, 55 tests serveur, 30 moteur, 10 mobile et Python data réussis. Les commits documentaires suivants ne changent pas le code.
 - Dernière CI de code validée avant ETB : run `43869469546`, SHA `d163da9` (`validate` + `python-data`), couvrant les permanents vanilla, la pose de terrain de base, les migrations de checkpoints, la reconnexion et le redémarrage OS.
 - Cette CI couvre : persistance de salle, reprise pré-partie, initialisation du checkpoint à create-room, vue restaurée au rejoin, reconnexion mobile automatique et test de redémarrage réel du processus Node avec SIGKILL/restart, réauthentification et rejeu idempotent.
 - Les runs antérieurs `43826473231` et `43826793567` ont révélé deux assertions erronées dans le nouveau test mulligan ; elles ont été corrigées (premier mulligan gratuit, second mulligan, six cartes après bottom). Le run `43826978349` a validé la reprise pré-partie, `43827536943` la reconnexion mobile, puis `43827956587` l'ensemble avec le test OS.
