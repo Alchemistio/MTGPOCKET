@@ -46,6 +46,37 @@ describe("RoomRegistry", () => {
     }
   });
 
+  it("persists the post-pregame snapshot and server-only shuffle seeds", () => {
+    const directory = mkdtempSync(join(tmpdir(), "commander-pocket-seeds-"));
+    try {
+      const persistence = new JsonFileRoomPersistence(directory);
+      const registry = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const { room } = registry.create("seeded-g1", players);
+      const activeState = {
+        ...room.state,
+        revision: room.state.revision + 1,
+        status: "active" as const,
+        deckSetupComplete: true,
+        phase: "beginning" as const,
+        step: "upkeep" as const,
+        priorityPlayerId: "p1"
+      };
+      const seedLog = [
+        { sequence: 0, purpose: "opening-hand" as const, playerId: "p1", seed: "opening-seed" },
+        { sequence: 1, purpose: "mulligan" as const, playerId: "p2", seed: "mulligan-seed" }
+      ];
+      registry.replaceStateFromPregame("seeded-g1", activeState, seedLog);
+      const persisted = persistence.loadAll()[0];
+      expect(persisted?.checkpoint.snapshot).toEqual(activeState);
+      expect(persisted?.seedLog).toEqual(seedLog);
+
+      const restored = new RoomRegistry(undefined, undefined, undefined, persistence);
+      expect(restored.get("seeded-g1")?.state).toEqual(activeState);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("rolls back an accepted command when durable persistence fails", () => {
     let saves = 0;
     const persistence: RoomPersistence = {
