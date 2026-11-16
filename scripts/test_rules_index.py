@@ -58,7 +58,7 @@ class ComprehensiveRulesIndexTests(unittest.TestCase):
             end = loc["line_end"] - 1
             self.assertEqual(self.lines[start].strip(), row["term"])
             byte_start = sum(len(line) for line in self.raw_lines[:start])
-            byte_end = byte_start + sum(len(line) for line in self.raw_lines[start:end]) + len(self.raw_lines[end].rstrip(b"\\r\\n"))
+            byte_end = byte_start + sum(len(line) for line in self.raw_lines[start:end]) + len(self.raw_lines[end].rstrip(b"\r\n"))
             self.assertEqual(loc["utf8_byte_start"], byte_start)
             self.assertEqual(loc["utf8_byte_end_exclusive"], byte_end)
 
