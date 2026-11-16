@@ -10,12 +10,12 @@
 - Stack : pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Dernière validation connue
-- CI verte : run `43827956587`, SHA `1747a4a0540b62560efc58b8b626e7c4bea0f347`, jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+- CI verte sur la fondation : run `43827956587`, SHA `1747a4a0540b62560efc58b8b626e7c4bea0f347`. Pour la première tranche de permanents vanilla, run `43867856511`, SHA `f93d82b2e769b991b87a9fb074c57b9bbc78c196`, jobs `validate` et `python-data` réussis.
 - Cette CI couvre : persistance de salle, reprise pré-partie, initialisation du checkpoint à create-room, vue restaurée au rejoin, reconnexion mobile automatique et test de redémarrage réel du processus Node avec SIGKILL/restart, réauthentification et rejeu idempotent.
 - Les runs antérieurs `43826473231` et `43826793567` ont révélé deux assertions erronées dans le nouveau test mulligan ; elles ont été corrigées (premier mulligan gratuit, second mulligan, six cartes après bottom). Le run `43826978349` a validé la reprise pré-partie, `43827536943` la reconnexion mobile, puis `43827956587` l'ensemble avec le test OS.
 - Les commits après le SHA CI sont documentaires uniquement. Aucun test local n'a été exécuté depuis cet environnement.
 
-- Permanents vanilla : première tranche implémentée (créatures, artefacts, enchantements sans texte Oracle), paiement simple, timing de phase principale, pile puis champ de bataille ; UI mobile et projection publique/privée ajoutées. CI initiale `43867439926` a passé typecheck/Python mais échoué sur un fixture de test incomplet (`deckSetupComplete` manquant), corrigé dans `7601209`/`c8ff02a`. CI du HEAD corrigé à obtenir.
+- Permanents vanilla : première tranche implémentée (créatures, artefacts, enchantements sans texte Oracle), paiement simple, timing de phase principale, pile puis champ de bataille ; UI mobile et projection publique/privée ajoutées. CI initiale `43867439926` a passé typecheck/Python mais échoué sur un fixture de test incomplet (`deckSetupComplete` manquant), corrigé dans `7601209`/`c8ff02a`. Le test WebSocket quatre sièges du lancement de permanent a été ajouté ensuite ; CI sur le HEAD actuel encore à obtenir.
 
 ## État du code
 - Moteur initial Commander : setup, mulligan de Londres, phases/priorité/pile, pioche, mana basique, cleanup, pertes, taxe et quelques sorts supportés.
