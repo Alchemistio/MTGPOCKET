@@ -88,6 +88,10 @@ export class GameRoom {
       throw new Error("INVALID_ROOM_CHECKPOINT");
     }
     const snapshot = cloneGameState(checkpoint.snapshot);
+    // Backward-compatible migration for persisted rooms created before land-play tracking.
+    snapshot.players = snapshot.players.map(player => ({
+      ...player, landsPlayedThisTurn: player.landsPlayedThisTurn ?? 0
+    }));
     const players = snapshot.players.map(({ id, name, seat }) => ({ id, name, seat }));
     const room = new GameRoom(checkpoint.gameId, players, snapshot, resolveStackEffect, resolveCard, supportsSpell);
     for (const rawEvent of checkpoint.events as readonly unknown[]) {
