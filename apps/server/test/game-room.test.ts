@@ -327,6 +327,13 @@ describe("GameRoom", () => {
     expect(room.state.players[0]?.battlefield).toContain("vanilla-scout");
     expect(room.state.players[0]?.graveyard).not.toContain("vanilla-scout");
     expect(room.replay()).toEqual(room.state);
+    const restored = GameRoom.restore(
+      room.checkpoint,
+      resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined,
+      supportsBasicSpell
+    );
+    expect(restored.state).toEqual(room.state);
   });
 
   it("rejects a permanent spell outside its controller's main phase without spending mana", () => {
