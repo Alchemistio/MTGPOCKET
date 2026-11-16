@@ -35,6 +35,7 @@ describe("RoomRegistry", () => {
       expect(accepted.accepted).toBe(true);
 
       const restoredRegistry = new RoomRegistry(undefined, undefined, undefined, persistence);
+      expect(restoredRegistry.wasRestored("persisted-g1")).toBe(true);
       const restored = restoredRegistry.authenticate("persisted-g1", "p1", alice.token);
       expect(restored).not.toBeNull();
       expect(restored!.state).toEqual(room.state);
