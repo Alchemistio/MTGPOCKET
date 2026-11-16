@@ -1,8 +1,12 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
 import { PregameCoordinator } from "../src/pregame-coordinator.js";
 import { PregameSessionRegistry } from "../src/pregame-session-registry.js";
 import { RoomRegistry } from "../src/room-registry.js";
+import { JsonFileRoomPersistence } from "../src/room-persistence.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -77,6 +81,27 @@ describe("PregameSessionRegistry", () => {
     expect(sessions.declareMulligan("g1", "p2", secondCredentials.find(item => item.playerId === "p2")!.token, "keep"))
       .toEqual({ accepted: false, code: "UNAUTHENTICATED" });
     expect(sessions.declareMulligan("g1", "p2", bob.token, "keep").accepted).toBe(true);
+  });
+
+  it("refuses to recreate a volatile pregame coordinator after a server restart", () => {
+    const directory = mkdtempSync(join(tmpdir(), "commander-pocket-pregame-restart-"));
+    try {
+      const persistence = new JsonFileRoomPersistence(directory);
+      const originalRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const credentials = originalRooms.create("interrupted-pregame", players).credentials;
+      const restoredRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const sessions = new PregameSessionRegistry(restoredRooms, {
+        create: (gameId, setup) => new PregameCoordinator(gameId, setup, catalog, {
+          isCommanderEligible: candidate => candidate.providerId === "cmd"
+        })
+      });
+      const alice = credentials.find(item => item.playerId === "p1")!;
+      expect(sessions.submitDeck("interrupted-pregame", "p1", alice.token, deck)).toEqual({
+        accepted: false, code: "UNAUTHENTICATED"
+      });
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it("does not start until the coordinator confirms all players kept and bottomed", () => {
