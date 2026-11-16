@@ -21,3 +21,6 @@ __pycache__/
 .pytest_cache/
 data/bulk/
 data/snapshots/
+
+# Authoritative game snapshots, private hands, seat-token hashes and RNG seeds
+data/server-rooms/
