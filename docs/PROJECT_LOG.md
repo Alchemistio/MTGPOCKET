@@ -1,3 +1,9 @@
+## 2026-11-16 — CI verte sur la reconnexion automatique mobile
+
+- Run `43827536943`, SHA `3a95375958dc6c7607a8bf2d90808b8547642593` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+- Cette CI couvre le client mobile avec reconnexion/réauthentification par jeton, retry exponentiel, resynchronisation de la vue et tests de déconnexion manuelle.
+- Des commits ultérieurs initialisent aussi le checkpoint pré-partie dès la création de salle ; ils nécessitent un run CI supplémentaire.
+
 ## 2026-11-16 — CI verte sur la reprise pré-partie et le rejoin serveur
 
 - Run `43826978349`, SHA `82eb67098d73af863cadd4e64da3b7b4d0a14e3f` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
