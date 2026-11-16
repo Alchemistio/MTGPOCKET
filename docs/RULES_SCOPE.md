@@ -23,6 +23,10 @@ La référence de travail est le PDF Comprehensive Rules fourni avec le projet, 
 6. **CR 800.4** : départ d'un joueur, objets possédés/contrôlés par d'autres joueurs, effets continus et cas de remplacement.
 7. Capacités de cartes : coûts, cibles, choix, couches, copies, remplacement, prévention et effets continus.
 
+## Tranche de permanents implémentée — validation en cours
+
+Le code ajoute une première tranche volontairement restreinte : créatures, artefacts et enchantements vanilla avec coût simple et texte Oracle vide. Ils sont lancés en rituel pendant une phase principale du joueur actif, passent par la pile, puis rejoignent le champ de bataille sous le contrôle du lanceur après résolution. Les cartes multi-face, les permanents avec capacités/texte Oracle, les terrains joués comme action spéciale, les commandants, les cibles et les coûts avancés ne sont pas couverts par cette tranche. Les tests sont ajoutés ; ne considérer la tranche comme validée qu'après CI verte sur le SHA correspondant.
+
 ## Processus
 Référence → modèle de données → commande/transition → test positif → test négatif → test de régression → mise à jour de cette matrice. Distinguer règle générale, règle de format, capacité Oracle et effet réellement implémenté. Ne jamais exécuter du texte Oracle comme du code arbitraire.
 
