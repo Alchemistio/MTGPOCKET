@@ -49,7 +49,7 @@ Lorsque catalogue et policy sont tous deux configurés, le bootstrap injecte une
 - Instants/rituels de layout `normal`, coût simple (symboles W/U/B/R/G/C et générique numérique), sans cible, avec texte Oracle exact : `Draw a card.`, `Draw two cards.`, `Draw three cards.` ou `You gain N life.`.
 - Créatures, artefacts et enchantements vanilla de layout `normal`, coût simple et texte Oracle vide. Ils ne peuvent être lancés que par le joueur actif en phase principale, pile vide ; après résolution, ils arrivent sur le champ de bataille sous le contrôle du lanceur.
 
-Les permanents avec capacités ou texte Oracle, cartes multi-face, commandants, terrains joués comme action spéciale, cibles et coûts avancés ne sont pas pris en charge par cette tranche. Les autres textes ne sont pas interprétés et ne doivent jamais être traités comme des effets résolus. Étendre cette liste seulement avec un handler et des tests dédiés.
+Les terrains de base de layout normal peuvent également être joués depuis la main via l'action spéciale `play-land` : joueur actif, phase principale, priorité, pile vide, une pose par tour, sans pile ni paiement. Les terrains non basiques, les terrains multi-face ou avec effets d'arrivée restent hors périmètre. Les permanents avec capacités ou texte Oracle, cartes multi-face, commandants, cibles et coûts avancés ne sont pas pris en charge par cette tranche. Les autres textes ne sont pas interprétés et ne doivent jamais être traités comme des effets résolus. Étendre cette liste seulement avec un handler et des tests dédiés.
 
 ## Persistance des salles et reprise serveur
 
