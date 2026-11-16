@@ -1,3 +1,9 @@
+## 2026-11-16 — CI verte sur la reprise pré-partie et le rejoin serveur
+
+- Run `43826978349`, SHA `82eb67098d73af863cadd4e64da3b7b4d0a14e3f` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+- Cette CI couvre les checkpoints pré-partie, le rollback, la reconstruction du runtime WebSocket et le renvoi de la vue pré-partie restaurée.
+- La reconnexion automatique mobile a été développée après ce SHA ; sa propre CI reste nécessaire.
+
 ## 2026-11-16 — Reconnexion automatique du client mobile
 
 - `RoomClient` mémorise en mémoire l'URL et les credentials du siège après création/rejoindre.
