@@ -18,8 +18,8 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SOURCE = ROOT / "source" / "MagicCompRules_20261106.txt"
-OUT = ROOT / "index"
+DEFAULT_SOURCE = ROOT / "Rules_Engine" / "source" / "MagicCompRules_20261106.txt"
+OUT = ROOT / "Rules_Engine" / "index"
 RULE_RE = re.compile(r"^(\d{3}\.\d+[a-z]?)\.?\s+(.+)$")
 SECTION_RE = re.compile(r"^(\d{3})\.\s+(.+)$")
 CHAPTER_RE = re.compile(r"^([1-9])\.\s+(.+)$")
@@ -32,7 +32,7 @@ i if in into is it its itself may me more most must my neither no nor not of off
 once only or other our out over own same she should so some such than that the their
 theirs them themselves then there these they this those through to too under until up
 upon us very was we were what when where which while who whom why will with within
-without would you your yours magic rule rules section example note notes see
+without would you your yours magic rule rules section example note notes see object objects player players game games ability abilities card cards
 """.split())
 
 
@@ -117,16 +117,14 @@ def main() -> None:
                 token,
             ),
         )
-        section_words = words(section)
-        ordered = list(dict.fromkeys(section_words + ranked))
-        return ordered[:8]
+        return ranked[:8]
 
     source_name = source.name
     for item in records:
         if item["kind"] == "rule":
             kw = keywords(item["paragraph"], item["section_title"])
             item["summary"] = (
-                "Thématique : " + ", ".join(kw[:4])
+                "Précise les interactions liées à " + ", ".join(kw[:4])
                 + ". Consulter le paragraphe source pour les conditions et exceptions exactes."
             )
             item["keywords"] = kw
