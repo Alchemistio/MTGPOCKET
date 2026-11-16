@@ -4,6 +4,7 @@ import { RoomClient } from "../src/network/room-client.js";
 class FakeSocket {
   readyState = 0;
   sent: string[] = [];
+  onSend?: (payload: string) => void;
   private listeners = new Map<string, Set<(event: any) => void>>();
 
   addEventListener(type: string, listener: (event: any) => void) {
@@ -16,7 +17,7 @@ class FakeSocket {
     this.listeners.get(type)?.delete(listener);
   }
 
-  send(payload: string) { this.sent.push(payload); }
+  send(payload: string) { this.sent.push(payload); this.onSend?.(payload); }
   close() {
     this.readyState = 3;
     this.dispatch("close", { reason: "test close" });
@@ -169,6 +170,53 @@ describe("RoomClient", () => {
     await secondConnection;
     client.declareMulligan("keep");
     client.disconnect();
+  });
+
+  it("reconnects with the stored seat token and receives the authoritative room view", async () => {
+    const firstSocket = new FakeSocket();
+    const secondSocket = new FakeSocket();
+    secondSocket.onSend = payload => {
+      const message = JSON.parse(payload) as { type?: string };
+      if (message.type === "join-room") {
+        queueMicrotask(() => secondSocket.message({ type: "room-joined", view: { revision: 9, status: "active" } }));
+      }
+    };
+    let socketCount = 0;
+    const client = new RoomClient(() => {
+      socketCount += 1;
+      if (socketCount === 1) return firstSocket as unknown as WebSocket;
+      queueMicrotask(() => secondSocket.open());
+      return secondSocket as unknown as WebSocket;
+    }, 100, 1, 3);
+    const events: string[] = [];
+    client.onEvent(event => events.push(event.type));
+
+    const connected = client.connect("ws://127.0.0.1:3000/ws");
+    firstSocket.open();
+    await connected;
+    const joined = client.joinRoom("restartable-room", "p2", "seat-secret");
+    firstSocket.message({ type: "room-joined", view: { revision: 4, status: "pregame" } });
+    await joined;
+
+    const reconnected = new Promise<void>(resolve => {
+      const unsubscribe = client.onEvent(event => {
+        if (event.type === "reconnected") {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+    firstSocket.close();
+    await reconnected;
+
+    const reconnectMessage = secondSocket.sent.map(payload => JSON.parse(payload) as Record<string, unknown>)
+      .find(message => message.type === "join-room");
+    expect(reconnectMessage).toMatchObject({
+      type: "join-room", gameId: "restartable-room", playerId: "p2", token: "seat-secret"
+    });
+    expect(events.filter(type => type === "room-joined")).toHaveLength(2);
+    expect(events).toContain("reconnecting");
+    expect(events).toContain("reconnected");
   });
 
   it("rejects malformed server messages instead of trusting their shape", async () => {
