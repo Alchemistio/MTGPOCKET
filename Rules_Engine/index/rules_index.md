@@ -2,17 +2,17 @@
 
 Cet index couvre **tous les paragraphes de règles et sous-règles détectés**, ainsi que tous les titres de chapitre/section. Chaque entrée JSONL comprend un résumé thématique, des mots-clés et une position inclusive dans le fichier source courant.
 
-| Chapitre | Index JSONL |
-|---|---|
-| 1. Game Concepts | [rules_chapter_1.jsonl](rules_chapter_1.jsonl) |
-| 2. Parts of a Card | [rules_chapter_2.jsonl](rules_chapter_2.jsonl) |
-| 3. Card Types | [rules_chapter_3.jsonl](rules_chapter_3.jsonl) |
-| 4. Zones | [rules_chapter_4.jsonl](rules_chapter_4.jsonl) |
-| 5. Turn Structure | [rules_chapter_5.jsonl](rules_chapter_5.jsonl) |
-| 6. Spells, Abilities, and Effects | [rules_chapter_6.jsonl](rules_chapter_6.jsonl) |
-| 7. Additional Rules | [rules_chapter_7.jsonl](rules_chapter_7.jsonl) |
-| 8. Multiplayer Rules | [rules_chapter_8.jsonl](rules_chapter_8.jsonl) |
-| 9. Casual Variants | [rules_chapter_9.jsonl](rules_chapter_9.jsonl) |
+| Chapitre | Index JSONL | Entrées |
+|---|---|---:|
+| 1. Game Concepts | [rules_chapter_1.jsonl](rules_chapter_1.jsonl) | 531 |
+| 2. Parts of a Card | [rules_chapter_2.jsonl](rules_chapter_2.jsonl) | 135 |
+| 3. Card Types | [rules_chapter_3.jsonl](rules_chapter_3.jsonl) | 181 |
+| 4. Zones | [rules_chapter_4.jsonl](rules_chapter_4.jsonl) | 88 |
+| 5. Turn Structure | [rules_chapter_5.jsonl](rules_chapter_5.jsonl) | 166 |
+| 6. Spells, Abilities, and Effects | [rules_chapter_6.jsonl](rules_chapter_6.jsonl) | 337 |
+| 7. Additional Rules | [rules_chapter_7.jsonl](rules_chapter_7.jsonl) | 1 578 |
+| 8. Multiplayer Rules | [rules_chapter_8.jsonl](rules_chapter_8.jsonl) | 184 |
+| 9. Casual Variants | [rules_chapter_9.jsonl](rules_chapter_9.jsonl) | 139 |
 
 - [Glossary index — 744 terms](glossary_index.jsonl)
 - [Manifest and counts](index_manifest.json)
