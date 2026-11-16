@@ -324,6 +324,9 @@ describe("WebSocket pregame transport", () => {
       state = addCardInstance(state, {
         instance_id: "library-instance", card_id: libraryCard.providerId, owner_id: "p1", zone: "library"
       });
+      state = addCardInstance(state, {
+        instance_id: "etb-library-instance", card_id: libraryCard.providerId, owner_id: "p1", zone: "library"
+      });
       const room = runtime.rooms.get("ws-vanilla-permanent");
       if (!room) throw new Error("ROOM_NOT_FOUND");
       room.replaceStateFromPregame(state);
@@ -420,7 +423,7 @@ describe("WebSocket pregame transport", () => {
       for (const [index, playerId] of [0, 1, 2, 3].entries()) {
         resolvedViews = await sendCommand(playerId, "resolve-wall-trigger-" + index, "pass-priority");
       }
-      expect(room.state.players[0]?.hand).toContain("library-instance");
+      expect(room.state.players[0]?.hand).toContain("etb-library-instance");
       expect(room.state.stack).toHaveLength(0);
       for (const view of resolvedViews) {
         for (const player of view.players.filter(item => item.id !== "p1")) {
