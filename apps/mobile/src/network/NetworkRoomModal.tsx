@@ -12,6 +12,7 @@ export interface MobileHandCardView {
   layout: string;
   isCommander: boolean;
   isSupportedSpell: boolean;
+  isSupportedPermanent: boolean;
 }
 
 export interface MobileStackItemView {
