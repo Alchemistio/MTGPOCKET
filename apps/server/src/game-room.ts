@@ -203,7 +203,10 @@ export class GameRoom {
       } else if (result.outcome === "resolution-required") {
         if (this.resolveStackEffect) {
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
-            const resolved = this.resolveStackEffect!(state, item);
+            const payload = isRecord(item.payload) ? item.payload : {};
+            const resolved = item.kind === "spell" && payload.permanent === true && item.source_instance_id
+              ? moveCardToZone(state, item.source_instance_id, "battlefield", item.controller_id)
+              : this.resolveStackEffect!(state, item);
             if (item.kind === "spell" && item.source_instance_id &&
                 resolved.cards[item.source_instance_id]?.zone === "stack") {
               return moveCardToZone(resolved, item.source_instance_id, "graveyard");
@@ -302,12 +305,15 @@ export class GameRoom {
     if (definition.layout !== "normal") return this.reject(cacheKey, "UNSUPPORTED_CARD_LAYOUT");
     const isInstant = /\bInstant\b/.test(definition.typeLine);
     const isSorcery = /\bSorcery\b/.test(definition.typeLine);
-    if (!isInstant && !isSorcery) return this.reject(cacheKey, "UNSUPPORTED_SPELL_TYPE");
+    const isPermanent = !isInstant && !isSorcery &&
+      /\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine);
+    if (!isInstant && !isSorcery && !isPermanent) return this.reject(cacheKey, "UNSUPPORTED_SPELL_TYPE");
     if (/\btarget\b/i.test(definition.oracleText)) return this.reject(cacheKey, "TARGET_SELECTION_NOT_SUPPORTED");
-    if (isSorcery && (this.currentState.activePlayerId !== command.playerId ||
+    if (isPermanent && definition.oracleText.trim().length > 0) return this.reject(cacheKey, "UNSUPPORTED_PERMANENT_ABILITIES");
+    if ((isSorcery || isPermanent) && (this.currentState.activePlayerId !== command.playerId ||
         (this.currentState.phase !== "precombat-main" && this.currentState.phase !== "postcombat-main") ||
         this.currentState.stack.length > 0 || this.currentState.awaitingResolutionId !== null)) {
-      return this.reject(cacheKey, "SORCERY_TIMING");
+      return this.reject(cacheKey, isPermanent ? "PERMANENT_TIMING" : "SORCERY_TIMING");
     }
     const payment = paySimpleManaCost(this.currentState, command.playerId, definition.manaCost);
     if (!payment.ok) return this.reject(cacheKey, payment.code);
@@ -320,7 +326,8 @@ export class GameRoom {
         kind: "spell",
         payload: {
           cardId: definition.providerId, oracleId: definition.oracleId, name: definition.name,
-          typeLine: definition.typeLine, oracleText: definition.oracleText, manaCost: definition.manaCost
+          typeLine: definition.typeLine, oracleText: definition.oracleText, manaCost: definition.manaCost,
+          permanent: isPermanent
         }
       });
       this.currentState = nextState;
