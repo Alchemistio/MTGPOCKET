@@ -1,6 +1,6 @@
 # Matrice de tests et couverture
 
-Dernière revue : 2026-11-15. Cette matrice décrit les tests présents dans le dépôt, pas une certification complète des règles Magic.
+Dernière revue : 2026-11-16. Cette matrice décrit les tests présents dans le dépôt, pas une certification complète des règles Magic.
 
 ## Moteur de règles
 
@@ -19,7 +19,7 @@ Dernière revue : 2026-11-15. Cette matrice décrit les tests présents dans le 
 | Domaine | Tests | Ce qui est vérifié | Lacunes majeures |
 |---|---|---|---|
 | Salle LAN | `apps/server/test/game-room.test.ts`, `apps/server/test/room-registry.test.ts` | Island/Wastes tap-for-mana, anti double-tap, Divination/pioches, gain de vie, refus texte inconnu, instant/réponse, LIFO, cleanup, replay, checkpoint restauré, idempotence, persistance avant ACK et rollback disque | terrains non basiques, permanents non-terrain, cibles/contres, coûts avancés, crash de processus réel, persistance du seed log avant start, reconnexion |
-| Pré-partie | `apps/server/test/pregame-coordinator.test.ts`, `apps/server/test/pregame-session-registry.test.ts`, `apps/server/test/server-pregame-transport.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan, capture des graines côté serveur, transfert au GameRoom, vues privées à quatre sièges, première commande WebSocket et refus de recréer un coordinateur volatil après redémarrage | persistance des actions intermédiaires de pré-partie, tour complet avec sort/réponse/résolution/cleanup, catalogue/banlist de production |
+| Pré-partie | `apps/server/test/pregame-coordinator.test.ts`, `apps/server/test/pregame-session-registry.test.ts`, `apps/server/test/server-pregame-transport.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan, capture des graines côté serveur, transfert au GameRoom, vues privées à quatre sièges, première commande WebSocket, restauration des decks soumis/déclarations/choix bottom/seeds depuis checkpoint entre plusieurs reconstructions du registre | crash réel du processus serveur, tour complet avec sort/réponse/résolution/cleanup, catalogue/banlist de production |
 | Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé, statut explicite `pregame`/`active` | audit complet des champs sensibles et tests fuzz |
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, hash des jetons, restauration après redémarrage, persistance des seeds, rollback si écriture échoue | rotation/expiration des jetons, test multi-processus |
 | Persistance disque | `apps/server/test/room-persistence.test.ts` | round-trip versionné, écriture atomique, permissions 0600, absence de jeton brut, validation JSON/credentials/seeds | crash injection entre fsync/rename, corruption du snapshot complet, migrations de schéma |
@@ -63,3 +63,12 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 ## Persistance et reprise — ajout 2026-11-16
 
 Les tests de checkpoint, stockage disque et RoomRegistry passent dans le run 43806846271 ; le même run a échoué sur trois tests pré-partie à cause d'un garde-fou erroné. Le typecheck et python-data étaient verts. Le garde-fou a été corrigé dans 7df71f3, puis le checkpoint a reçu un champ engineVersion. Aucun run CI n'est encore observé sur le HEAD actuel ; aucune validation de cette tranche n'est revendiquée. Aucun test de redémarrage de processus réel ni test sur appareil n'est revendiqué.
+
+
+## Pré-partie persistante — ajout 2026-11-16
+
+- `PregameCoordinator.checkpoint` capture l'état, les decks soumis, les déclarations keep/mulligan et les seeds dans une copie défensive.
+- `RoomRegistry` persiste le checkpoint à chaque transition acceptée avant l'ACK ; en cas d'échec disque, le coordinateur revient au checkpoint précédent.
+- Le test `pregame-session-registry.test.ts` reconstruit plusieurs registres à partir du même stockage et vérifie la reprise après decks partiels, déclaration mulligan en attente, cartes bottomées et seeds.
+- La restauration revalide les decks avec le catalogue et la policy injectés ; une salle pré-partie restaurée sans checkpoint, ou avec checkpoint invalide, reste fermée.
+- Tests écrits mais pas encore validés par CI sur le nouveau HEAD. Ce scénario reconstruit les registres dans le même processus de test ; il ne remplace pas encore un redémarrage de processus serveur réel.
