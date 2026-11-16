@@ -62,7 +62,7 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 
 ## Persistance et reprise — ajout 2026-11-16
 
-Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Le run **43826473231** sur le merge ref associé au commit `b0162da` a passé typecheck et `python-data`, mais Vitest a révélé une hypothèse incorrecte dans le nouveau test de reprise : le premier mulligan est gratuit et ne demande pas encore de bottom. Le test a ensuite corrigé la séquence pour effectuer un second mulligan (premier mulligan gratuit), puis l'assertion de main à six cartes après le bottom (`eca67c0`). Le test WebSocket couvre également le rejoin avec vue pré-partie restaurée. Une CI sur ces derniers correctifs reste à obtenir. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
+Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Les runs **43826473231** et **43826793567** ont passé typecheck et `python-data`, mais Vitest a détecté deux assertions incorrectes du test de reprise du mulligan. La séquence a été corrigée (premier mulligan gratuit, second mulligan, six cartes après bottom) dans `eca67c0`. Le run **43826978349** sur `82eb670` est ensuite entièrement vert (`validate` et `python-data`) ; il couvre la reprise pré-partie et le rejoin WebSocket avec vue restaurée, mais pas les commits de reconnexion mobile ajoutés ensuite. CI de la reconnexion mobile encore à obtenir. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
 
 
 ## Pré-partie persistante — ajout 2026-11-16
