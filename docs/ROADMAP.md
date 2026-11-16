@@ -14,9 +14,9 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 
 - [x] CI initiale verte sur le code précédent : run `43689458355`, SHA `7d6b320` (typecheck, Vitest, Python).
 - [x] Parcours automatisé à quatre sièges : soumission des decks, mulligan, démarrage, vues privées et première commande via WebSocket.
-- [ ] Vérifier la CI sur les nouveaux commits de persistance et de restauration.
-- [ ] Valider la sauvegarde atomique, la restauration après redémarrage, le rejeu et l'idempotence sur un serveur relancé.
-- [ ] Valider la reconnexion/réauthentification du client mobile avec les jetons de siège après redémarrage.
+- [x] CI verte sur les commits de persistance, reprise pré-partie, reconnexion mobile et test de processus réel : run `43827956587`, SHA `1747a4a` (`validate` + `python-data`).
+- [x] Valider la sauvegarde atomique, la restauration après redémarrage du processus OS, le rejeu, la réauthentification par jeton et l'idempotence sur un serveur relancé (test automatisé CI).
+- [x] Implémenter et tester la reconnexion/réauthentification mobile avec le jeton de siège et la resynchronisation de la vue après redémarrage serveur ; validation physique encore à faire.
 - [ ] Tester au minimum deux appareils physiques sur un même Wi-Fi ; viser quatre appareils pour la validation LAN complète.
 - [ ] Relecture finale du diff, des limites connues, des permissions de stockage et des données privées.
 **Gate de merge :** CI verte sur le dernier code, récupération d'une partie active vérifiée, absence de défaut bloquant connu, et test physique minimal à deux appareils. La couverture complète des Comprehensive Rules et de toutes les cartes n'est pas un prérequis au merge ; elle reste un chantier incrémental de M2.
@@ -45,7 +45,7 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [ ] Tester une partie complète sur appareils physiques.
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
 - [x] Capture serveur en mémoire des graines d'ouverture et de mulligan, hors vues client.
-- [ ] Finaliser la validation de la persistance durable du snapshot autoritaire, du journal accepté et du seed log : stockage JSON atomique et restauration/rejeu implémentés ; test de processus serveur réel encore requis.
+- [x] Valider la persistance durable du snapshot autoritaire, du journal accepté et du seed log : stockage JSON atomique, restauration/rejeu et test de processus serveur réel validés en CI.
 - [x] Persister l'état intermédiaire de pré-partie (decks soumis, déclarations de mulligan, choix bottom et seeds déjà générées) dans un checkpoint privé versionné, après chaque transition acceptée.
 - [x] Persister les transitions pré-partie avant leur ACK et restaurer le checkpoint précédent si l'écriture échoue ; le démarrage remplace le checkpoint pré-partie par le snapshot de partie dans une écriture durable.
 
