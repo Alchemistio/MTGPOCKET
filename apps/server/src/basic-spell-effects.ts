@@ -21,12 +21,12 @@ function basicEtbEffect(definition: CardDefinition): BasicEtbEffect | null {
   const suffix = " life.";
   if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
   const amountText = text.slice(prefix.length, -suffix.length);
-  if (!/^[1-9]\\d*$/.test(amountText)) return null;
+  if (!/^[1-9]\d*$/.test(amountText)) return null;
   const amount = Number(amountText);
   return Number.isSafeInteger(amount) ? { effect: "etb-gain-life", amount } : null;
 }
 
-/** Supported permanent definitions: vanilla or the exact self-referential ETB draw template. */
+/** Supported permanent definitions: vanilla or one of the exact self-referential ETB templates. */
 export function supportsBasicPermanent(definition: CardDefinition): boolean {
   if (definition.layout !== "normal" || !hasSimpleManaCost(definition.manaCost) ||
       !/\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine)) return false;
@@ -43,7 +43,7 @@ export function supportsBasicSpell(definition: CardDefinition): boolean {
   return supportsBasicPermanent(definition);
 }
 
-/** Creates the server-known stack object for the first supported ETB ability. */
+/** Creates the server-known stack object for an allowlisted ETB ability. */
 export function createBasicPermanentEtbTrigger(
   instanceId: string,
   controllerId: string,
