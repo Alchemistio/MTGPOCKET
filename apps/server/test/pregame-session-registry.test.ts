@@ -83,22 +83,58 @@ describe("PregameSessionRegistry", () => {
     expect(sessions.declareMulligan("g1", "p2", bob.token, "keep").accepted).toBe(true);
   });
 
-  it("refuses to recreate a volatile pregame coordinator after a server restart", () => {
+  it("restores submitted decks, mulligan declarations, bottom choices and seeds after restart", () => {
     const directory = mkdtempSync(join(tmpdir(), "commander-pocket-pregame-restart-"));
     try {
       const persistence = new JsonFileRoomPersistence(directory);
-      const originalRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
-      const credentials = originalRooms.create("interrupted-pregame", players).credentials;
-      const restoredRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
-      const sessions = new PregameSessionRegistry(restoredRooms, {
-        create: (gameId, setup) => new PregameCoordinator(gameId, setup, catalog, {
+      let seed = 0;
+      const factory = {
+        create: (gameId: string, setup: typeof players) => new PregameCoordinator(gameId, setup, catalog, {
           isCommanderEligible: candidate => candidate.providerId === "cmd"
-        })
+        }, () => `resume-seed-${++seed}`)
+      };
+      const originalRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const credentials = originalRooms.create("resumable-pregame", players).credentials;
+      const original = new PregameSessionRegistry(originalRooms, factory);
+      for (const credential of credentials.slice(0, 3)) {
+        expect(original.submitDeck("resumable-pregame", credential.playerId, credential.token, deck)).toMatchObject({
+          accepted: true, result: { accepted: true }
+        });
+      }
+
+      const restoredRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const restored = new PregameSessionRegistry(restoredRooms, factory);
+      const p4 = credentials[3]!;
+      const finalDeck = restored.submitDeck("resumable-pregame", p4.playerId, p4.token, deck);
+      expect(finalDeck).toMatchObject({ accepted: true, result: { accepted: true, allDecksSubmitted: true } });
+
+      const p1 = credentials[0]!;
+      const p2 = credentials[1]!;
+      expect(restored.declareMulligan("resumable-pregame", p1.playerId, p1.token, "mulligan").accepted).toBe(true);
+
+      const secondRestartRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const secondRestart = new PregameSessionRegistry(secondRestartRooms, factory);
+      expect(secondRestart.declareMulligan("resumable-pregame", p1.playerId, p1.token, "keep")).toEqual({
+        accepted: false, code: "DUPLICATE_MULLIGAN_DECLARATION"
       });
-      const alice = credentials.find(item => item.playerId === "p1")!;
-      expect(sessions.submitDeck("interrupted-pregame", "p1", alice.token, deck)).toEqual({
-        accepted: false, code: "UNAUTHENTICATED"
-      });
+      for (const credential of credentials.slice(1)) {
+        const result = secondRestart.declareMulligan("resumable-pregame", credential.playerId, credential.token, "keep");
+        expect(result.accepted).toBe(true);
+      }
+      const p1Hand = secondRestartRooms.getPregameCheckpoint("resumable-pregame")?.state.players
+        .find(player => player.id === "p1")?.hand ?? [];
+      expect(p1Hand).toHaveLength(8);
+      expect(secondRestart.chooseBottomCards("resumable-pregame", p1.playerId, p1.token, [p1Hand[0]!]).accepted).toBe(true);
+
+      const thirdRestartRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+      const thirdRestart = new PregameSessionRegistry(thirdRestartRooms, factory);
+      const restoredCheckpoint = thirdRestartRooms.getPregameCheckpoint("resumable-pregame");
+      expect(restoredCheckpoint?.state.players.find(player => player.id === "p1")?.pendingBottomCount).toBe(0);
+      expect(restoredCheckpoint?.generatedSeeds).toHaveLength(5);
+      const started = thirdRestart.start("resumable-pregame", p1.playerId, p1.token);
+      expect(started).toMatchObject({ accepted: true, view: { status: "active", step: "upkeep" } });
+      expect(thirdRestartRooms.getPregameCheckpoint("resumable-pregame")).toBeUndefined();
+      expect(thirdRestartRooms.get("resumable-pregame")?.state.players.find(player => player.id === "p1")?.hand).toHaveLength(7);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
