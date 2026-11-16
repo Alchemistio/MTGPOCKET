@@ -56,7 +56,7 @@ Le serveur de production persiste les salles dans `data/server-rooms/` par défa
 - Au démarrage, le serveur restaure les salles et rejoue le journal. Les versions et résultats sont vérifiés ; un journal incompatible fait échouer la restauration plutôt que de produire un état approximatif.
 - Les jetons bruts ne sont jamais enregistrés : seul leur hash est conservé. Les mains, bibliothèques et seeds restent des données privées serveur. Ne jamais exposer, committer ou servir ces fichiers.
 
-Cette première tranche ne persiste pas encore les actions intermédiaires de pré-partie (decks soumis, déclarations de mulligan et choix bottom). Les seeds sont écrits avec le snapshot au démarrage de la partie. La reconnexion automatique/réauthentification du client mobile et le test d'un redémarrage de processus réel restent à valider.
+Cette première tranche ne persiste pas encore les actions intermédiaires de pré-partie (decks soumis, déclarations de mulligan et choix bottom). Les seeds sont écrits avec le snapshot au démarrage de la partie. Après un redémarrage au milieu de la pré-partie, le serveur refuse volontairement de recréer un coordinateur vide sur l'ancienne salle ; il faut créer une nouvelle salle. La reconnexion automatique/réauthentification du client mobile et le test d'un redémarrage de processus réel restent à valider.
 
 ## Messages réseau
 
