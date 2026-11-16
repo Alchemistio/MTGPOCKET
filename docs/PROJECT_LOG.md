@@ -1,3 +1,10 @@
+## 2026-11-16 — Ajustement de l'assertion post-bottom
+
+- Run `43826793567` sur `97c1499` : typecheck et `python-data` passent ; Vitest échoue sur la taille de main attendue après le bottom.
+- Le moteur enlève effectivement la carte bottomée de la main : après le second mulligan puis le bottom d'une carte, le joueur conserve six cartes. L'assertion est corrigée dans `eca67c0`.
+- Une autre amélioration a été ajoutée en parallèle : lors d'un `join-room` après redémarrage, le serveur hydrate le coordinateur et renvoie la vue privée pré-partie restaurée. Test WebSocket associé ajouté.
+- CI du HEAD après ces changements encore requise.
+
 ## 2026-11-16 — Correction du test de reprise après CI
 
 - Run `43826473231` sur le merge ref associé à `b0162da` : typecheck et Python passent ; Vitest échoue sur une assertion du test de reprise pré-partie.
