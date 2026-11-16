@@ -1,3 +1,9 @@
+## 2026-11-16 — CI verte du redémarrage OS et de la reprise complète
+
+- Run `43827956587`, SHA `1747a4a0540b62560efc58b8b626e7c4bea0f347` : `validate` et `python-data` réussis.
+- La CI passe le test qui tue réellement le processus Node après ACK durable, relance le serveur sur le même répertoire, rejoint la salle avec le jeton, vérifie l'état restauré et rejoue le même commandId sans double mutation.
+- La tranche M1 de persistance/reprise et la reconnexion mobile sont donc validées en CI. Les tests physiques restent ouverts.
+
 ## 2026-11-16 — Test de redémarrage réel du processus serveur
 
 - Nouveau test `server-process-restart.test.ts` lance le serveur de production dans un processus Node séparé avec un répertoire temporaire.
