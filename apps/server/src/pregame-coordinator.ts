@@ -84,7 +84,7 @@ export class PregameCoordinator {
     const playerIds = new Set(this.players.map(player => player.id));
     if (checkpoint.state.deckSetupComplete ||
         checkpoint.submittedDecks.some(item => !item || !playerIds.has(item.playerId) ||
-          !validateCommanderDeck(item.deck, this.cardIndex, this.validationOptions).valid) ||
+          !isCommanderDeckList(item.deck) || !validateCommanderDeck(item.deck, this.cardIndex, this.validationOptions).valid) ||
         new Set(checkpoint.submittedDecks.map(item => item.playerId)).size !== checkpoint.submittedDecks.length ||
         checkpoint.mulliganDeclarations.some(item => !item || !playerIds.has(item.playerId) ||
           (item.action !== "keep" && item.action !== "mulligan")) ||
@@ -252,4 +252,13 @@ function isValidCheckpoint(value: unknown): value is PregameCoordinatorCheckpoin
     Array.isArray(checkpoint.players) && typeof checkpoint.state === "object" && checkpoint.state !== null &&
     Array.isArray(checkpoint.submittedDecks) && Array.isArray(checkpoint.mulliganDeclarations) &&
     Array.isArray(checkpoint.generatedSeeds);
+}
+
+function isCommanderDeckList(value: unknown): value is CommanderDeckList {
+  if (typeof value !== "object" || value === null) return false;
+  const deck = value as Partial<CommanderDeckList>;
+  return Array.isArray(deck.commanderIds) && deck.commanderIds.every(id => typeof id === "string" && id.length > 0) &&
+    Array.isArray(deck.cards) && deck.cards.every(entry => typeof entry === "object" && entry !== null &&
+      typeof entry.cardId === "string" && entry.cardId.length > 0 &&
+      Number.isInteger(entry.quantity) && entry.quantity > 0);
 }
