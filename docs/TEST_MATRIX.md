@@ -21,7 +21,9 @@ Dernière revue : 2026-11-15. Cette matrice décrit les tests présents dans le 
 | Salle LAN | `apps/server/test/game-room.test.ts` | Island/Wastes tap-for-mana, anti double-tap, Divination/pioches, gain de vie, refus texte inconnu, instant/réponse, LIFO, cleanup et replay | terrains non basiques, permanents non-terrain, cibles/contres, coûts avancés, persistance durable, seed transcript, reconnexion |
 | Pré-partie | `apps/server/test/pregame-coordinator.test.ts`, `apps/server/test/pregame-session-registry.test.ts`, `apps/server/test/server-pregame-transport.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan, capture des graines côté serveur, transfert au GameRoom, vues privées à quatre sièges et première commande de priorité via WebSocket | tour complet avec sort/réponse/résolution/cleanup, catalogue/banlist de production |
 | Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé, statut explicite `pregame`/`active` | audit complet des champs sensibles et tests fuzz |
-| Registre de salle | `apps/server/test/room-registry.test.ts` | création, jetons et authentification de siège | rotation/expiration des jetons |
+| Registre de salle | `apps/server/test/room-registry.test.ts` | création, hash des jetons, restauration après redémarrage, persistance des seeds, rollback si écriture échoue | rotation/expiration des jetons, test multi-processus |
+| Persistance disque | `apps/server/test/room-persistence.test.ts` | round-trip versionné, écriture atomique, permissions 0600, absence de jeton brut, validation JSON/credentials/seeds | crash injection entre fsync/rename, corruption du snapshot complet, migrations de schéma |
+| Checkpoint / replay | `apps/server/test/game-room.test.ts` | checkpoint défensif, restauration par rejeu, idempotence après restauration, refus d'un résultat d'événement altéré | tests de redémarrage du processus serveur et compatibilité entre versions moteur |
 | Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées, rejet de message mal formé, fermeture avant ouverture, timeouts de connexion/handshake/action pré-partie, fermeture explicite et rejet d'un ACK tardif | reconnexion/réauthentification automatique, tests UI et appareils |
 
 ## Données
@@ -56,3 +58,8 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 ## Complément — Client mobile réseau (2026-11-15)
 
 - Tests ajoutés pour fermeture avant ouverture, délais de connexion/handshake, fermeture explicite pendant handshake et timeout d'action pré-partie avec verrouillage jusqu'à reconnexion. Reconnexion automatique et UI native restent hors couverture.
+
+
+## Persistance et reprise — ajout 2026-11-16
+
+Les tests de checkpoint et de stockage ont été ajoutés au dépôt, mais ne sont pas considérés comme validés tant que la CI du nouveau SHA n'a pas réussi. Le dernier run CI connu (43689458355) précède ces changements. Aucun test de redémarrage de processus réel ni test sur appareil n'est revendiqué.
