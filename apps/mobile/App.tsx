@@ -274,7 +274,7 @@ export default function App() {
       return;
     }
     const ownPlayer = roomView.players.find(player => player.id === roomSession.playerId);
-    const hasSupportedResponse = ownPlayer?.handCards.some(card => card.isSupportedSpell || card.isSupportedPermanent) ?? false;
+    const hasSupportedResponse = ownPlayer?.handCards.some(card => card.isSupportedSpell && /\\bInstant\\b/.test(card.typeLine)) ?? false;
     const hasPendingChoice = roomView.pendingDiscardPlayerId === roomSession.playerId ||
       roomView.pendingCommanderChoices.length > 0;
     if (hasSupportedResponse || hasPendingChoice || autoYieldRevision.current === roomView.revision) return;
@@ -498,14 +498,23 @@ export default function App() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScroll}>
             {ownHandCards.map(card => {
               const selected = selectedDiscardIds.includes(card.instanceId);
+              const isSupportedPlayable = card.isSupportedSpell || card.isSupportedPermanent;
+              const isInstant = /\\bInstant\\b/.test(card.typeLine);
+              const needsSorceryTiming = card.isSupportedPermanent || /\\bSorcery\\b/.test(card.typeLine);
+              const hasSorceryTiming = roomView.activePlayerId === roomSession.playerId &&
+                (roomView.phase === "precombat-main" || roomView.phase === "postcombat-main") &&
+                roomView.stack.length === 0 && roomView.awaitingResolutionId === null;
+              const hasCastTiming = isInstant || (needsSorceryTiming && hasSorceryTiming);
               const canCast = !discardPending && roomView.spellCastingAvailable &&
-                roomView.priorityPlayerId === roomSession.playerId && (card.isSupportedSpell || card.isSupportedPermanent);
+                roomView.priorityPlayerId === roomSession.playerId && isSupportedPlayable && hasCastTiming;
               const disabled = !discardPending && !canCast;
               const actionLabel = discardPending
                 ? selected ? "À DÉFAUSSER" : "CHOISIR"
                 : canCast ? "JOUER"
                   : !roomView.spellCastingAvailable ? "EFFETS OFF"
-                    : (card.isSupportedSpell || card.isSupportedPermanent) ? "ATTENDRE" : "NON PRIS EN CHARGE";
+                    : !isSupportedPlayable ? "NON PRIS EN CHARGE"
+                      : roomView.priorityPlayerId !== roomSession.playerId ? "ATTENDRE"
+                        : !hasCastTiming ? "TIMING" : "ATTENDRE";
               return (
                 <Pressable
                   key={card.instanceId}
