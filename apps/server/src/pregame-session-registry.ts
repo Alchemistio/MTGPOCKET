@@ -116,15 +116,15 @@ export class PregameSessionRegistry {
       }));
       const persisted = this.rooms.getPregameCheckpoint(gameId);
       if (this.rooms.wasRestored(gameId) && !persisted) return null;
-      session = this.factory.create(gameId, players);
-      if (persisted) session.restoreCheckpoint(persisted);
-      else {
-        try {
+      try {
+        session = this.factory.create(gameId, players);
+        if (persisted) session.restoreCheckpoint(persisted);
+        else {
           // Save an empty checkpoint before accepting the first pregame mutation.
           this.rooms.savePregameCheckpoint(gameId, session.checkpoint);
-        } catch {
-          return null;
         }
+      } catch {
+        return null;
       }
       this.sessions.set(gameId, session);
     }
