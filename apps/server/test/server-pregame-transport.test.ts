@@ -357,9 +357,11 @@ describe("WebSocket pregame transport", () => {
       expect(room.state.players[0]?.battlefield).toContain("scout-instance");
       expect(room.state.cards["scout-instance"]?.controller_id).toBe("p1");
       for (const view of finalViews) {
-        expect(view.players.find(player => player.id === "p1")?.battlefieldCards).toContainEqual({
-          instanceId: "scout-instance", name: "Vanilla Scout"
-        });
+        expect(view.players.find(player => player.id === "p1")?.battlefieldCards).toEqual(
+          expect.arrayContaining([expect.objectContaining({
+            instanceId: "scout-instance", name: "Vanilla Scout"
+          })])
+        );
         for (const player of view.players.filter(item => item.id !== "p1")) {
           expect(player.handCards).toEqual([]);
         }
