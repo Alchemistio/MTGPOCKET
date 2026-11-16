@@ -82,11 +82,16 @@ export class PregameCoordinator {
       throw new Error("INVALID_PREGAME_CHECKPOINT");
     }
     const playerIds = new Set(this.players.map(player => player.id));
-    if (checkpoint.submittedDecks.some(item => !playerIds.has(item.playerId)) ||
+    if (checkpoint.state.deckSetupComplete ||
+        checkpoint.submittedDecks.some(item => !item || !playerIds.has(item.playerId) ||
+          !validateCommanderDeck(item.deck, this.cardIndex, this.validationOptions).valid) ||
         new Set(checkpoint.submittedDecks.map(item => item.playerId)).size !== checkpoint.submittedDecks.length ||
-        checkpoint.mulliganDeclarations.some(item => !playerIds.has(item.playerId)) ||
+        checkpoint.mulliganDeclarations.some(item => !item || !playerIds.has(item.playerId) ||
+          (item.action !== "keep" && item.action !== "mulligan")) ||
         new Set(checkpoint.mulliganDeclarations.map(item => item.playerId)).size !== checkpoint.mulliganDeclarations.length ||
-        checkpoint.generatedSeeds.some((item, index) => item.sequence !== index || !playerIds.has(item.playerId))) {
+        checkpoint.generatedSeeds.some((item, index) => !item || item.sequence !== index ||
+          !playerIds.has(item.playerId) || (item.purpose !== "opening-hand" && item.purpose !== "mulligan") ||
+          typeof item.seed !== "string" || item.seed.trim().length === 0)) {
       throw new Error("INVALID_PREGAME_CHECKPOINT");
     }
     const restored = clone(checkpoint);
