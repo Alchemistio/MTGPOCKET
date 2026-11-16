@@ -27,6 +27,10 @@ La référence de travail est le PDF Comprehensive Rules fourni avec le projet, 
 
 Le code ajoute une première tranche volontairement restreinte : créatures, artefacts et enchantements vanilla avec coût simple et texte Oracle vide. Ils sont lancés en rituel pendant une phase principale du joueur actif, passent par la pile, puis rejoignent le champ de bataille sous le contrôle du lanceur après résolution. Les cartes multi-face, les permanents avec capacités/texte Oracle, les terrains joués comme action spéciale, les commandants, les cibles et les coûts avancés ne sont pas couverts par cette tranche. Les tests sont ajoutés ; ne considérer la tranche comme validée qu'après CI verte sur le SHA correspondant.
 
+## Action spéciale : jouer un terrain de base — validation en cours
+
+Le serveur accepte `play-land` uniquement pour un terrain de base de layout normal depuis la main du joueur actif, pendant une phase principale, avec la priorité et une pile vide. Une seule pose est autorisée par tour. Le terrain arrive dégagé sur le champ de bataille sans passer par la pile et sans payer de coût. Le compteur est remis à zéro au début du prochain tour de ce joueur. Les terrains non basiques, cartes multi-face, terrains avec coûts/effets d'arrivée et effets qui autorisent des poses supplémentaires restent hors périmètre. Les checkpoints de salle et de pré-partie migrent les anciennes données en initialisant le compteur à zéro.
+
 ## Processus
 Référence → modèle de données → commande/transition → test positif → test négatif → test de régression → mise à jour de cette matrice. Distinguer règle générale, règle de format, capacité Oracle et effet réellement implémenté. Ne jamais exécuter du texte Oracle comme du code arbitraire.
 
