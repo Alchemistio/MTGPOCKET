@@ -40,6 +40,7 @@ export interface PlayerState {
   commanderCastCount: Readonly<Record<string, number>>;
   commanderDamageReceived: Readonly<Record<InstanceId, number>>;
   manaPool: Readonly<Record<string, number>>;
+  landsPlayedThisTurn: number;
   isEliminated: boolean;
   attemptedEmptyLibraryDraw: boolean;
   mulliganCount: number;
