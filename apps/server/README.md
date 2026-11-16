@@ -44,7 +44,12 @@ Ne pas committer de dump bulk, de données utilisateur ou de secrets. Provisionn
 
 ## Effets de cartes pris en charge
 
-Lorsque catalogue et policy sont tous deux configurés, le bootstrap injecte un résolveur volontairement limité aux cartes de layout `normal`, type Instant/Sorcery, coût simple (symboles W/U/B/R/G/C et générique numérique), sans cible, et texte Oracle exact : `Draw a card.`, `Draw two cards.`, `Draw three cards.` ou `You gain N life.`. Les autres textes ne sont pas interprétés et ne doivent pas être traités comme des effets résolus. Étendre cette liste seulement avec un handler et des tests dédiés.
+Lorsque catalogue et policy sont tous deux configurés, le bootstrap injecte une liste de cartes jouables volontairement restreinte :
+
+- Instants/rituels de layout `normal`, coût simple (symboles W/U/B/R/G/C et générique numérique), sans cible, avec texte Oracle exact : `Draw a card.`, `Draw two cards.`, `Draw three cards.` ou `You gain N life.`.
+- Créatures, artefacts et enchantements vanilla de layout `normal`, coût simple et texte Oracle vide. Ils ne peuvent être lancés que par le joueur actif en phase principale, pile vide ; après résolution, ils arrivent sur le champ de bataille sous le contrôle du lanceur.
+
+Les permanents avec capacités ou texte Oracle, cartes multi-face, commandants, terrains joués comme action spéciale, cibles et coûts avancés ne sont pas pris en charge par cette tranche. Les autres textes ne sont pas interprétés et ne doivent jamais être traités comme des effets résolus. Étendre cette liste seulement avec un handler et des tests dédiés.
 
 ## Persistance des salles et reprise serveur
 
@@ -56,7 +61,7 @@ Le serveur de production persiste les salles dans `data/server-rooms/` par défa
 - Au démarrage, le serveur restaure les salles et rejoue le journal. Les versions et résultats sont vérifiés ; un journal incompatible fait échouer la restauration plutôt que de produire un état approximatif.
 - Les jetons bruts ne sont jamais enregistrés : seul leur hash est conservé. Les mains, bibliothèques et seeds restent des données privées serveur. Ne jamais exposer, committer ou servir ces fichiers.
 
-Cette première tranche ne persiste pas encore les actions intermédiaires de pré-partie (decks soumis, déclarations de mulligan et choix bottom). Les seeds sont écrits avec le snapshot au démarrage de la partie. Après un redémarrage au milieu de la pré-partie, le serveur refuse volontairement de recréer un coordinateur vide sur l'ancienne salle ; il faut créer une nouvelle salle. La reconnexion automatique/réauthentification du client mobile et le test d'un redémarrage de processus réel restent à valider.
+Les actions intermédiaires de pré-partie (decks soumis, déclarations de mulligan et choix bottom) sont persistées dans un checkpoint privé. Les seeds sont écrits avec le snapshot au démarrage de la partie. Après redémarrage, le coordinateur est restauré et les vues privées sont recalculées au rejoin. Le client mobile retente automatiquement la connexion tant que l'app reste active ; les credentials ne sont pas conservés après fermeture complète de l'app.
 
 ## Messages réseau
 
@@ -64,4 +69,4 @@ Créer une salle avec create-room et quatre sièges, rejoindre avec join-room et
 
 ## Limites
 
-Les commandes de jeu restent limitées aux actions explicitement implémentées et testées. La découverte automatique LAN, TLS, la reconnexion automatique du mobile, la reprise des états intermédiaires de pré-partie et la validation sur appareils physiques restent à faire. Les jetons sont distribués par l'hôte : réserver ce mode au réseau local de confiance jusqu'à l'ajout d'un flux d'invitation sécurisé.
+Les commandes de jeu restent limitées aux actions explicitement implémentées et testées. La découverte automatique LAN, TLS, la reconnexion après fermeture complète de l'app et la validation sur appareils physiques restent à faire. Les jetons sont distribués par l'hôte : réserver ce mode au réseau local de confiance jusqu'à l'ajout d'un flux d'invitation sécurisé.
