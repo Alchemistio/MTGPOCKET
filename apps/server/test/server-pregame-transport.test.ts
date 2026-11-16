@@ -300,6 +300,9 @@ describe("WebSocket pregame transport", () => {
         instance_id: "plains-instance", card_id: plains.providerId, owner_id: "p1", zone: "battlefield"
       });
       state = addCardInstance(state, {
+        instance_id: "plains-hand-instance", card_id: plains.providerId, owner_id: "p1", zone: "hand"
+      });
+      state = addCardInstance(state, {
         instance_id: "scout-instance", card_id: scout.providerId, owner_id: "p1", zone: "hand"
       });
       state = addCardInstance(state, {
@@ -366,6 +369,17 @@ describe("WebSocket pregame transport", () => {
           expect(player.handCards).toEqual([]);
         }
       }
+
+      const landViews = await sendCommand(0, "play-plains-from-hand", "play-land", {
+        instanceId: "plains-hand-instance"
+      });
+      expect(room.state.cards["plains-hand-instance"]?.zone).toBe("battlefield");
+      expect(room.state.players[0]?.landsPlayedThisTurn).toBe(1);
+      expect(landViews.every(view =>
+        view.players.find(player => player.id === "p1")?.battlefieldCards.some(card =>
+          card.instanceId === "plains-hand-instance" && card.name === "Plains"
+        )
+      )).toBe(true);
     } finally {
       await Promise.all(clients.map(client => new Promise<void>(resolve => {
         if (client.readyState === WebSocket.CLOSED) resolve();
