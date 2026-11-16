@@ -29,7 +29,7 @@ export interface GameRoomCheckpoint {
   gameId: string;
   /** Authoritative state immediately before the first event in the journal. */
   snapshot: GameState;
-  events: readonly PersistedPersistedRoomEvent[];
+  events: readonly PersistedRoomEvent[];
 }
 
 const GAME_ENGINE_VERSION = 1 as const;
