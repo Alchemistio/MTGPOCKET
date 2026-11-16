@@ -4,8 +4,9 @@ Cette mémoire complète `docs/ROADMAP.md` et conserve recherches, décisions d'
 
 ## Base de règles
 - [Rules Engine](../Rules_Engine/README.md) — source texte, index exhaustif et outil de reconstruction.
-- [Index des règles](../Rules_Engine/index/rules_index.md) — règles, sous-règles, glossaire et positions.
-- [Synchronisation des versions](../Rules_Engine/CURRENT_VERSION.md) — source locale 2026-09-25, dernière édition officielle connue 2026-11-06.
+- [Index des règles](../Rules_Engine/index/rules_index.md) — 3 182 règles/sous-règles, 148 titres, 744 termes du glossaire et positions.
+- [Index mémoire des règles](rules/rules_index.md) — workflow de recherche et modules.
+- [Synchronisation des versions](../Rules_Engine/CURRENT_VERSION.md) — source courante 2026-11-06, archive fournie 2026-09-25.
 
 ## Modules
 - [Index des modules](rules/README.md)
