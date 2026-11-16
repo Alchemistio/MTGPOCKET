@@ -37,6 +37,7 @@ export interface MobileGameView {
   id: string;
   revision: number;
   spellCastingAvailable: boolean;
+  activePlayerId: string | null;
   pendingDiscardPlayerId: string | null;
   pendingDiscardCount: number;
   turnNumber: number;
