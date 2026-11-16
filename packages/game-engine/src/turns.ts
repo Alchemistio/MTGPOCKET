@@ -61,6 +61,9 @@ export function nextTurnStep(state: GameState): GameState {
   if (!nextPlayer) throw new Error("Aucun joueur actif.");
   return {
     ...state, revision: state.revision + 1, activePlayerId: nextPlayer.id, activePlayerSeat: nextPlayer.seat,
+    players: state.players.map(player => player.id === nextPlayer.id
+      ? { ...player, landsPlayedThisTurn: 0 }
+      : player),
     turnNumber: state.turnNumber + 1, phase: "beginning", step: "untap",
     priorityPlayerId: null, consecutivePasses: [], priorityWindowClosed: false
   };
