@@ -1,3 +1,13 @@
+## 2026-11-16 — Base de règles Magic indexée
+
+- Import de la version texte de travail des Comprehensive Rules effective au 6 novembre 2026 ; le texte du 25 septembre 2026 correspondant au PDF fourni est conservé comme archive.
+- Index machine vérifié : 3 182 règles/sous-règles avec identifiants uniques, 148 en-têtes de chapitre/section et 744 termes de glossaire. Neuf fichiers JSONL de chapitres et un index glossaire.
+- Chaque point renvoie à des lignes inclusives dans le fichier source ; le glossaire contient aussi des offsets UTF-8. Index maître et manifest ajoutés.
+- Générateur standard-library : `Rules_Engine/tools/build_rule_index.py`.
+- Mémoire créée/actualisée : index maître, index règles, architecture générique et dossier ETB avec recherche et roadmap.
+- Source normative : Wizards Rules, édition 2026-11-06. Le miroir texte sert à la recherche ; le PDF officiel Wizards prévaut en cas de divergence.
+- Aucun comportement de jeu n'a été modifié dans cette tranche ; la couverture du moteur reste partielle.
+
 ## 2026-11-16 — CI verte ETB pioche et gain de vie
 
 - Run `43872836544`, SHA `199194aa6f756bde42a8658aeb5a9595fbc6838a` : jobs `validate` et `python-data` réussis.
