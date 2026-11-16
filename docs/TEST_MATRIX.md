@@ -1,4 +1,14 @@
 
+## Jouer un terrain de base — ajout 2026-11-16, CI en attente
+
+- Moteur : le compteur `landsPlayedThisTurn` est initialisé à zéro et réinitialisé uniquement quand le joueur devient actif au début de son tour.
+- Serveur : `play-land` déplace un terrain de base de la main au champ de bataille sans pile ni paiement ; une deuxième pose est rejetée ; hors phase principale, la carte reste en main.
+- Vues : la main privée expose `isSupportedLand`, le compteur public est projeté, les mains adverses restent cachées.
+- WebSocket : le scénario quatre sièges vérifie la pose depuis la main et l'affichage public du terrain.
+- Compatibilité : tests de migration des anciens checkpoints de salle et de pré-partie sans compteur.
+- CI du HEAD contenant cette tranche requise avant de cocher la roadmap.
+
+
 ## Permanents vanilla — ajout 2026-11-16, CI en attente
 - Run `43867439926` : typecheck et Python réussis ; Vitest échoue uniquement sur le test négatif de timing car son état de fixture n'indiquait pas que le setup de deck était terminé. Fixture corrigé dans `7601209`, assertions de frontières élargies dans `c8ff02a`. Nouveau run CI requis.
 
