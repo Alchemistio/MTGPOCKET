@@ -80,8 +80,14 @@ export class PregameSessionRegistry {
     try {
       const room = this.rooms.get(gameId);
       if (!room) return { accepted: false, code: "UNKNOWN_GAME" };
+      const previousState = session.state;
       const state = session.start();
-      room.replaceStateFromPregame(state);
+      try {
+        this.rooms.replaceStateFromPregame(gameId, state, session.seedLog);
+      } catch (error) {
+        session.restoreStateAfterFailedStart(previousState);
+        throw error;
+      }
       return { accepted: true, revision: room.state.revision, view: toPlayerView(room.state, playerId, this.resolveCard, this.spellCastingAvailable, this.supportsSpell) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
@@ -90,7 +96,7 @@ export class PregameSessionRegistry {
 
   private getAuthorizedSession(gameId: string, playerId: string, token: string): PregameCoordinator | null {
     const room = this.rooms.authenticate(gameId, playerId, token);
-    if (!room) return null;
+    if (!room || room.state.status !== "pregame" || room.state.deckSetupComplete) return null;
     let session = this.sessions.get(gameId);
     if (!session) {
       const players = room.state.players.map(player => ({
