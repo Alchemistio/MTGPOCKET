@@ -1,3 +1,11 @@
+## 2026-11-16 — Action spéciale de pose d'un terrain de base
+
+- Ajout de `landsPlayedThisTurn` dans l'état joueur, initialisé à zéro et réinitialisé au début du tour de son contrôleur.
+- Nouvelle commande serveur `play-land` : terrain de base normal depuis la main, joueur actif, phase principale, priorité, pile vide, une pose par tour. L'action ne passe pas par la pile et ne dépense pas de mana.
+- La vue expose la jouabilité du terrain et le compteur ; l'UI mobile affiche Terrain x/1 et l'action POSER.
+- Migrations ajoutées pour les anciens checkpoints de partie et de pré-partie.
+- Tests ajoutés : limite, timing, reset par tour, migration, transport WebSocket quatre sièges. CI de cette tranche en cours au moment de la rédaction.
+
 ## 2026-11-16 — CI verte de la tranche de permanents et du transport WebSocket
 
 - Run `43868236829`, SHA `0c55bdb39ad9093674dc78ae61b99a625601cc85` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
