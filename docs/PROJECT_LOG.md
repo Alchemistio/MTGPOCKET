@@ -1,3 +1,10 @@
+## 2026-11-16 — Régression CI pré-partie détectée puis corrigée
+
+- Run `43806846271` (merge ref PR #1 après la première tranche de persistance) : typecheck réussi, `python-data` réussi, Vitest échoue sur 3 tests de pré-partie. Les tests de checkpoint, stockage disque et RoomRegistry passent.
+- Cause : le garde-fou de récupération vérifiait `room.state.status === "pregame"`, alors que RoomRegistry crée une GameState vide avec `status="active"` et `deckSetupComplete=false`, avant d'hydrater le coordinateur séparé.
+- Correctif `7df71f3` : autoriser les nouvelles salles vides ; refuser seulement les salles restaurées dont le coordinateur de pré-partie n'a pas été restauré, ou les parties dont le setup est terminé.
+- Checkpoints ensuite explicitement versionnés avec `engineVersion` (`c99b826`, `dd1c331`). Aucun résultat CI n'est encore disponible pour le HEAD actuel ; ne pas marquer la tranche validée.
+
 ## 2026-11-16 — Persistance durable initiale et gate de stabilisation PR #1
 
 - Ajout d'un checkpoint GameRoom versionné : snapshot autoritaire défensif + journal de commandes acceptées ; restauration par rejeu et validation des versions, révisions et résultats.
