@@ -4,6 +4,10 @@
 Construire un moteur générique qui prend en charge un maximum de cartes à partir des règles et du texte Oracle, sans implémenter chaque carte individuellement. Cette stratégie complète les roadmaps existantes ; elle ne remplace ni fondation, ni réseau, ni mobile, ni autres priorités.
 
 ## Source et recherche
+- Édition de travail actuelle : Comprehensive Rules 2026-11-06 ; édition 2026-09-25 conservée comme archive.
+- L'index couvre 3 182 règles/sous-règles, 148 titres et 744 termes du glossaire ; voir le manifest de `Rules_Engine/`.
+- Les résumés/mots-clés sont des aides de navigation, pas des règles ni une interprétation ; toujours lire le paragraphe source et ses renvois.
+- La base de règles et cette stratégie restent complémentaires des roadmaps M0–M6.
 - Base texte et index : `Rules_Engine/`.
 - Mémoire : `memory/`, avec un sous-dossier par domaine.
 - Rechercher l'identifiant CR dans `Rules_Engine/index/rules_index.md`, lire le paragraphe source, puis suivre références et glossaire.
@@ -32,6 +36,9 @@ Voir [architecture cible](../memory/rules/engine_architecture.md). La cible incl
 Ne pas confondre ces mesures. Aucun fallback silencieux pour un texte non supporté.
 
 ## Modules
+Chaque module doit commencer par une recherche CR et externe, puis une roadmap complète des sous-systèmes, interactions, cas limites et tests. Une fois commencé, le module ne se limite pas au premier motif de carte rencontré. ETB sert de premier pilote de cette méthode ; voir [index ETB](../memory/rules/etb/etb_index.md) et [roadmap ETB](../memory/rules/etb/etb_roadmap.md).
+
+
 Chaque mécanique complexe reçoit un dossier mémoire, une recherche, une roadmap complète et une matrice de tests. Exemple : [ETB](../memory/rules/etb/etb_index.md).
 
 ## Recherche externe
