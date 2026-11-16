@@ -2,6 +2,8 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
+**Avancement 2026-11-16 :** premier contrat `ZoneChangeEvent` et raccordement au chemin de résolution des sorts permanents. ETB-0 reste ouvert : les remplacements, les groupes simultanés et la centralisation de toutes les sources ne sont pas encore implémentés.
+
 ## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
 - [ ] Centraliser chaque changement de zone dans un processeur métier.
 - [ ] Introduire événements proposés/commis et groupe de simultanéité.

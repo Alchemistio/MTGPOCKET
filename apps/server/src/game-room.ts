@@ -1,6 +1,6 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
-  type GameState, type PlayerSetup, type StackItem
+  advanceAfterAllPass, advanceAutomaticStep, createGame, createZoneChangeEvent, discardCards, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  type GameState, type PlayerSetup, type StackItem, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
@@ -207,15 +207,26 @@ export class GameRoom {
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
         if (this.resolveStackEffect) {
-          const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition } | null } = { current: null };
+          const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition; zoneChangeEvent: ZoneChangeEvent } | null } = { current: null };
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
+              const before = state.cards[item.source_instance_id];
               const entered = moveCardToZone(state, item.source_instance_id, "battlefield", item.controller_id);
+              const after = entered.cards[item.source_instance_id];
+              const zoneChangeEvent = before && after ? createZoneChangeEvent(before, after, {
+                eventId: "zone-change:" + item.id,
+                cause: "spell-resolution"
+              }) : null;
               const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
               const definition = cardId ? this.resolveCard?.(cardId) : undefined;
-              if (definition && this.supportsSpell?.(definition)) {
-                enteredPermanent.current = { instanceId: item.source_instance_id, controllerId: item.controller_id, definition };
+              if (zoneChangeEvent?.toZone === "battlefield" && definition && this.supportsSpell?.(definition)) {
+                enteredPermanent.current = {
+                  instanceId: item.source_instance_id,
+                  controllerId: item.controller_id,
+                  definition,
+                  zoneChangeEvent
+                };
               }
               return entered;
             }
@@ -233,7 +244,8 @@ export class GameRoom {
               enteredPermanent.current.instanceId,
               enteredPermanent.current.controllerId,
               enteredPermanent.current.definition,
-              nextState.revision
+              nextState.revision,
+              enteredPermanent.current.zoneChangeEvent.eventId
             );
             if (trigger) nextState = pushStackItem(nextState, trigger);
           }

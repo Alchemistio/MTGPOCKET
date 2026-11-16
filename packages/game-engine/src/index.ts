@@ -6,3 +6,4 @@ export * from "./commander.js";
 export * from "./library.js";
 export * from "./players.js";
 export * from "./pregame.js";
+export * from "./zone-events.js";

@@ -67,3 +67,11 @@
 - CI verte sur le SHA exact ≠ test simulateur ≠ test appareil.
 - Mettre à jour ce fichier et le journal après chaque avancée.
 - Ne jamais exposer GameState brut, les mains adverses, les hashes/jetons de siège ou les seeds.
+
+
+## Reprise ETB — 16 novembre 2026
+- Début de ETB-0 : contrat `ZoneChangeEvent` ajouté dans `packages/game-engine/src/zone-events.ts` et exporté par le moteur.
+- Le chemin de résolution d'un sort permanent construit maintenant un événement déterministe (`zone-change:<stack-item-id>`) à partir des snapshots avant/après, conserve le contrôleur avant/après et le LKI, puis associe son identifiant au trigger ETB allowlisté.
+- La détection ETB existante reste limitée aux deux templates targetless ; le contrat ne prétend pas encore traiter les remplacements, les changements simultanés, les SBA induites ou les autres sources d'entrée.
+- Tests ajoutés au transport serveur pour vérifier l'identifiant d'événement dans les deux triggers déjà supportés. Tests non exécutés depuis cet environnement ; la CI doit valider le commit.
+- Prochaine tranche : faire passer les autres transitions de zone par un dispatcher métier unique, puis traiter remplacements et groupes simultanés avant d'élargir le parseur Oracle.

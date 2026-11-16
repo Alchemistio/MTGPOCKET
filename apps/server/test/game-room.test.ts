@@ -393,7 +393,10 @@ describe("GameRoom", () => {
     expect(room.state.players[0]?.life).toBe(40);
     expect(room.state.stack).toMatchObject([{
       kind: "triggered-ability", controller_id: "p1", source_instance_id: "lone-missionary",
-      payload: { effect: "etb-gain-life", amount: 4, sourceName: "Lone Missionary" }
+      payload: {
+        effect: "etb-gain-life", amount: 4, sourceName: "Lone Missionary",
+        zoneChangeEventId: "zone-change:spell:p1:cast-missionary"
+      }
     }]);
     for (const playerId of ["p1", "p2", "p3", "p4"]) {
       result = room.apply(command(playerId, room.state.revision, "missionary-trigger-pass-" + playerId));
@@ -507,7 +510,10 @@ describe("GameRoom", () => {
     expect(room.state.cards["wall-of-omens"]?.zone).toBe("battlefield");
     expect(room.state.stack).toMatchObject([{
       kind: "triggered-ability", controller_id: "p1", source_instance_id: "wall-of-omens",
-      payload: { effect: "etb-draw-one", sourceName: "Wall of Omens" }
+      payload: {
+        effect: "etb-draw-one", sourceName: "Wall of Omens",
+        zoneChangeEventId: "zone-change:spell:p1:cast-wall"
+      }
     }]);
     expect(room.state.players[0]?.hand).not.toContain("top-card");
     for (const playerId of ["p1", "p2", "p3", "p4"]) {

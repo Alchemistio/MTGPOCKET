@@ -484,3 +484,11 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Tests : texte approchant refusé, ordre spell puis trigger, carte en champ de bataille, pioche uniquement après résolution du trigger, rejeu et restauration du checkpoint ; projection privée jouable.
 - Limites : un trigger targetless, aucun APNAP ou ordre de plusieurs triggers, aucune autre famille d'événement ni parsing Oracle générique. CI du nouveau SHA requise ; pas de test physique ou WebSocket ETB dédié.
 
+
+
+## 2026-11-16 — ETB-0 : contrat initial de changement de zone
+- Ajout de `ZoneChangeEvent` : snapshots avant/après, zones source/destination, propriétaire, contrôleur avant/après, cause, groupe simultané, trace de remplacement et last known information.
+- Le premier raccordement concerne la résolution des sorts permanents : l'événement est construit après le mouvement vers le champ de bataille et son identifiant déterministe est conservé dans le trigger ETB.
+- Les deux effets ETB existants restent inchangés ; aucun texte Oracle supplémentaire n'est accepté.
+- Limites : pas encore de remplacement/prévention, de batching simultané, de dispatcher de toutes les sources, ni d'identité d'objet complète après changement de zone. Cette tranche ne coche donc pas ETB-0 comme terminé.
+- Validation : tests ajoutés, exécution locale impossible dans l'environnement de reprise ; attendre la CI du SHA de ce commit. Aucun test sur appareils revendiqué.

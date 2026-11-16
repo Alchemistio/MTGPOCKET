@@ -48,7 +48,8 @@ export function createBasicPermanentEtbTrigger(
   instanceId: string,
   controllerId: string,
   definition: CardDefinition,
-  revision: number
+  revision: number,
+  zoneChangeEventId?: string
 ): StackItem | null {
   const effect = basicEtbEffect(definition);
   if (!supportsBasicPermanent(definition) || !effect) return null;
@@ -57,7 +58,7 @@ export function createBasicPermanentEtbTrigger(
     controller_id: controllerId,
     source_instance_id: instanceId,
     kind: "triggered-ability",
-    payload: { ...effect, sourceName: definition.name }
+    payload: { ...effect, sourceName: definition.name, ...(zoneChangeEventId ? { zoneChangeEventId } : {}) }
   };
 }
 
