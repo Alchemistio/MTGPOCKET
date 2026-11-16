@@ -15,39 +15,48 @@
   "index_files": [
     {
       "path": "Rules_Engine/index/rules_chapter_1.jsonl",
-      "chapter": 1
+      "chapter": 1,
+      "records": 531
     },
     {
       "path": "Rules_Engine/index/rules_chapter_2.jsonl",
-      "chapter": 2
+      "chapter": 2,
+      "records": 135
     },
     {
       "path": "Rules_Engine/index/rules_chapter_3.jsonl",
-      "chapter": 3
+      "chapter": 3,
+      "records": 181
     },
     {
       "path": "Rules_Engine/index/rules_chapter_4.jsonl",
-      "chapter": 4
+      "chapter": 4,
+      "records": 88
     },
     {
       "path": "Rules_Engine/index/rules_chapter_5.jsonl",
-      "chapter": 5
+      "chapter": 5,
+      "records": 166
     },
     {
       "path": "Rules_Engine/index/rules_chapter_6.jsonl",
-      "chapter": 6
+      "chapter": 6,
+      "records": 337
     },
     {
       "path": "Rules_Engine/index/rules_chapter_7.jsonl",
-      "chapter": 7
+      "chapter": 7,
+      "records": 1578
     },
     {
       "path": "Rules_Engine/index/rules_chapter_8.jsonl",
-      "chapter": 8
+      "chapter": 8,
+      "records": 184
     },
     {
       "path": "Rules_Engine/index/rules_chapter_9.jsonl",
-      "chapter": 9
+      "chapter": 9,
+      "records": 139
     },
     {
       "path": "Rules_Engine/index/glossary_index.jsonl",
@@ -56,5 +65,6 @@
   ],
   "position_format": "1-based inclusive line_start/line_end in the UTF-8 source text. Lines identify the complete numbered paragraph; the source is plain text for stable lookup.",
   "summary_policy": "Generated topical summaries and keyword extraction are navigation aids, not authoritative rule text. Always inspect the referenced source paragraph for interpretation.",
-  "coverage": "All 3,182 numbered rules/subrules, 148 chapter/section headings, and 744 glossary terms are indexed."
+  "coverage": "All 3,182 numbered rules/subrules, 148 chapter/section headings, and 744 glossary terms are indexed.",
+  "source_blob_sha": "17a632c0faa2594991057e18e3722f4b5fd76377"
 }
