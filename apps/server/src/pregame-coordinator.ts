@@ -165,7 +165,7 @@ export class PregameCoordinator {
 
   /** Rolls back only the state transition when durable room persistence fails. */
   restoreStateAfterFailedStart(state: GameState): void {
-    if (state.id !== this.currentState.id || state.deckSetupComplete) {
+    if (state.id !== this.currentState.id || state.status !== "pregame") {
       throw new Error("INVALID_PREGAME_ROLLBACK");
     }
     this.currentState = state;
