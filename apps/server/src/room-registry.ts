@@ -1,13 +1,14 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { PlayerSetup } from "@commander-pocket/game-engine";
 import { GameRoom, type CardDefinitionResolver, type CardSpellSupport, type StackEffectResolver, type RoomCommand, type RoomCommandResult } from "./game-room.js";
-import type { PregameSeedRecord } from "./pregame-coordinator.js";
+import type { PregameCoordinatorCheckpoint, PregameSeedRecord } from "./pregame-coordinator.js";
 import { hashSeatToken, type PersistedRoomRecord, type RoomPersistence } from "./room-persistence.js";
 
 interface RoomEntry {
   room: GameRoom;
   tokenHashes: Map<string, string>;
   seedLog: PregameSeedRecord[];
+  pregameCheckpoint?: PregameCoordinatorCheckpoint;
 }
 
 export interface SeatCredential {
@@ -30,7 +31,8 @@ export class RoomRegistry {
       this.entries.set(record.gameId, {
         room,
         tokenHashes: new Map(Object.entries(record.seatTokenHashes)),
-        seedLog: record.seedLog.map(seed => ({ ...seed }))
+        seedLog: record.seedLog.map(seed => ({ ...seed })),
+        ...(record.pregameCheckpoint ? { pregameCheckpoint: clone(record.pregameCheckpoint) } : {})
       });
       this.restoredGameIds.add(record.gameId);
     }
@@ -60,6 +62,30 @@ export class RoomRegistry {
     return this.restoredGameIds.has(gameId);
   }
 
+  /** Return a defensive copy of a room's interrupted pregame, if one was persisted. */
+  getPregameCheckpoint(gameId: string): PregameCoordinatorCheckpoint | undefined {
+    const checkpoint = this.entries.get(gameId)?.pregameCheckpoint;
+    return checkpoint ? clone(checkpoint) : undefined;
+  }
+
+  /** Persist every accepted pregame transition before it is acknowledged to the client. */
+  savePregameCheckpoint(gameId: string, checkpoint: PregameCoordinatorCheckpoint): void {
+    const entry = this.entries.get(gameId);
+    if (!entry) throw new Error("UNKNOWN_GAME");
+    if (checkpoint.gameId !== gameId || checkpoint.state.status !== "pregame") {
+      throw new Error("INVALID_PREGAME_CHECKPOINT");
+    }
+    const previous = entry.pregameCheckpoint;
+    entry.pregameCheckpoint = clone(checkpoint);
+    try {
+      this.persist(entry);
+    } catch (error) {
+      if (previous) entry.pregameCheckpoint = previous;
+      else delete entry.pregameCheckpoint;
+      throw error;
+    }
+  }
+
   /** Apply and durably journal an accepted command before the caller acknowledges it. */
   apply(gameId: string, command: RoomCommand): RoomCommandResult {
     const entry = this.entries.get(gameId);
@@ -82,13 +108,16 @@ export class RoomRegistry {
     if (!entry) throw new Error("UNKNOWN_GAME");
     const previousCheckpoint = entry.room.checkpoint;
     const previousSeeds = entry.seedLog;
+    const previousPregameCheckpoint = entry.pregameCheckpoint;
     try {
       entry.room.replaceStateFromPregame(state);
       entry.seedLog = seedLog.map(seed => ({ ...seed }));
+      delete entry.pregameCheckpoint;
       this.persist(entry);
     } catch (error) {
       entry.room = GameRoom.restore(previousCheckpoint, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
       entry.seedLog = previousSeeds;
+      if (previousPregameCheckpoint) entry.pregameCheckpoint = previousPregameCheckpoint;
       throw error;
     }
   }
@@ -110,7 +139,8 @@ export class RoomRegistry {
       gameId: entry.room.id,
       checkpoint: entry.room.checkpoint,
       seatTokenHashes: Object.fromEntries(entry.tokenHashes),
-      seedLog: entry.seedLog.map(seed => ({ ...seed }))
+      seedLog: entry.seedLog.map(seed => ({ ...seed })),
+      ...(entry.pregameCheckpoint ? { pregameCheckpoint: clone(entry.pregameCheckpoint) } : {})
     };
     this.persistence.save(record);
   }
@@ -135,4 +165,8 @@ function validateRoomSetup(gameId: string, players: readonly PlayerSetup[]): voi
     seats.add(player.seat);
   }
   if (seats.size !== 4) throw new Error("INCOMPLETE_SEATS");
+}
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
 }
