@@ -96,7 +96,8 @@ export class PregameSessionRegistry {
 
   private getAuthorizedSession(gameId: string, playerId: string, token: string): PregameCoordinator | null {
     const room = this.rooms.authenticate(gameId, playerId, token);
-    if (!room || room.state.status !== "pregame" || room.state.deckSetupComplete) return null;
+    if (!room || room.state.status !== "pregame" || room.state.deckSetupComplete ||
+        this.rooms.wasRestored(gameId)) return null;
     let session = this.sessions.get(gameId);
     if (!session) {
       const players = room.state.players.map(player => ({
