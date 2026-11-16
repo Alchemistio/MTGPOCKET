@@ -1,3 +1,10 @@
+## 2026-11-16 — CI verte de la première capacité déclenchée ETB
+
+- Run `43872357368`, SHA `76151c79384ca6018e81b47fdc1534d51eeb18ff` : jobs `validate` et `python-data` réussis.
+- Typecheck réussi ; Vitest : 55 tests serveur (dont le test WebSocket authentifié à quatre sièges), 30 moteur et 10 mobile réussis ; Python data réussi.
+- Le test transport couvre le lancement d'un permanent vanilla puis d'un permanent ETB, l'arrivée au champ de bataille, l'objet déclenché distinct sur la pile, sa résolution et la confidentialité des mains adverses.
+- Aucun test physique ni LAN réel sur appareils n'est revendiqué. Les commits documentaires suivants ne modifient pas le code.
+
 ## 2026-11-16 — CI verte de la pose de terrain de base
 
 - Run `43869469546`, SHA `d163da9fbbbab93541823a3689a8eeedca7505ff` : `validate` et `python-data` réussis.
