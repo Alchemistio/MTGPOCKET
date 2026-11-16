@@ -2,23 +2,23 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-## ETB-0 — Contrat d'événement et changements de zone
+## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
 - [ ] Centraliser chaque changement de zone dans un processeur métier.
 - [ ] Introduire événements proposés/commis et groupe de simultanéité.
 - [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
-- [ ] Préparer l'interception par remplacements/préventions.
+- [ ] Préparer l'interception par remplacements/préventions (614.12, 616.1) et distinguer entrée modifiée d'un trigger (603.6d).
 - [ ] Tests : événement remplacé, mouvements simultanés, token, contrôle et nouvelle identité.
 
-## ETB-1 — Détection générique
+## ETB-1 — Détection générique (toutes sources pertinentes)
 - [ ] Compiler « When this enters », « Whenever a creature enters », « Whenever another permanent enters », etc. vers TriggerSpec.
-- [ ] Scanner toutes les sources pertinentes, entrants compris.
+- [ ] Scanner toutes les sources pertinentes, entrants compris ; appliquer les zones de fonctionnement de 113.6, y compris les exceptions hors battlefield.
 - [ ] Capturer le contrôleur au moment du trigger.
 - [ ] Conditions simples et occurrences multiples.
 - [ ] Tests : source elle-même, autre permanent, plusieurs entrants, types modifiés par effets continus.
 
-## ETB-2 — Timing, priorité et APNAP
+## ETB-2 — Timing, priorité et APNAP (checkpoint CR 117.5)
 - [ ] Accumuler les candidats jusqu'au prochain checkpoint de priorité.
-- [ ] SBA avant priorité et collecte des triggers qui en résultent.
+- [ ] SBA avant priorité et collecte des triggers qui en résultent ; répéter jusqu'à stabilisation.
 - [ ] Ordre APNAP et ordre choisi par chaque joueur ; deux groupes de 603.3b.
 - [ ] Répéter SBA → triggers jusqu'à stabilisation.
 - [ ] Tests à 2/4 joueurs, plusieurs contrôleurs, plusieurs triggers par joueur et SBA induites.
@@ -36,8 +36,8 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [ ] Recalculer couches/caractéristiques ; déterminer capacités présentes au moment pertinent.
 - [ ] Tests d'effets globaux, auto-remplacements et interactions.
 
-## ETB-5 — Références et familles avancées
-- [ ] Last known information et références après changement de zone.
+## ETB-5 — Références, identité d'objet et familles avancées
+- [ ] Last known information, exceptions de 400.7 et références après changement de zone.
 - [ ] Source quittant le battlefield avant résolution.
 - [ ] Tokens, copies, multi-faces, face-down, meld, blink, réanimation et entrées simultanées.
 - [ ] Capacités retardées/réflexives et capacités liées.
@@ -48,6 +48,12 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [ ] Mesurer parse, semantic et execution coverage séparément.
 - [ ] Tests différentiels et scénarios déterministes/rejouables.
 - [ ] Exception carte-spécifique uniquement avec justification, test et règle CR.
+
+## ETB-7 — Couverture des cartes et robustesse en continu
+- [ ] Générer des fixtures à partir des cartes Scryfall/Oracle, groupées par motif de trigger et d'effet.
+- [ ] Détecter les formulations inconnues et produire un diagnostic stable (règles candidates, token non reconnu, raison d'échec).
+- [ ] Mesurer les cartes totalement supportées, partiellement supportées et non supportées ; ne jamais afficher une carte « jouable » si une capacité obligatoire est ignorée.
+- [ ] Ajouter des tests différentiels pour les régressions de parseur et des tests de propriété pour les événements simultanés/replacements.
 
 ## Critères de sortie
 - Sous-aspects pertinents de 603.6, 603.2–603.5, 603.3a–d, 603.7, 603.10–603.12 et règles adjacentes reliés à des tests.
