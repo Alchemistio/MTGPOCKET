@@ -43,3 +43,10 @@ Respecter les conditions des fournisseurs, les limites de débit et les droits d
 Le handler accepte uniquement un permanent de layout normal (créature, artefact ou enchantement), à coût simple, dont le texte Oracle correspond exactement à l'un de ces deux modèles auto-référentiels : « When {nom de la carte} enters the battlefield, draw a card. » ou « When {nom de la carte} enters the battlefield, you gain {N} life. ». À la résolution du sort permanent, la carte entre d'abord sur le champ de bataille ; l'objet de sort est retiré de la pile, puis le déclenchement est ajouté à la pile avant l'ouverture de la priorité suivante (référence de travail : CR 117.5 et 603.3 du PDF Comprehensive Rules fourni, édition 25 septembre 2026).
 
 La capacité se résout comme un objet de pile distinct : pioche d'une carte ou gain du nombre entier de points de vie indiqué, pour le contrôleur qui contrôlait la source au déclenchement. Les capacités inconnues, textes approchants, cibles, choix, plusieurs déclenchements simultanés, ordre APNAP et déclenchements d'autres événements ne sont pas pris en charge. Il ne s'agit pas d'un parseur Oracle général. La tranche est validée en CI sur le SHA `199194a` (run `43872836544`), avec tests unitaires et scénario WebSocket authentifié à quatre sièges couvrant les deux effets.
+
+
+## Index documentaire exhaustif
+
+La source texte et l'index machine sont dans `Rules_Engine/`. La base locale indexée correspond à l'édition du 25 septembre 2026 fournie dans le projet : 3 166 règles/sous-règles et 741 termes du glossaire. Les positions sont des lignes et offsets UTF-8 dans le fichier texte normalisé. La dernière édition officielle connue est effective au 6 novembre 2026 ; la base locale reste non-current jusqu'à l'import et la reconstruction de cette version. Voir `Rules_Engine/CURRENT_VERSION.md`.
+
+La stratégie moteur générique et le plan ETB complet sont documentés dans `docs/RULE_ENGINE_STRATEGY.md` et `memory/rules/etb/`.

@@ -102,5 +102,22 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [ ] Profilage, tests appareils, crash reporting et bêta privée.
 **Sortie :** release candidate iOS/Android avec checklist de publication.
 
+## Stratégie complémentaire — moteur générique piloté par les règles
+
+Cette stratégie **s'ajoute** aux étapes M0–M6 et ne remplace aucun chantier déjà prévu. L'objectif est de développer des mécanismes génériques capables de traiter des familles entières de cartes, plutôt que d'écrire un handler par carte.
+
+- [x] Importer une source texte normalisée de la CR fournie (édition 2026-09-25) dans `Rules_Engine/source/`.
+- [x] Construire un index exhaustif : 3 166 règles/sous-règles, 741 termes de glossaire, 9 chapitres et 147 groupes, avec résumé extractif, mots-clés, références et positions.
+- [x] Ajouter un générateur reproductible et un manifest de validation.
+- [ ] Mettre à jour la source et tous les index vers l'édition officielle du 2026-11-06 ; la version locale actuelle reste explicitement non-current.
+- [ ] Construire un processeur d'événements métier centralisé pour zones, remplacements, SBA et triggers.
+- [ ] Construire le compilateur Oracle générique : lexing, grammaire, résolution des références, validation sémantique, AST puis IR typée.
+- [ ] Construire un interpréteur d'effets composables avec cibles, choix, coûts, modes et durées.
+- [ ] Développer les modules complets par mécanique (ETB, capacités statiques, coûts, remplacement/prévention, couches, combat, copies), chacun avec recherche et tests.
+- [ ] Mesurer séparément rule/parse/semantic/execution/card coverage sur un corpus Scryfall/Oracle.
+- [ ] Réserver les exceptions carte-spécifiques aux mécaniques réellement non généralisables ; chacune doit être documentée, testée et liée aux règles CR.
+
+Détails : [docs/RULE_ENGINE_STRATEGY.md](RULE_ENGINE_STRATEGY.md), [memory/memory_index.md](../memory/memory_index.md), [module ETB](../memory/rules/etb/etb_index.md).
+
 ## Definition of Done
 Typecheck et tests pertinents verts ; cas négatifs et régressions ; erreurs et règles non supportées explicites ; documentation/index/journal à jour ; tests natifs et UX validés sur appareils pour toute fonctionnalité mobile.

@@ -43,3 +43,8 @@ Reprise après interruption : **[docs/RESUME.md](docs/RESUME.md)**. Pour le dét
 Le socle du moteur, le plateau mobile, la recherche Scryfall et le cache SQLite existent. Le client peut créer/rejoindre une salle LAN et passer la priorité. Le serveur ne distribue pas encore de decks et le jeu n'est pas encore complet : consulter la roadmap et le journal avant de considérer une fonctionnalité comme livrée.
 
 Projet indépendant, non affilié à Wizards of the Coast.
+
+
+## Documentation des règles
+
+Voir [Rules_Engine](Rules_Engine/README.md) pour la source texte et l'index exhaustif des Comprehensive Rules, et [memory_index](memory/memory_index.md) pour les recherches et roadmaps des modules.
