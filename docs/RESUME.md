@@ -37,7 +37,7 @@
 
 ## Prochaines actions — ordre recommandé
 1. Vérifier la CI sur le HEAD courant et corriger les erreurs.
-2. Ajouter un test de redémarrage du processus serveur réel avec réauthentification par jeton et rejeu exact.
+2. Valider en CI le nouveau test de redémarrage du processus serveur réel : réauthentification par jeton et rejeu idempotent après SIGKILL/restart.
 3. Implémenter reconnexion/réauthentification automatique mobile et synchronisation depuis la vue serveur restaurée.
 4. Tester au minimum deux appareils sur le même Wi-Fi ; viser quatre appareils.
 5. Provisionner et dater le snapshot Scryfall et la policy Commander officiels, sans inventer de légalité.
