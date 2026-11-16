@@ -1,3 +1,10 @@
+## 2026-11-16 — CI verte de la pose de terrain de base
+
+- Run `43869469546`, SHA `d163da9fbbbab93541823a3689a8eeedca7505ff` : `validate` et `python-data` réussis.
+- Typecheck complet réussi ; Vitest : 30 tests moteur, 53 tests serveur et 10 tests mobile réussis.
+- La CI couvre le reset du compteur au début du tour, la limite d'une pose, le timing, la migration des checkpoints historiques, la projection de la main et le scénario WebSocket quatre sièges.
+- Les commits suivants sont documentaires ; aucun test sur appareils physiques n'est revendiqué.
+
 ## 2026-11-16 — Action spéciale de pose d'un terrain de base
 
 - Ajout de `landsPlayedThisTurn` dans l'état joueur, initialisé à zéro et réinitialisé au début du tour de son contrôleur.
