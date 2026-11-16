@@ -58,9 +58,9 @@ class ComprehensiveRulesIndexTests(unittest.TestCase):
             end = loc["line_end"] - 1
             self.assertEqual(self.lines[start].strip(), row["term"])
             byte_start = sum(len(line) for line in self.raw_lines[:start])
-            byte_end = byte_start + len(self.raw_lines[start:end + 1])
+            byte_end = byte_start + sum(len(line) for line in self.raw_lines[start:end]) + len(self.raw_lines[end].rstrip(b"\\r\\n"))
             self.assertEqual(loc["utf8_byte_start"], byte_start)
-            self.assertEqual(loc["utf8_byte_end_exclusive"], byte_end - len(self.raw_lines[end].splitlines(keepends=True)[-1]) + len(self.raw_lines[end].rstrip(b"\\r\\n")))
+            self.assertEqual(loc["utf8_byte_end_exclusive"], byte_end)
 
     def test_manifest_points_to_the_current_source(self) -> None:
         self.assertEqual(self.manifest["edition"], "2026-11-06")
