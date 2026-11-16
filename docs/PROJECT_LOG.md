@@ -1,3 +1,13 @@
+## 2026-11-16 — Persistance durable initiale et gate de stabilisation PR #1
+
+- Ajout d'un checkpoint GameRoom versionné : snapshot autoritaire défensif + journal de commandes acceptées ; restauration par rejeu et validation des versions, révisions et résultats.
+- Ajout de JsonFileRoomPersistence : JSON par salle, fichier temporaire, fsync, rename atomique, répertoire 0700 et fichiers 0600. Les données contiennent des mains privées et restent dans `data/server-rooms/`, ignoré par Git.
+- RoomRegistry charge les salles au démarrage, conserve uniquement les hash SHA-256 des jetons de siège, écrit les commandes acceptées avant l'ACK et restaure le checkpoint précédent si l'écriture échoue.
+- Le snapshot de début de partie et le seed log sont persistés au démarrage ; les seeds restent exclusivement côté serveur. Les états intermédiaires de pré-partie ne sont pas encore persistés.
+- Tests ajoutés pour le checkpoint/replay, l'idempotence après restauration, le stockage, les permissions, les secrets, les seeds et le rollback disque. CI à vérifier sur le nouveau HEAD ; le run 43689458355 est antérieur à ces changements.
+- Roadmap : ajout de M0.5, gate de merge PR #1. La couverture complète des règles Magic est explicitement hors des critères de merge ; priorité à CI, restauration, reconnexion et test physique minimal à deux appareils.
+- Aucun test de redémarrage réel du processus, aucune validation sur appareil et aucun merge ne sont revendiqués.
+
 ## 2026-11-15 — Validation CI de la capture des graines de pré-partie
 
 - Run `43689458355` sur `7d6b320983270638d829ec51995ca593cfa65f79`: `validate` (typecheck + Vitest) et `python-data` réussis.
