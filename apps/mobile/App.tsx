@@ -219,9 +219,10 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = roomClient.onEvent(event => {
-    if (event.type === "game-view") {
+    if (event.type === "game-view" || event.type === "room-joined") {
       setRoomView(event.view as MobileGameView);
       setSelectedDiscardIds([]);
+      autoYieldRevision.current = null;
     }
     if (event.type === "command-result") {
       const result = event.result as { accepted?: unknown; code?: unknown } | null;
@@ -232,10 +233,20 @@ export default function App() {
       setNetworkMessage(event.code);
     }
     if (event.type === "disconnected") {
+      setSelectedDiscardIds([]);
+      setNetworkMessage("Connexion perdue. Tentative de reconnexion…");
+    }
+    if (event.type === "reconnecting") {
+      setNetworkMessage(`Reconnexion au serveur… tentative ${event.attempt}/5`);
+    }
+    if (event.type === "reconnected") {
+      setNetworkMessage("Connexion rétablie. État de la partie resynchronisé.");
+    }
+    if (event.type === "reconnect-failed") {
       setRoomView(null);
       setRoomSession(null);
       setSelectedDiscardIds([]);
-      setNetworkMessage("Connexion réseau fermée.");
+      setNetworkMessage("Reconnexion impossible. Rejoignez de nouveau la salle avec votre jeton.");
     }
     });
     return () => { unsubscribe(); roomClient.disconnect(); };
