@@ -1,10 +1,12 @@
 # Mémoire des règles — index des modules
 
 ## Références
-- Index normatif : `Rules_Engine/index/rules_index.md`.
-- Glossaire : `Rules_Engine/index/glossary_index.jsonl`.
+- Index normatif courant : `Rules_Engine/index/rules_index.md` (édition 2026-11-06).
+- Glossaire : `Rules_Engine/index/glossary_index.jsonl` (744 termes).
 - Groupes : `Rules_Engine/index/sections_index.jsonl`.
 - Stratégie : `docs/RULE_ENGINE_STRATEGY.md`.
+
+- Index mémoire et workflow : [rules_index.md](rules_index.md).
 
 ## Modules
 - [ETB / zone-change triggers](etb/etb_index.md) — entrée sur le champ de bataille, détection, APNAP, pile, choix, résolution, remplacements et couches.
