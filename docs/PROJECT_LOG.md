@@ -1,3 +1,13 @@
+## 2026-11-16 — Reprise durable des pré-parties interrompues
+
+- `PregameCoordinator.checkpoint` sérialise l'état de pré-partie, les decks soumis, les déclarations keep/mulligan, les seeds déjà générées et les sièges, avec copie défensive.
+- La restauration vérifie le schéma, la salle, les sièges, les déclarations, la séquence des seeds et revalide chaque deck avec le catalogue et la policy serveur actuellement injectés.
+- `RoomRegistry` stocke le checkpoint dans le même enregistrement privé que la salle. `PregameSessionRegistry` persiste chaque transition acceptée avant le retour WebSocket et restaure le coordinateur en mémoire si l'écriture échoue.
+- Le démarrage retire le checkpoint pré-partie dans la même écriture durable qui enregistre l'état actif et le seed log.
+- Test ajouté : reconstruction de plusieurs registres depuis le même répertoire, poursuite des decks, reprise d'une déclaration mulligan en attente, sélection bottom, seeds puis démarrage.
+- Le test ne simule pas encore un processus OS redémarré. Les commits de cette tranche doivent encore passer CI ; aucun test local ou appareil n'est revendiqué.
+- CI de référence précédente : run `43807266906`, SHA `e00d679a03b0ddfacae7c1d95eacff8daf349245`, succès avant cette tranche.
+
 ## 2026-11-16 — Régression CI pré-partie détectée puis corrigée
 
 - Run `43806846271` (merge ref PR #1 après la première tranche de persistance) : typecheck réussi, `python-data` réussi, Vitest échoue sur 3 tests de pré-partie. Les tests de checkpoint, stockage disque et RoomRegistry passent.
