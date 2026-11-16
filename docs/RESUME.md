@@ -33,6 +33,8 @@
 - Test OS : le serveur de production est lancé dans un processus Node, crée une salle et persiste une commande, est tué puis relancé sur le même répertoire ; le test vérifie la réauthentification et l'idempotence.
 - Les fichiers serveur sont conservés sous `data/server-rooms`, exclu de Git. Mains adverses, bibliothèques et seeds ne sont jamais projetées.
 
+- Tranche suivante en cours : lancement des permanents vanilla (créatures, artefacts, enchantements sans texte Oracle), timing de phase principale, paiement générique/coloré, passage par la pile et arrivée sur le champ de bataille. UI mobile : action de jeu et affichage compact des permanents publics. Tests ajoutés ; CI de ce nouveau code à confirmer.
+
 ## Limites et blocages
 - Aucun test sur appareils physiques ni LAN réel à deux/quatre téléphones.
 - Découverte LAN et TLS/gestion de secrets de production non implémentées.
