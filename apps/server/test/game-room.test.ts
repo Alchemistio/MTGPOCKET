@@ -554,6 +554,20 @@ describe("GameRoom", () => {
     expect(restored.eventLog).toHaveLength(2);
   });
 
+  it("migrates a persisted room snapshot created before land-play counters existed", () => {
+    const room = new GameRoom("room-1", players);
+    room.apply(command("p1", room.state.revision, "legacy-room-event"));
+    const checkpoint = room.checkpoint;
+    const legacySnapshot = {
+      ...checkpoint.snapshot,
+      players: checkpoint.snapshot.players.map(({ landsPlayedThisTurn: _ignored, ...player }) => player)
+    };
+    const legacyCheckpoint = { ...checkpoint, snapshot: legacySnapshot } as unknown as typeof checkpoint;
+    const restored = GameRoom.restore(legacyCheckpoint);
+    expect(restored.state.players.every(player => player.landsPlayedThisTurn === 0)).toBe(true);
+    expect(restored.state).toEqual(room.state);
+  });
+
   it("rejects a checkpoint whose accepted command result was altered", () => {
     const room = new GameRoom("room-1", players);
     room.apply(command("p1", room.state.revision, "tamper-check"));
