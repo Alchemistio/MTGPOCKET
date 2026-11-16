@@ -10,12 +10,12 @@
 - Stack : pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Dernière validation connue
-- Dernière CI verte : run `43868236829`, SHA `0c55bdb39ad9093674dc78ae61b99a625601cc85`, jobs `validate` (typecheck + Vitest) et `python-data` réussis. Elle couvre la première tranche de permanents vanilla et son test WebSocket quatre sièges.
+- Dernière CI verte : run `43869469546`, SHA `d163da9` (`validate` + `python-data`), couvrant les permanents vanilla, la pose de terrain de base, les migrations de checkpoints, la reconnexion et le redémarrage OS.
 - Cette CI couvre : persistance de salle, reprise pré-partie, initialisation du checkpoint à create-room, vue restaurée au rejoin, reconnexion mobile automatique et test de redémarrage réel du processus Node avec SIGKILL/restart, réauthentification et rejeu idempotent.
 - Les runs antérieurs `43826473231` et `43826793567` ont révélé deux assertions erronées dans le nouveau test mulligan ; elles ont été corrigées (premier mulligan gratuit, second mulligan, six cartes après bottom). Le run `43826978349` a validé la reprise pré-partie, `43827536943` la reconnexion mobile, puis `43827956587` l'ensemble avec le test OS.
 - Les commits après le SHA CI sont documentaires uniquement. Aucun test local n'a été exécuté depuis cet environnement.
 
-- Permanents vanilla : première tranche implémentée (créatures, artefacts, enchantements sans texte Oracle), paiement simple, timing de phase principale, pile puis champ de bataille ; UI mobile et projection publique/privée ajoutées. CI initiale `43867439926` a passé typecheck/Python mais échoué sur un fixture de test incomplet (`deckSetupComplete` manquant), corrigé dans `7601209`/`c8ff02a`. Les commits après ce SHA sont documentaires uniquement ; aucun code non testé n’a été ajouté ensuite.
+- Permanents vanilla : première tranche implémentée (créatures, artefacts, enchantements sans texte Oracle), paiement simple, timing de phase principale, pile puis champ de bataille ; UI mobile et projection publique/privée ajoutées. CI initiale `43867439926` a passé typecheck/Python mais échoué sur un fixture de test incomplet (`deckSetupComplete` manquant), corrigé dans `7601209`/`c8ff02a`. Les commits après le SHA validé sont documentaires uniquement ; aucun code non testé n’a été ajouté ensuite.
 
 ## État du code
 - Moteur initial Commander : setup, mulligan de Londres, phases/priorité/pile, pioche, mana basique, cleanup, pertes, taxe et quelques sorts supportés.
@@ -37,7 +37,7 @@
 
 - Tranche suivante en cours : lancement des permanents vanilla (créatures, artefacts, enchantements sans texte Oracle), timing de phase principale, paiement générique/coloré, passage par la pile et arrivée sur le champ de bataille. UI mobile : action de jeu et affichage compact des permanents publics. Tests ajoutés ; CI de ce nouveau code à confirmer.
 
-- Action spéciale « jouer un terrain de base » ajoutée : un par tour, joueur actif en phase principale avec priorité et pile vide ; déplacement direct sur le champ de bataille sans pile/paiement. Compteur visible et UI mobile mis à jour. Migrations rétrocompatibles des checkpoints salle/pré-partie. CI de cette tranche en cours ; tests physiques non effectués.
+- Action spéciale « jouer un terrain de base » ajoutée : un par tour, joueur actif en phase principale avec priorité et pile vide ; déplacement direct sur le champ de bataille sans pile/paiement. Compteur visible et UI mobile mis à jour. Migrations rétrocompatibles des checkpoints salle/pré-partie. CI verte : run `43869469546`, SHA `d163da9` (`validate` + `python-data`). Tests physiques non effectués.
 
 ## Limites et blocages
 - Aucun test sur appareils physiques ni LAN réel à deux/quatre téléphones.
