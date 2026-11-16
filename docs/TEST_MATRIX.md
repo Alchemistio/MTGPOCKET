@@ -1,5 +1,6 @@
 
 ## Permanents vanilla — ajout 2026-11-16, CI en attente
+- Run `43867439926` : typecheck et Python réussis ; Vitest échoue uniquement sur le test négatif de timing car son état de fixture n'indiquait pas que le setup de deck était terminé. Fixture corrigé dans `7601209`, assertions de frontières élargies dans `c8ff02a`. Nouveau run CI requis.
 
 - `game-room.test.ts` : lancer une créature vanilla depuis la main, payer un coût coloré + générique, empiler le sort, résoudre après les quatre passes, déplacer l'instance sur le champ de bataille du contrôleur et vérifier le rejeu.
 - Test négatif : lancer un permanent hors phase principale est refusé sans dépenser de mana.
