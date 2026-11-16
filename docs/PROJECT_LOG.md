@@ -1,3 +1,10 @@
+## 2026-11-16 — Validation CI de l'index des règles
+
+- Run `43892396267`, HEAD `df4987b22556909960fa225dc4830a4c581b11d6` : jobs `validate` et `python-data` réussis.
+- `scripts/test_rules_index.py` vérifie les 3 182 identifiants uniques, les 148 en-têtes, les 744 termes, les lignes source et les offsets UTF-8/CRLF du glossaire.
+- Python : 7 tests réussis. TypeScript : typecheck réussi ; Vitest : 8 card-data, 30 moteur, 56 serveur et 10 mobile réussis.
+- Aucun comportement de jeu ni code runtime n'a été modifié dans cette tranche.
+
 ## 2026-11-16 — Base de règles Magic indexée
 
 - Import de la version texte de travail des Comprehensive Rules effective au 6 novembre 2026 ; le texte du 25 septembre 2026 correspondant au PDF fourni est conservé comme archive.
