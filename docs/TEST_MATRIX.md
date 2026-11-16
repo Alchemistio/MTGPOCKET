@@ -42,7 +42,7 @@ Workflow `.github/workflows/ci.yml` :
 - `pnpm test` (Vitest sur les packages)
 - `python -m unittest discover -s scripts -p "test_*.py"`
 
-Dernier run complet vérifié : **43689458355**, commit `7d6b320983270638d829ec51995ca593cfa65f79`, jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+Dernier run entièrement vert avant la tranche de pré-partie persistante : **43807266906**, commit `e00d679a03b0ddfacae7c1d95eacff8daf349245`, jobs `validate` et `python-data` réussis.
 
 ## Validation non automatisée — non encore réalisée
 
@@ -62,7 +62,7 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 
 ## Persistance et reprise — ajout 2026-11-16
 
-Les tests de checkpoint, stockage disque et RoomRegistry passent dans le run 43806846271 ; le même run a échoué sur trois tests pré-partie à cause d'un garde-fou erroné. Le typecheck et python-data étaient verts. Le garde-fou a été corrigé dans 7df71f3, puis le checkpoint a reçu un champ engineVersion. Aucun run CI n'est encore observé sur le HEAD actuel ; aucune validation de cette tranche n'est revendiquée. Aucun test de redémarrage de processus réel ni test sur appareil n'est revendiqué.
+Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Le run **43826473231** sur le merge ref associé au commit `b0162da` a passé typecheck et `python-data`, mais Vitest a révélé une hypothèse incorrecte dans le nouveau test de reprise : le premier mulligan est gratuit et ne demande pas encore de bottom. Le test a été corrigé pour effectuer un second mulligan avant le choix bottom (commit `a58a513`). Une CI sur ce correctif reste à obtenir. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
 
 
 ## Pré-partie persistante — ajout 2026-11-16
