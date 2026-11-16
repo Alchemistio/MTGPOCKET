@@ -124,7 +124,7 @@ def main() -> None:
         if item["kind"] == "rule":
             kw = keywords(item["paragraph"], item["section_title"])
             item["summary"] = (
-                "Précise les interactions liées à " + ", ".join(kw[:4])
+                "Point de règle sur " + ", ".join(kw[:4])
                 + ". Consulter le paragraphe source pour les conditions et exceptions exactes."
             )
             item["keywords"] = kw
@@ -143,6 +143,14 @@ def main() -> None:
         path = OUT / f"rules_chapter_{number}.jsonl"
         path.write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in items), encoding="utf-8")
 
+    # Preserve exact byte positions as well as inclusive line positions.
+    raw_lines = raw.splitlines(keepends=True)
+    byte_starts: list[int] = []
+    byte_position = 0
+    for raw_line in raw_lines:
+        byte_starts.append(byte_position)
+        byte_position += len(raw_line)
+
     glossary: list[dict] = []
     i = glossary_at + 1
     while i < len(lines):
@@ -156,12 +164,21 @@ def main() -> None:
         while i < len(lines) and lines[i].strip():
             i += 1
         end = i - 1
+        definition = re.sub(r"\\s+", " ", " ".join(lines[start + 1:end + 1])).strip()
+        first_sentence_match = re.match(r"^.*?[.!?](?=\\s|$)", definition)
+        summary = first_sentence_match.group(0) if first_sentence_match else definition
         glossary.append({
-            "id": term, "term": term, "kind": "glossary",
-            "summary": f"Terme du glossaire Magic : {term}. Voir la définition dans la source.",
-            "keywords": keywords(term),
-            "source_file": f"../source/{source_name}",
-            "line_start": start + 1, "line_end": end + 1,
+            "term": term,
+            "summary": summary,
+            "definition": definition,
+            "keywords": list(dict.fromkeys(words(term + " " + definition)))[:10],
+            "referenced_rule_ids": sorted(set(REFERENCE_RE.findall(definition))),
+            "source_location": {
+                "line_start": start + 1,
+                "line_end": end + 1,
+                "utf8_byte_start": byte_starts[start],
+                "utf8_byte_end_exclusive": byte_starts[end] + len(lines[end].encode("utf-8")),
+            },
         })
     (OUT / "glossary_index.jsonl").write_text(
         "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in glossary), encoding="utf-8"
