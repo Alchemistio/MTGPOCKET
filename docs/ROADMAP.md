@@ -39,6 +39,7 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [x] Résolution serveur d’un objet de pile après passes unanimes, via un handler d’effet injecté et rejouable.
 - [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, réponse d’un autre joueur, résolution LIFO via handler serveur et envoi au cimetière.
 - [x] CI verte sur la tranche complète de permanents vanilla, y compris le test WebSocket quatre sièges : run `43868236829`, SHA `0c55bdb` (`validate` + `python-data`).
+- [ ] CI verte sur l’action spéciale « jouer un terrain de base » (un par tour, timing de phase principale, sans pile), tests de migration des checkpoints et transport WebSocket ; code/tests ajoutés, validation en attente.
 - [ ] Étendre le lancement aux permanents avec capacités, cibles, coûts alternatifs, commandants et handlers d’effets réels.
 - [x] Cleanup serveur : défausse de fin de tour contrôlée par le siège concerné, puis progression automatique vers l'upkeep du joueur suivant.
 - [x] Test serveur d'un tour de p1 depuis main 1 jusqu'à l'upkeep p2 : instant, réponse adverse, résolution LIFO, passes des étapes de combat, cleanup et défausse.
