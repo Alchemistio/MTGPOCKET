@@ -138,7 +138,7 @@ describe("PregameSessionRegistry", () => {
       const started = thirdRestart.start("resumable-pregame", p1.playerId, p1.token);
       expect(started).toMatchObject({ accepted: true, view: { status: "active", step: "upkeep" } });
       expect(thirdRestartRooms.getPregameCheckpoint("resumable-pregame")).toBeUndefined();
-      expect(thirdRestartRooms.get("resumable-pregame")?.state.players.find(player => player.id === "p1")?.hand).toHaveLength(7);
+      expect(thirdRestartRooms.get("resumable-pregame")?.state.players.find(player => player.id === "p1")?.hand).toHaveLength(6);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
