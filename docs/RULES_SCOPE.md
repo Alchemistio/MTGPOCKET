@@ -47,6 +47,6 @@ La capacité se résout comme un objet de pile distinct : pioche d'une carte ou 
 
 ## Index documentaire exhaustif
 
-La source texte et l'index machine sont dans `Rules_Engine/`. La base locale indexée correspond à l'édition du 25 septembre 2026 fournie dans le projet : 3 166 règles/sous-règles et 741 termes du glossaire. Les positions sont des lignes et offsets UTF-8 dans le fichier texte normalisé. La dernière édition officielle connue est effective au 6 novembre 2026 ; la base locale reste non-current jusqu'à l'import et la reconstruction de cette version. Voir `Rules_Engine/CURRENT_VERSION.md`.
+La source texte et l'index machine sont dans `Rules_Engine/`. La version courante indexée est l'édition officielle effective au 6 novembre 2026 : 3 182 règles/sous-règles, 148 en-têtes de chapitre/section et 744 termes du glossaire. L'édition du 25 septembre 2026 fournie dans le projet est conservée comme archive. Chaque entrée renvoie à un paragraphe par lignes inclusives dans le fichier texte normalisé ; le glossaire comporte également des offsets UTF-8. Voir `Rules_Engine/CURRENT_VERSION.md` et `Rules_Engine/index/rules_index.md`.
 
 La stratégie moteur générique et le plan ETB complet sont documentés dans `docs/RULE_ENGINE_STRATEGY.md` et `memory/rules/etb/`.
