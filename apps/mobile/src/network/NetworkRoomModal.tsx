@@ -167,7 +167,7 @@ export function NetworkRoomModal({ visible, client, onClose, onConnected }: Prop
             ))}
           </View>
         ) : null}
-        <Text style={styles.footer}>Le serveur doit être lancé sur le réseau local. La découverte automatique et la reconnexion seront ajoutées ensuite.</Text>
+        <Text style={styles.footer}>Le client retente automatiquement la connexion et réauthentifie le siège (5 essais maximum) tant que l’application reste active. Après fermeture complète de l’application, rejoins de nouveau la salle avec ton jeton. La découverte LAN reste à ajouter.</Text>
       </ScrollView>
     </Modal>
   );
