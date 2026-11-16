@@ -320,6 +320,7 @@ describe("WebSocket pregame transport", () => {
           id: string;
           handCards: unknown[];
           battlefieldCards: Array<{ instanceId: string; name: string }>;
+          landsPlayedThisTurn: number;
         }>;
       };
       async function sendCommand(playerIndex: number, commandId: string, type: string, payload: unknown = {}): Promise<TransportView[]> {
@@ -375,11 +376,12 @@ describe("WebSocket pregame transport", () => {
       });
       expect(room.state.cards["plains-hand-instance"]?.zone).toBe("battlefield");
       expect(room.state.players[0]?.landsPlayedThisTurn).toBe(1);
-      expect(landViews.every(view =>
-        view.players.find(player => player.id === "p1")?.battlefieldCards.some(card =>
+      expect(landViews.every(view => {
+        const host = view.players.find(player => player.id === "p1");
+        return host?.landsPlayedThisTurn === 1 && host.battlefieldCards.some(card =>
           card.instanceId === "plains-hand-instance" && card.name === "Plains"
-        )
-      )).toBe(true);
+        );
+      })).toBe(true);
     } finally {
       await Promise.all(clients.map(client => new Promise<void>(resolve => {
         if (client.readyState === WebSocket.CLOSED) resolve();
