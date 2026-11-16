@@ -37,6 +37,7 @@ interface PlayerPanelData {
   libraryCount: number;
   commanderCastCount: Readonly<Record<string, number>>;
   manaPool: Readonly<Record<string, number>>;
+  landsPlayedThisTurn: number;
   isEliminated: boolean;
 }
 
@@ -58,6 +59,7 @@ function PlayerPanel({ player, hasPriority, canPass, onPass }: {
         <Text style={styles.metric}>Main {player.handCount}</Text>
         <Text style={styles.metric}>Taxe {commanderTax}</Text>
         <Text style={styles.metric}>Mana {mana}</Text>
+        <Text style={styles.metric}>Terrain {player.landsPlayedThisTurn}/1</Text>
       </View>
       <View style={styles.battlefield}>
         <Text style={styles.hint}>CHAMP DE BATAILLE</Text>
@@ -206,13 +208,13 @@ export default function App() {
         id: player.id, name: player.name, life: player.life, handCount: player.handCount,
         battlefieldCount: player.battlefield.length, battlefieldCards: player.battlefieldCards, graveyardCount: player.graveyard.length,
         libraryCount: player.libraryCount, commanderCastCount: player.commanderCastCount,
-        manaPool: player.manaPool, isEliminated: player.isEliminated
+        manaPool: player.manaPool, landsPlayedThisTurn: player.landsPlayedThisTurn, isEliminated: player.isEliminated
       }))
     : game.players.map(player => ({
         id: player.id, name: player.name, life: player.life, handCount: player.hand.length,
         battlefieldCount: player.battlefield.length, battlefieldCards: [], graveyardCount: player.graveyard.length,
         libraryCount: player.library.length, commanderCastCount: player.commanderCastCount,
-        manaPool: player.manaPool, isEliminated: player.isEliminated
+        manaPool: player.manaPool, landsPlayedThisTurn: player.landsPlayedThisTurn, isEliminated: player.isEliminated
       }));
   const priorityPlayerId = roomView ? roomView.priorityPlayerId : game.priorityPlayerId;
   const turnNumber = roomView?.turnNumber ?? game.turnNumber;
@@ -349,6 +351,21 @@ export default function App() {
     });
   }
 
+  function playLand(instanceId: string) {
+    if (!roomView || !roomSession || !roomView.spellCastingAvailable ||
+        roomView.priorityPlayerId !== roomSession.playerId) return;
+    setNetworkMessage(null);
+    roomClient.sendCommand({
+      protocolVersion: 1,
+      gameId: roomSession.gameId,
+      commandId: Date.now().toString() + "-" + Math.random().toString(36).slice(2),
+      playerId: roomSession.playerId,
+      expectedRevision: roomView.revision,
+      type: "play-land",
+      payload: { instanceId }
+    });
+  }
+
   function toggleDiscardCard(instanceId: string) {
     if (!roomView || !discardPending) return;
     setSelectedDiscardIds(current => {
@@ -475,7 +492,7 @@ export default function App() {
               {discardPending
                 ? "Choisis " + roomView.pendingDiscardCount + " carte(s) à défausser"
                 : roomView.spellCastingAvailable
-                  ? roomView.priorityPlayerId === roomSession.playerId ? "Sélectionne un sort ou permanent simple" : "En attente de priorité"
+                  ? roomView.priorityPlayerId === roomSession.playerId ? "Sélectionne un sort, permanent ou terrain simple" : "En attente de priorité"
                   : "Effets de cartes serveur non configurés"}
             </Text>
           </View>
@@ -498,7 +515,7 @@ export default function App() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScroll}>
             {ownHandCards.map(card => {
               const selected = selectedDiscardIds.includes(card.instanceId);
-              const isSupportedPlayable = card.isSupportedSpell || card.isSupportedPermanent;
+              const isSupportedPlayable = card.isSupportedSpell || card.isSupportedPermanent || card.isSupportedLand;
               const isInstant = /\bInstant\b/.test(card.typeLine);
               const needsSorceryTiming = card.isSupportedPermanent || /\bSorcery\b/.test(card.typeLine);
               const hasSorceryTiming = roomView.activePlayerId === roomSession.playerId &&
@@ -510,7 +527,7 @@ export default function App() {
               const disabled = !discardPending && !canCast;
               const actionLabel = discardPending
                 ? selected ? "À DÉFAUSSER" : "CHOISIR"
-                : canCast ? "JOUER"
+                : canCast ? card.isSupportedLand ? "POSER" : "JOUER"
                   : !roomView.spellCastingAvailable ? "EFFETS OFF"
                     : !isSupportedPlayable ? "NON PRIS EN CHARGE"
                       : roomView.priorityPlayerId !== roomSession.playerId ? "ATTENDRE"
@@ -519,11 +536,11 @@ export default function App() {
                 <Pressable
                   key={card.instanceId}
                   disabled={disabled}
-                  onPress={() => discardPending ? toggleDiscardCard(card.instanceId) : castSpell(card.instanceId)}
+                  onPress={() => discardPending ? toggleDiscardCard(card.instanceId) : card.isSupportedLand ? playLand(card.instanceId) : castSpell(card.instanceId)}
                   accessibilityRole="button"
                   accessibilityLabel={discardPending
                     ? (selected ? "Retirer " : "Sélectionner ") + card.name + " pour la défausse"
-                    : "Jouer " + card.name}
+                    : (card.isSupportedLand ? "Poser " : "Jouer ") + card.name}
                   accessibilityState={{ disabled, selected }}
                   style={[styles.handCard, selected && styles.handCardSelected, disabled && styles.handCardDisabled]}
                 >
