@@ -163,6 +163,14 @@ export class PregameCoordinator {
     return this.currentState;
   }
 
+  /** Rolls back only the state transition when durable room persistence fails. */
+  restoreStateAfterFailedStart(state: GameState): void {
+    if (state.id !== this.currentState.id || state.deckSetupComplete) {
+      throw new Error("INVALID_PREGAME_ROLLBACK");
+    }
+    this.currentState = state;
+  }
+
   private progress(roundResolved: boolean): MulliganProgress {
     return {
       roundResolved,
