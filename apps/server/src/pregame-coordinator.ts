@@ -95,7 +95,13 @@ export class PregameCoordinator {
       throw new Error("INVALID_PREGAME_CHECKPOINT");
     }
     const restored = clone(checkpoint);
-    this.currentState = restored.state;
+    // Older pregame checkpoints predate per-player land-play counters.
+    this.currentState = {
+      ...restored.state,
+      players: restored.state.players.map(player => ({
+        ...player, landsPlayedThisTurn: player.landsPlayedThisTurn ?? 0
+      }))
+    };
     this.submittedDecks.clear();
     for (const item of restored.submittedDecks) this.submittedDecks.set(item.playerId, item.deck);
     this.mulliganDeclarations.clear();
