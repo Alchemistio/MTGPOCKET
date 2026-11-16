@@ -18,7 +18,7 @@ Dernière revue : 2026-11-16. Cette matrice décrit les tests présents dans le 
 
 | Domaine | Tests | Ce qui est vérifié | Lacunes majeures |
 |---|---|---|---|
-| Salle LAN | `apps/server/test/game-room.test.ts`, `apps/server/test/room-registry.test.ts` | Island/Wastes tap-for-mana, anti double-tap, Divination/pioches, gain de vie, refus texte inconnu, instant/réponse, LIFO, cleanup, replay, checkpoint restauré, idempotence, persistance avant ACK et rollback disque | terrains non basiques, permanents non-terrain, cibles/contres, coûts avancés, crash de processus réel, persistance du seed log avant start, reconnexion |
+| Salle LAN | `apps/server/test/game-room.test.ts`, `apps/server/test/room-registry.test.ts` | Island/Wastes tap-for-mana, anti double-tap, Divination/pioches, gain de vie, refus texte inconnu, instant/réponse, LIFO, cleanup, replay, checkpoint restauré, idempotence, persistance avant ACK et rollback disque | terrains non basiques, permanents non-terrain, cibles/contres, coûts avancés, CI du nouveau test de processus réel à confirmer, persistance du seed log avant start, reconnexion après fermeture app |
 | Pré-partie | `apps/server/test/pregame-coordinator.test.ts`, `apps/server/test/pregame-session-registry.test.ts`, `apps/server/test/server-pregame-transport.test.ts` | validation serveur des quatre decks, création des instances, mains initiales, mulligan, capture des graines côté serveur, transfert au GameRoom, vues privées à quatre sièges, première commande WebSocket, restauration des decks soumis/déclarations/choix bottom/seeds depuis checkpoint entre plusieurs reconstructions du registre | crash réel du processus serveur, tour complet avec sort/réponse/résolution/cleanup, catalogue/banlist de production |
 | Vues privées | `apps/server/test/player-view.test.ts` | main du propriétaire visible seulement par lui, bibliothèque masquée, choix Commander privé, statut explicite `pregame`/`active` | audit complet des champs sensibles et tests fuzz |
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, hash des jetons, restauration après redémarrage, persistance des seeds, rollback si écriture échoue | rotation/expiration des jetons, test multi-processus |
@@ -81,3 +81,10 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - L'app conserve le dernier plateau pendant la reconnexion, applique la nouvelle vue au `room-joined` et signale l'échec après épuisement des essais.
 - Test unitaire avec sockets simulées : perte de connexion, réauthentification et réception de la nouvelle vue.
 - Les credentials ne sont pas persistés après fermeture complète de l'app ; aucun test sur appareil ni sur réseau mobile réel n'est effectué. CI de cette tranche à confirmer.
+
+
+## Redémarrage réel du serveur — test ajouté 2026-11-16
+
+- `server-process-restart.test.ts` lance deux instances successives du serveur de production dans des processus Node séparés, avec le même répertoire persistant.
+- Vérifie création de salle, commande acceptée, arrêt forcé du premier processus, restauration au second démarrage, réauthentification par jeton et rejeu idempotent de la même commande.
+- Le test est écrit mais n'a pas encore été couvert par une CI verte. Il reste à obtenir le run CI correspondant ; ce test ne valide pas un déploiement en production ni le réseau physique.
