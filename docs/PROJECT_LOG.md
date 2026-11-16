@@ -1,3 +1,10 @@
+## 2026-11-16 — Test de redémarrage réel du processus serveur
+
+- Nouveau test `server-process-restart.test.ts` lance le serveur de production dans un processus Node séparé avec un répertoire temporaire.
+- Le test crée une salle, accepte et persiste une commande, tue le processus, relance le serveur avec le même stockage, rejoint avec le jeton initial et vérifie la révision/priorité restaurées.
+- Il rejoue ensuite le même identifiant de commande et vérifie que le résultat initial est renvoyé sans seconde mutation.
+- Le test est ajouté mais attend encore CI ; il ne constitue pas une validation de déploiement ni un test multi-appareils.
+
 ## 2026-11-16 — CI verte sur la reconnexion automatique mobile
 
 - Run `43827536943`, SHA `3a95375958dc6c7607a8bf2d90808b8547642593` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
