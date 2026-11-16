@@ -62,7 +62,7 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 
 ## Persistance et reprise — ajout 2026-11-16
 
-Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Les runs **43826473231** et **43826793567** ont passé typecheck et `python-data`, mais Vitest a détecté deux assertions incorrectes du test de reprise du mulligan. La séquence a été corrigée (premier mulligan gratuit, second mulligan, six cartes après bottom) dans `eca67c0`. Le run **43826978349** sur `82eb670` est vert pour la reprise pré-partie et le rejoin WebSocket. Le run **43827536943** sur `3a95375` est également entièrement vert (`validate` et `python-data`) et couvre en plus la reconnexion mobile automatique et sa réauthentification. Les commits ultérieurs qui créent le checkpoint pré-partie dès la création de salle attendent leur propre CI. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
+Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Les runs **43826473231** et **43826793567** ont passé typecheck et `python-data`, mais Vitest a détecté deux assertions incorrectes du test de reprise du mulligan. La séquence a été corrigée (premier mulligan gratuit, second mulligan, six cartes après bottom) dans `eca67c0`. Le run **43826978349** sur `82eb670` est vert pour la reprise pré-partie et le rejoin WebSocket. Le run **43827536943** sur `3a95375` est également entièrement vert (`validate` et `python-data`) et couvre en plus la reconnexion mobile automatique et sa réauthentification. Le run **43827768778** sur `bd1972a` valide l’initialisation du checkpoint à create-room. Le run **43827956587** sur `1747a4a` est entièrement vert (`validate` + `python-data`) et couvre aussi le test de redémarrage du processus OS décrit ci-dessous. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
 
 
 ## Pré-partie persistante — ajout 2026-11-16
@@ -87,4 +87,4 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 
 - `server-process-restart.test.ts` lance deux instances successives du serveur de production dans des processus Node séparés, avec le même répertoire persistant.
 - Vérifie création de salle, commande acceptée, arrêt forcé du premier processus, restauration au second démarrage, réauthentification par jeton et rejeu idempotent de la même commande.
-- Le test est écrit mais n'a pas encore été couvert par une CI verte. Il reste à obtenir le run CI correspondant ; ce test ne valide pas un déploiement en production ni le réseau physique.
+- Le run CI **43827956587** sur `1747a4a` passe avec ce test. Il valide le cycle OS process restart en environnement CI, pas un déploiement en production ni le réseau physique.
