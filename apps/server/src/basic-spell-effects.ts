@@ -9,11 +9,14 @@ function hasSimpleManaCost(manaCost: string | null): boolean {
 
 /** Deliberately narrow support list: unknown Oracle text must never resolve as a no-op. */
 export function supportsBasicSpell(definition: CardDefinition): boolean {
-  if (definition.layout !== "normal") return false;
-  if (!/\b(?:Instant|Sorcery)\b/.test(definition.typeLine)) return false;
-  if (!hasSimpleManaCost(definition.manaCost)) return false;
+  if (definition.layout !== "normal" || !hasSimpleManaCost(definition.manaCost)) return false;
   const text = definition.oracleText.trim();
-  return /^Draw (?:a|two|three) cards\.$/.test(text) || /^You gain \d+ life\.$/.test(text);
+  if (/\b(?:Instant|Sorcery)\b/.test(definition.typeLine)) {
+    return /^Draw (?:a|two|three) cards\.$/.test(text) || /^You gain \d+ life\.$/.test(text);
+  }
+  // First permanent slice: vanilla creatures, artifacts and enchantments only.
+  // Cards with abilities, targets, multi-face layouts or advanced costs stay disabled.
+  return /\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine) && text.length === 0;
 }
 
 export function basicLandManaOptions(definition: CardDefinition): string[] {
