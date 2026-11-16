@@ -66,6 +66,7 @@ export class RoomClient {
 
   async connect(url: string): Promise<void> {
     if (this.socket?.readyState === WebSocket.OPEN) return;
+    if (!this.reconnecting) this.clearReconnectTimer();
     this.manualDisconnect = false;
     this.lastUrl = url;
     if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
