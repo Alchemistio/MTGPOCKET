@@ -6,7 +6,7 @@
 - Vues : la main privée expose `isSupportedLand`, le compteur public est projeté, les mains adverses restent cachées.
 - WebSocket : le scénario quatre sièges vérifie la pose depuis la main et l'affichage public du terrain.
 - Compatibilité : tests de migration des anciens checkpoints de salle et de pré-partie sans compteur.
-- CI du HEAD contenant cette tranche requise avant de cocher la roadmap.
+- Run `43869469546` sur `d163da9` : typecheck, 53 tests serveur, 30 tests moteur, 10 tests mobile et `python-data` verts ; la pose de terrain WebSocket, les migrations et le reset du compteur sont couverts.
 
 
 ## Permanents vanilla — ajout 2026-11-16, CI en attente
