@@ -109,3 +109,12 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - `server-process-restart.test.ts` lance deux instances successives du serveur de production dans des processus Node séparés, avec le même répertoire persistant.
 - Vérifie création de salle, commande acceptée, arrêt forcé du premier processus, restauration au second démarrage, réauthentification par jeton et rejeu idempotent de la même commande.
 - Le run CI **43827956587** sur `1747a4a` passe avec ce test. Il valide le cycle OS process restart en environnement CI, pas un déploiement en production ni le réseau physique.
+
+
+## ETB « When {nom} enters the battlefield, draw a card. » — ajout 2026-11-16
+
+- `game-room.test.ts` : l'allowlist accepte uniquement le texte auto-référentiel exact ; un texte ETB voisin (scry) est refusé.
+- Le sort permanent résout vers le champ de bataille ; le trigger est ensuite ajouté comme `triggered-ability` distinct, avant la priorité, avec source et contrôleur conservés.
+- La résolution du trigger pioche une carte ; tests de pile, ordre, rejeu déterministe et restauration checkpoint.
+- `player-view.test.ts` : l'ETB supporté est signalé jouable dans la main privée du propriétaire ; aucune main adverse n'est exposée.
+- Limites : un seul trigger simple, sans cible ni choix ; APNAP, triggers simultanés et déclenchements d'autres événements non couverts. CI à confirmer sur le SHA de cette tranche.
