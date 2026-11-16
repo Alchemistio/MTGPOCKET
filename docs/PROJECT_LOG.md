@@ -501,3 +501,10 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Cette primitive ne prétend pas implémenter les effets de remplacement/prévention 614/616 : pas de registre de remplacements, choix APNAP, événements imbriqués, coûts ou choix d'entrée. Les triggers ETB ne consomment pas encore ce batch.
 - Source normative vérifiée : PDF Comprehensive Rules fourni, édition 2026-09-25, notamment 603.2c/g, 603.3a-b, 603.6a-d, 614.12-13, 616.1a-g, 700.1 et 608.2e-f.
 - CI non encore disponible sur le commit de code ; aucune exécution locale revendiquée.
+
+
+## 2026-11-16 — ETB-0 : processeur canonique pour une transition
+- Ajout de `moveCardToZoneWithEvent` qui retourne ensemble le nouvel état et l'événement commis.
+- Le chemin de résolution serveur des sorts permanents utilise ce processeur au lieu de construire lui-même le snapshot avant/après ; l'identifiant de déclenchement reste déterministe à partir de l'ID de l'objet de pile.
+- Test moteur : arrivée sur le champ de bataille, contrôleur transféré et état d'origine non muté.
+- Les autres chemins (SBA, terrains, effets et mouvements hors résolution de sorts) ne sont pas encore raccordés à un dispatcher unique.

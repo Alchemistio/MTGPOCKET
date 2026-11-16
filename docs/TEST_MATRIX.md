@@ -134,3 +134,6 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 
 
 | Zone-change batch | 2 instances depuis des zones distinctes, groupe simultané commun, snapshots pré-événement, no-op, identifiant dupliqué | `packages/game-engine/test/zone-change-batch.test.ts` | Ajouté, CI en attente |
+
+
+| Zone-change processor single move | arrivée sur battlefield, événement commis, contrôleur avant/après, état source immuable | `packages/game-engine/test/zone-change-batch.test.ts` | Ajouté, CI à vérifier |

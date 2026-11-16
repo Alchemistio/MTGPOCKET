@@ -84,3 +84,6 @@
 - Limite : ce batch est une primitive d'agrégation, pas le moteur complet 614/616. Il ne choisit pas lui-même les remplacements, ne gère pas les coûts/choix de 614.12a-b, ni les événements imbriqués de 614.13 ; les règles Commander déjà existantes restent traitées par le chemin existant.
 - Commit de code : `104ae254fac73bb7a068ccd025b9d78b0b2c26bb`. CI non encore visible sur ce SHA ; tests non exécutés localement.
 - Références étudiées dans le PDF CR fourni (2026-09-25) : 603.2c, 603.2g, 603.3a-b, 603.6a-d, 614.12-614.13, 616.1a-g, 700.1 et 608.2e-f.
+
+
+- Suite ETB-0 : ajout de `moveCardToZoneWithEvent`, wrapper canonique d'une transition unique ; la résolution d'un sort permanent côté serveur passe désormais par ce processeur. Le batch simultané reste disponible pour les groupes. Test moteur dédié ajouté. Commit code : `97993177b76c9240629a8b2d8a990f7ad8a34b24`. CI à vérifier sur le SHA exact.
