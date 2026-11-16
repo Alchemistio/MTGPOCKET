@@ -12,6 +12,7 @@
 - `packages/game-engine` : domaine, état, règles, commandes, événements.
 - `packages/card-data` : schéma Scryfall, adaptateurs et cache.
 - `packages/protocol` : messages réseau versionnés et validation.
+- L'état joueur inclut `landsPlayedThisTurn` : compteur autoritaire réinitialisé au début du tour de ce joueur, utilisé pour valider l'action spéciale de pose de terrain.
 
 ## Autorité métier
 Le moteur est indépendant de l'UI, du réseau et des fournisseurs de cartes. Le client envoie une intention ; le serveur vérifie siège, autorisation et révision, applique le moteur, journalise les événements puis distribue une vue filtrée. Aucun client ne déclare directement un sort résolu ou un joueur éliminé.
