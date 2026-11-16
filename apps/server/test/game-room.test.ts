@@ -363,6 +363,37 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
+  it("restores a room checkpoint by replaying its versioned command journal", () => {
+    const room = new GameRoom("room-1", players);
+    const firstCommand = command("p1", room.state.revision, "persisted-1");
+    const first = room.apply(firstCommand);
+    const second = room.apply(command("p2", room.state.revision, "persisted-2"));
+    expect(first.accepted).toBe(true);
+    expect(second.accepted).toBe(true);
+
+    const checkpoint = room.checkpoint;
+    const restored = GameRoom.restore(checkpoint);
+    expect(restored.state).toEqual(room.state);
+    expect(restored.eventLog).toEqual(room.eventLog);
+
+    // The replayed command cache survives restoration, so a network retry is idempotent.
+    expect(restored.apply(firstCommand)).toEqual(first);
+    expect(restored.eventLog).toHaveLength(2);
+  });
+
+  it("rejects a checkpoint whose accepted command result was altered", () => {
+    const room = new GameRoom("room-1", players);
+    room.apply(command("p1", room.state.revision, "tamper-check"));
+    const checkpoint = room.checkpoint;
+    const altered = {
+      ...checkpoint,
+      events: checkpoint.events.map((event, index) => index === 0
+        ? { ...event, payload: { ...event.payload, result: { ...event.payload.result, revision: 999 } } }
+        : event)
+    };
+    expect(() => GameRoom.restore(altered)).toThrow("EVENT_REPLAY_MISMATCH");
+  });
+
   it("rejects stale commands and does not apply duplicate command ids twice", () => {
     const room = new GameRoom("room-1", players);
     const revision = room.state.revision;
