@@ -10,8 +10,8 @@
 - Stack : pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Dernière validation connue
-- Dernière CI verte observée avant la tranche de pré-partie persistante : run `43807266906`, commit `e00d679a03b0ddfacae7c1d95eacff8daf349245`, conclusion `success`.
-- Ce run ne couvre PAS les commits de pré-partie persistante ci-dessous. Runs `43826473231` et `43826793567` : typecheck et `python-data` verts ; Vitest a révélé deux assertions erronées du test de reprise. Le test suit maintenant le premier mulligan gratuit, le second mulligan, puis six cartes après bottom (`eca67c0`). CI sur le HEAD corrigé et sur le rejoin WebSocket avec vue restaurée encore à obtenir.
+- Dernière CI entièrement verte avant la reconnexion mobile : run `43826978349`, commit `82eb67098d73af863cadd4e64da3b7b4d0a14e3f`, jobs `validate` et `python-data` réussis. Elle couvre la persistance pré-partie et le rejoin WebSocket, mais pas la tranche de reconnexion mobile ajoutée ensuite.
+- Ce run ne couvre PAS les commits de pré-partie persistante ci-dessous. Runs `43826473231` et `43826793567` : typecheck et `python-data` verts ; Vitest a révélé deux assertions erronées du test de reprise. Le test suit maintenant le premier mulligan gratuit, le second mulligan, puis six cartes après bottom (`eca67c0`). Le run `43826978349` a ensuite validé le correctif et le rejoin WebSocket sur `82eb670`. Les commits de reconnexion mobile sont postérieurs et attendent leur propre CI.
 - Aucun test local n'a été exécuté depuis cet environnement. Aucun test de processus serveur réellement arrêté/redémarré, aucun test physique, aucun test LAN à quatre téléphones n'est revendiqué.
 
 ## État du code
