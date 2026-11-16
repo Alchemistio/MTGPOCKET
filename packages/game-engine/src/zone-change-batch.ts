@@ -20,6 +20,43 @@ export interface ZoneChangeBatchResult {
   events: readonly ZoneChangeEvent[];
 }
 
+export interface SingleZoneChangeContext {
+  eventId: string;
+  cause: ZoneChangeCause;
+}
+
+export interface SingleZoneChangeResult {
+  state: GameState;
+  event: ZoneChangeEvent | null;
+}
+
+/** Canonical single-transition wrapper for callers that need the committed event. */
+export function moveCardToZoneWithEvent(
+  state: GameState,
+  request: ZoneChangeRequest,
+  context: SingleZoneChangeContext
+): SingleZoneChangeResult {
+  if (!context.eventId.trim()) throw new Error("ZONE_CHANGE_EVENT_ID_REQUIRED");
+  const before = state.cards[request.instanceId];
+  if (!before) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
+  const next = moveCardToZone(
+    state,
+    request.instanceId,
+    request.destination,
+    request.destinationControllerId,
+    request.commanderReplacementChoice
+  );
+  const after = next.cards[request.instanceId];
+  if (!after) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
+  return {
+    state: next,
+    event: createZoneChangeEvent(before, after, {
+      eventId: context.eventId,
+      cause: context.cause
+    })
+  };
+}
+
 /**
  * Commits a group of independent zone moves as one logical simultaneous event.
  *

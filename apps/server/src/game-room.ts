@@ -1,5 +1,5 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, createZoneChangeEvent, discardCards, EngineError, moveCardToZone, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, moveCardToZoneWithEvent, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
   type GameState, type PlayerSetup, type StackItem, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
@@ -211,13 +211,16 @@ export class GameRoom {
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
-              const before = state.cards[item.source_instance_id];
-              const entered = moveCardToZone(state, item.source_instance_id, "battlefield", item.controller_id);
-              const after = entered.cards[item.source_instance_id];
-              const zoneChangeEvent = before && after ? createZoneChangeEvent(before, after, {
+              const transition = moveCardToZoneWithEvent(state, {
+                instanceId: item.source_instance_id,
+                destination: "battlefield",
+                destinationControllerId: item.controller_id
+              }, {
                 eventId: "zone-change:" + item.id,
                 cause: "spell-resolution"
-              }) : null;
+              });
+              const entered = transition.state;
+              const zoneChangeEvent = transition.event;
               const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
               const definition = cardId ? this.resolveCard?.(cardId) : undefined;
               if (zoneChangeEvent?.toZone === "battlefield" && definition && this.supportsSpell?.(definition)) {
