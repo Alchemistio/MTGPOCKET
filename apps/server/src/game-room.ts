@@ -13,7 +13,7 @@ export type CardSpellSupport = (definition: CardDefinition) => boolean;
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" | "mana-added" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" | "mana-added" | "land-played" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -189,6 +189,7 @@ export class GameRoom {
       }
     }
     if (command.type === "cast-spell") return this.castSpell(command, cacheKey);
+    if (command.type === "play-land") return this.playLand(command, cacheKey);
     if (command.type === "discard-cards") return this.discardPendingCards(command, cacheKey);
     if (command.type === "tap-for-mana") return this.tapForMana(command, cacheKey);
     if (command.type !== "pass-priority") return this.reject(cacheKey, "UNSUPPORTED_COMMAND");
@@ -226,6 +227,55 @@ export class GameRoom {
       }
       this.currentState = nextState;
       const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
+  }
+
+  private playLand(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    if (!this.resolveCard) return this.reject(cacheKey, "CARD_CATALOG_NOT_CONFIGURED");
+    if (this.currentState.status !== "active" || !this.currentState.deckSetupComplete) {
+      return this.reject(cacheKey, "GAME_NOT_STARTED");
+    }
+    if (this.currentState.priorityPlayerId !== command.playerId) return this.reject(cacheKey, "NOT_PRIORITY_PLAYER");
+    if (this.currentState.activePlayerId !== command.playerId ||
+        (this.currentState.phase !== "precombat-main" && this.currentState.phase !== "postcombat-main") ||
+        this.currentState.stack.length > 0 || this.currentState.awaitingResolutionId !== null) {
+      return this.reject(cacheKey, "LAND_TIMING");
+    }
+    if (!isRecord(command.payload) || typeof command.payload.instanceId !== "string") {
+      return this.reject(cacheKey, "INVALID_LAND_PAYLOAD");
+    }
+    const instanceId = command.payload.instanceId;
+    const card = this.currentState.cards[instanceId];
+    const player = this.currentState.players.find(item => item.id === command.playerId);
+    if (!player || !card || card.zone !== "hand" || card.owner_id !== command.playerId ||
+        !player.hand.includes(instanceId) || card.is_commander) {
+      return this.reject(cacheKey, "LAND_NOT_PLAYABLE_FROM_HAND");
+    }
+    if (player.landsPlayedThisTurn >= 1) return this.reject(cacheKey, "LAND_PLAY_LIMIT");
+    const definition = this.resolveCard(card.card_id);
+    if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
+    if (definition.layout !== "normal") return this.reject(cacheKey, "LAND_LAYOUT_NOT_SUPPORTED");
+    if (definition.manaCost !== null && definition.manaCost !== "") return this.reject(cacheKey, "LAND_HAS_MANA_COST");
+    if (basicLandManaOptions(definition).length === 0) return this.reject(cacheKey, "LAND_NOT_SUPPORTED");
+
+    try {
+      const moved = moveCardToZone(this.currentState, instanceId, "battlefield", command.playerId);
+      const nextState: GameState = {
+        ...moved,
+        players: moved.players.map(item => item.id === command.playerId
+          ? { ...item, landsPlayedThisTurn: item.landsPlayedThisTurn + 1 }
+          : item)
+      };
+      this.currentState = nextState;
+      const accepted: AcceptedRoomCommandResult = {
+        accepted: true, revision: nextState.revision, outcome: "land-played"
+      };
       this.commandResults.set(cacheKey, accepted);
       this.recordEvent(command, accepted);
       return accepted;
