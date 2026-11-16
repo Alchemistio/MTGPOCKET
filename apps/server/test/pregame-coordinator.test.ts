@@ -96,6 +96,23 @@ describe("PregameCoordinator", () => {
     expect(room.start().status).toBe("active");
   });
 
+  it("migrates legacy pregame checkpoints without a land-play counter", () => {
+    const original = coordinator();
+    const checkpoint = original.checkpoint;
+    const legacyState = {
+      ...checkpoint.state,
+      players: checkpoint.state.players.map(player => {
+        const copy = { ...player } as Record<string, unknown>;
+        delete copy.landsPlayedThisTurn;
+        return copy;
+      })
+    };
+    const legacyCheckpoint = { ...checkpoint, state: legacyState } as unknown as typeof checkpoint;
+    const restored = coordinator();
+    restored.restoreCheckpoint(legacyCheckpoint);
+    expect(restored.state.players.every(player => player.landsPlayedThisTurn === 0)).toBe(true);
+  });
+
   it("does not allow one player to submit another player's deck", () => {
     const room = coordinator();
     expect(room.submitDeck("intruder", deck)).toMatchObject({ accepted: false, code: "UNKNOWN_PLAYER" });
