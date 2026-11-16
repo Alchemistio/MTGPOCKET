@@ -17,12 +17,20 @@ export type RoomCommandResult =
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
-type RoomEvent = GameEventEnvelope<{
+export type PersistedRoomEvent = GameEventEnvelope<{
   engineVersion: 1;
   snapshotRevision: number;
   command: RoomCommand;
   result: AcceptedRoomCommandResult;
 }>;
+
+export interface GameRoomCheckpoint {
+  schemaVersion: 1;
+  gameId: string;
+  /** Authoritative state immediately before the first event in the journal. */
+  snapshot: GameState;
+  events: readonly PersistedPersistedRoomEvent[];
+}
 
 const GAME_ENGINE_VERSION = 1 as const;
 
@@ -30,7 +38,7 @@ export class GameRoom {
   private currentState: GameState;
   private replayBaseState: GameState;
   private readonly commandResults = new Map<string, RoomCommandResult>();
-  private readonly events: RoomEvent[] = [];
+  private readonly events: PersistedRoomEvent[] = [];
 
   constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver, private readonly supportsSpell?: CardSpellSupport) {
     this.currentState = initialState ?? advanceAutomaticStep(createGame(id, players));
@@ -42,7 +50,7 @@ export class GameRoom {
   }
 
   /** Returns a defensive copy of the accepted-command journal; it never exposes GameState snapshots. */
-  get eventLog(): readonly RoomEvent[] {
+  get eventLog(): readonly PersistedRoomEvent[] {
     return this.events.map(event => ({
       ...event,
       payload: {
@@ -51,6 +59,47 @@ export class GameRoom {
         result: { ...event.payload.result }
       }
     }));
+  }
+
+  /** A serializable checkpoint for server-side persistence; never send this to a client. */
+  get checkpoint(): GameRoomCheckpoint {
+    return {
+      schemaVersion: 1,
+      gameId: this.id,
+      snapshot: cloneGameState(this.replayBaseState),
+      events: this.eventLog
+    };
+  }
+
+  /** Restores a room by validating and replaying its persisted, accepted-command journal. */
+  static restore(
+    checkpoint: GameRoomCheckpoint,
+    resolveStackEffect?: StackEffectResolver,
+    resolveCard?: CardDefinitionResolver,
+    supportsSpell?: CardSpellSupport
+  ): GameRoom {
+    if (checkpoint.schemaVersion !== 1 || checkpoint.gameId !== checkpoint.snapshot.id ||
+        !Array.isArray(checkpoint.events)) {
+      throw new Error("INVALID_ROOM_CHECKPOINT");
+    }
+    const snapshot = cloneGameState(checkpoint.snapshot);
+    const players = snapshot.players.map(({ id, name, seat }) => ({ id, name, seat }));
+    const room = new GameRoom(checkpoint.gameId, players, snapshot, resolveStackEffect, resolveCard, supportsSpell);
+    for (const event of checkpoint.events) {
+      if (event.protocolVersion !== 1 || event.gameId !== checkpoint.gameId ||
+          event.type !== "command-applied" || event.payload.engineVersion !== GAME_ENGINE_VERSION ||
+          event.payload.snapshotRevision !== snapshot.revision ||
+          event.payload.command.protocolVersion !== event.protocolVersion ||
+          event.payload.command.gameId !== checkpoint.gameId) {
+        throw new Error("UNSUPPORTED_EVENT_LOG_VERSION");
+      }
+      const result = room.apply(event.payload.command);
+      if (!result.accepted || result.revision !== event.revision ||
+          JSON.stringify(result) !== JSON.stringify(event.payload.result)) {
+        throw new Error("EVENT_REPLAY_MISMATCH");
+      }
+    }
+    return room;
   }
 
   /** Rebuilds the current state by replaying accepted commands from the authoritative start snapshot. */
