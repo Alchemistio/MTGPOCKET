@@ -8,9 +8,10 @@ import WebSocket from "ws";
 import { createCommanderPocketServer } from "../src/server.js";
 
 import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
-import type { PlayerSetup } from "@commander-pocket/game-engine";
+import { addCardInstance, advanceAutomaticStep, createGame, type PlayerSetup } from "@commander-pocket/game-engine";
 import { PregameCoordinator } from "../src/pregame-coordinator.js";
 import { JsonFileRoomPersistence } from "../src/room-persistence.js";
+import { resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 },
@@ -254,5 +255,108 @@ describe("WebSocket pregame transport", () => {
       await runtime.close();
     }
   });
+
+  it("casts and resolves a vanilla permanent through the authenticated four-seat WebSocket transport", async () => {
+    const plains: CardDefinition = {
+      ...card("ws-plains", "Plains", "Basic Land — Plains"),
+      manaCost: "", manaValue: 0
+    };
+    const scout: CardDefinition = {
+      ...card("ws-scout", "Vanilla Scout", "Creature — Human Soldier", ["W"]),
+      manaCost: "{W}", manaValue: 1
+    };
+    const libraryCard = card("ws-library-card", "Library Card", "Sorcery");
+    const definitions = new Map([
+      [plains.providerId, plains],
+      [scout.providerId, scout],
+      [libraryCard.providerId, libraryCard]
+    ]);
+    const runtime = createCommanderPocketServer({
+      resolveCard: cardId => definitions.get(cardId),
+      resolveStackEffect: resolveBasicSpellEffect,
+      supportsSpell: supportsBasicSpell
+    });
+    runtime.httpServer.listen(0, "127.0.0.1");
+    await once(runtime.httpServer, "listening");
+    const address = runtime.httpServer.address() as AddressInfo;
+    const clients = players.map(() => new WebSocket(`ws://127.0.0.1:${address.port}/ws`));
+    const queues = clients.map(createMessageQueue);
+    try {
+      await Promise.all(clients.map(client => once(client, "open")));
+      clients[0]?.send(JSON.stringify({ type: "create-room", gameId: "ws-vanilla-permanent", players }));
+      const created = await queues[0]!.next();
+      const credentials = created.credentials as Array<{ playerId: string; token: string }>;
+      for (let index = 1; index < players.length; index += 1) {
+        const player = players[index]!;
+        const credential = credentials.find(item => item.playerId === player.id);
+        clients[index]?.send(JSON.stringify({
+          type: "join-room", gameId: "ws-vanilla-permanent", playerId: player.id, token: credential?.token
+        }));
+        expect(await queues[index]!.next()).toMatchObject({ type: "room-joined" });
+      }
+
+      let state = { ...advanceAutomaticStep(createGame("ws-vanilla-permanent", players)), deckSetupComplete: true };
+      state = addCardInstance(state, {
+        instance_id: "plains-instance", card_id: plains.providerId, owner_id: "p1", zone: "battlefield"
+      });
+      state = addCardInstance(state, {
+        instance_id: "scout-instance", card_id: scout.providerId, owner_id: "p1", zone: "hand"
+      });
+      state = addCardInstance(state, {
+        instance_id: "library-instance", card_id: libraryCard.providerId, owner_id: "p1", zone: "library"
+      });
+      const room = runtime.rooms.get("ws-vanilla-permanent");
+      if (!room) throw new Error("ROOM_NOT_FOUND");
+      room.replaceStateFromPregame(state);
+      let revision = room.state.revision;
+
+      async function sendCommand(playerIndex: number, commandId: string, type: string, payload: unknown = {}) {
+        const player = players[playerIndex]!;
+        clients[playerIndex]?.send(JSON.stringify({
+          type: "command",
+          command: {
+            protocolVersion: 1, gameId: "ws-vanilla-permanent", commandId,
+            playerId: player.id, expectedRevision: revision, type, payload
+          }
+        }));
+        const result = await queues[playerIndex]!.next();
+        expect(result).toMatchObject({ type: "command-result", result: { accepted: true } });
+        const views = await Promise.all(queues.map(queue => queue.next()));
+        expect(views.every(message => message.type === "game-view")).toBe(true);
+        const hostView = views[0]?.view as { revision: number };
+        revision = hostView.revision;
+        return hostView;
+      }
+
+      // Advance upkeep and draw, then reach the active player's first main phase.
+      for (const [index, playerId] of [0, 1, 2, 3, 0, 1, 2, 3].entries()) {
+        await sendCommand(playerId, "advance-" + index, "pass-priority");
+      }
+      expect(room.state.step).toBe("main-1");
+
+      await sendCommand(0, "tap-plains", "tap-for-mana", { instanceId: "plains-instance", color: "W" });
+      const castView = await sendCommand(0, "cast-scout", "cast-spell", { instanceId: "scout-instance" });
+      expect(room.state.cards["scout-instance"]?.zone).toBe("stack");
+      expect(room.state.players[0]?.manaPool.W).toBe(0);
+      expect(castView.revision).toBe(room.state.revision);
+
+      for (const [index, playerId] of [0, 1, 2, 3].entries()) {
+        await sendCommand(playerId, "resolve-scout-" + index, "pass-priority");
+      }
+      expect(room.state.cards["scout-instance"]?.zone).toBe("battlefield");
+      expect(room.state.players[0]?.battlefield).toContain("scout-instance");
+      for (const queue of queues) {
+        // The most recent view was consumed by sendCommand; inspect the authoritative projection directly as well.
+        expect(room.state.cards["scout-instance"]?.controller_id).toBe("p1");
+      }
+    } finally {
+      await Promise.all(clients.map(client => new Promise<void>(resolve => {
+        if (client.readyState === WebSocket.CLOSED) resolve();
+        else { client.once("close", () => resolve()); client.close(); }
+      })));
+      await runtime.close();
+    }
+  });
+
 
 });
