@@ -36,7 +36,7 @@
 - Test OS : le serveur de production est lancé dans un processus Node, crée une salle et persiste une commande, est tué puis relancé sur le même répertoire ; le test vérifie la réauthentification et l'idempotence.
 - Les fichiers serveur sont conservés sous `data/server-rooms`, exclu de Git. Mains adverses, bibliothèques et seeds ne sont jamais projetées.
 
-- Tranche suivante en cours : lancement des permanents vanilla (créatures, artefacts, enchantements sans texte Oracle), timing de phase principale, paiement générique/coloré, passage par la pile et arrivée sur le champ de bataille. UI mobile : action de jeu et affichage compact des permanents publics. Tests ajoutés ; CI de ce nouveau code à confirmer.
+- Permanents vanilla : créatures, artefacts et enchantements normaux à coût simple ; lancement en phase principale, paiement, pile et arrivée sur le champ de bataille. Deux ETB targetless sont pris en charge via allowlist stricte (pioche 1 ou gain de vie N).
 
 - Action spéciale « jouer un terrain de base » ajoutée : un par tour, joueur actif en phase principale avec priorité et pile vide ; déplacement direct sur le champ de bataille sans pile/paiement. Compteur visible et UI mobile mis à jour. Migrations rétrocompatibles des checkpoints salle/pré-partie. CI verte : run `43869469546`, SHA `d163da9` (`validate` + `python-data`). Tests physiques non effectués.
 
