@@ -10,8 +10,8 @@
 - Stack : pnpm, TypeScript strict, Expo/React Native, Node/WebSocket, moteur partagé, Scryfall, SQLite, ETL Python.
 
 ## Dernière validation connue
-- Dernière CI entièrement verte avant la reconnexion mobile : run `43826978349`, commit `82eb67098d73af863cadd4e64da3b7b4d0a14e3f`, jobs `validate` et `python-data` réussis. Elle couvre la persistance pré-partie et le rejoin WebSocket, mais pas la tranche de reconnexion mobile ajoutée ensuite.
-- Ce run ne couvre PAS les commits de pré-partie persistante ci-dessous. Runs `43826473231` et `43826793567` : typecheck et `python-data` verts ; Vitest a révélé deux assertions erronées du test de reprise. Le test suit maintenant le premier mulligan gratuit, le second mulligan, puis six cartes après bottom (`eca67c0`). Le run `43826978349` a ensuite validé le correctif et le rejoin WebSocket sur `82eb670`. Les commits de reconnexion mobile sont postérieurs et attendent leur propre CI.
+- Dernière CI verte : run `43827536943`, commit `3a95375958dc6c7607a8bf2d90808b8547642593`, jobs `validate` et `python-data` réussis. Elle couvre la reprise pré-partie, le rejoin WebSocket et la reconnexion mobile automatique. Des commits ultérieurs initialisent le checkpoint dès la création de salle et restent à valider.
+- Ce run ne couvre PAS les commits de pré-partie persistante ci-dessous. Runs `43826473231` et `43826793567` : typecheck et `python-data` verts ; Vitest a révélé deux assertions erronées du test de reprise. Le test suit maintenant le premier mulligan gratuit, le second mulligan, puis six cartes après bottom (`eca67c0`). Le run `43826978349` a ensuite validé le correctif et le rejoin WebSocket sur `82eb670`. Le run `43827536943` a validé aussi la reconnexion mobile ; les commits postérieurs sur l’initialisation du checkpoint à la création de salle attendent leur propre CI.
 - Aucun test local n'a été exécuté depuis cet environnement. Aucun test de processus serveur réellement arrêté/redémarré, aucun test physique, aucun test LAN à quatre téléphones n'est revendiqué.
 
 ## État du code
