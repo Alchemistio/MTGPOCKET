@@ -106,10 +106,10 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 
 Cette stratégie **s'ajoute** aux étapes M0–M6 et ne remplace aucun chantier déjà prévu. L'objectif est de développer des mécanismes génériques capables de traiter des familles entières de cartes, plutôt que d'écrire un handler par carte.
 
-- [x] Importer une source texte normalisée de la CR fournie (édition 2026-09-25) dans `Rules_Engine/source/`.
-- [x] Construire un index exhaustif : 3 166 règles/sous-règles, 741 termes de glossaire, 9 chapitres et 147 groupes, avec résumé extractif, mots-clés, références et positions.
-- [x] Ajouter un générateur reproductible et un manifest de validation.
-- [ ] Mettre à jour la source et tous les index vers l'édition officielle du 2026-11-06 ; la version locale actuelle reste explicitement non-current.
+- [x] Importer la version texte de travail des Comprehensive Rules effective au 2026-11-06 dans `Rules_Engine/source/MagicCompRules_20261106.txt` ; conserver l'édition du 2026-09-25 fournie par l'utilisateur comme archive.
+- [x] Construire l'index complet de la version courante : 3 182 règles/sous-règles, 148 titres de chapitre/section et 744 termes de glossaire, avec résumés thématiques, mots-clés, références croisées et positions de paragraphes.
+- [x] Ajouter le générateur Python reproductible, l'index maître et le manifest.
+- [x] Mettre à jour les références de la mémoire ETB vers l'édition du 2026-11-06 ; l'ancienne édition reste disponible pour comparaison historique.
 - [ ] Construire un processeur d'événements métier centralisé pour zones, remplacements, SBA et triggers.
 - [ ] Construire le compilateur Oracle générique : lexing, grammaire, résolution des références, validation sémantique, AST puis IR typée.
 - [ ] Construire un interpréteur d'effets composables avec cibles, choix, coûts, modes et durées.
