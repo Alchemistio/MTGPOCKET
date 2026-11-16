@@ -148,7 +148,7 @@ describe("WebSocket pregame transport", () => {
       client.send(JSON.stringify({
         type: "join-room", gameId: "ws-restart-pregame", playerId: alice.playerId, token: alice.token
       }));
-      expect(await secondQueue.next()).toMatchObject({ type: "room-joined" });
+      expect(await secondQueue.next()).toMatchObject({ type: "room-joined", view: { status: "pregame" } });
 
       client.send(JSON.stringify({ type: "pregame-submit-deck", deck }));
       expect(await secondQueue.next()).toMatchObject({
