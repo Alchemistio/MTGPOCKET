@@ -517,7 +517,7 @@ export default function App() {
               const selected = selectedDiscardIds.includes(card.instanceId);
               const isSupportedPlayable = card.isSupportedSpell || card.isSupportedPermanent || card.isSupportedLand;
               const isInstant = /\bInstant\b/.test(card.typeLine);
-              const needsSorceryTiming = card.isSupportedPermanent || /\bSorcery\b/.test(card.typeLine);
+              const needsSorceryTiming = card.isSupportedPermanent || card.isSupportedLand || /\bSorcery\b/.test(card.typeLine);
               const hasSorceryTiming = roomView.activePlayerId === roomSession.playerId &&
                 (roomView.phase === "precombat-main" || roomView.phase === "postcombat-main") &&
                 roomView.stack.length === 0 && roomView.awaitingResolutionId === null;
