@@ -62,7 +62,7 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 
 ## Persistance et reprise — ajout 2026-11-16
 
-Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Les runs **43826473231** et **43826793567** ont passé typecheck et `python-data`, mais Vitest a détecté deux assertions incorrectes du test de reprise du mulligan. La séquence a été corrigée (premier mulligan gratuit, second mulligan, six cartes après bottom) dans `eca67c0`. Le run **43826978349** sur `82eb670` est ensuite entièrement vert (`validate` et `python-data`) ; il couvre la reprise pré-partie et le rejoin WebSocket avec vue restaurée, mais pas les commits de reconnexion mobile ajoutés ensuite. CI de la reconnexion mobile encore à obtenir. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
+Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pré-partie. Les runs **43826473231** et **43826793567** ont passé typecheck et `python-data`, mais Vitest a détecté deux assertions incorrectes du test de reprise du mulligan. La séquence a été corrigée (premier mulligan gratuit, second mulligan, six cartes après bottom) dans `eca67c0`. Le run **43826978349** sur `82eb670` est vert pour la reprise pré-partie et le rejoin WebSocket. Le run **43827536943** sur `3a95375` est également entièrement vert (`validate` et `python-data`) et couvre en plus la reconnexion mobile automatique et sa réauthentification. Les commits ultérieurs qui créent le checkpoint pré-partie dès la création de salle attendent leur propre CI. Aucun redémarrage de processus OS ni test sur appareil n'est revendiqué.
 
 
 ## Pré-partie persistante — ajout 2026-11-16
