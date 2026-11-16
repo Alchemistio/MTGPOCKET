@@ -121,6 +121,9 @@ describe("PregameSessionRegistry", () => {
         const result = secondRestart.declareMulligan("resumable-pregame", credential.playerId, credential.token, "keep");
         expect(result.accepted).toBe(true);
       }
+      expect(secondRestartRooms.getPregameCheckpoint("resumable-pregame")?.state.players
+        .find(player => player.id === "p1")?.mulliganCount).toBe(1);
+      expect(secondRestart.declareMulligan("resumable-pregame", p1.playerId, p1.token, "mulligan").accepted).toBe(true);
       const p1Hand = secondRestartRooms.getPregameCheckpoint("resumable-pregame")?.state.players
         .find(player => player.id === "p1")?.hand ?? [];
       expect(p1Hand).toHaveLength(7);
@@ -131,7 +134,7 @@ describe("PregameSessionRegistry", () => {
       const thirdRestart = new PregameSessionRegistry(thirdRestartRooms, factory);
       const restoredCheckpoint = thirdRestartRooms.getPregameCheckpoint("resumable-pregame");
       expect(restoredCheckpoint?.state.players.find(player => player.id === "p1")?.pendingBottomCount).toBe(0);
-      expect(restoredCheckpoint?.generatedSeeds).toHaveLength(5);
+      expect(restoredCheckpoint?.generatedSeeds).toHaveLength(6);
       const started = thirdRestart.start("resumable-pregame", p1.playerId, p1.token);
       expect(started).toMatchObject({ accepted: true, view: { status: "active", step: "upkeep" } });
       expect(thirdRestartRooms.getPregameCheckpoint("resumable-pregame")).toBeUndefined();
