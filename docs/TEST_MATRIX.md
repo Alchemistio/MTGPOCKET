@@ -128,6 +128,6 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Vérification structurelle : 3 182 identifiants de règles/sous-règles uniques, 148 titres de chapitre/section, 744 entrées du glossaire.
 - Neuf index JSONL par chapitre et un index JSONL du glossaire ; chaque règle a des mots-clés, un résumé thématique et une plage de lignes inclusive.
 - Vérification de lecture des index : toutes les lignes JSONL parsées, aucun identifiant de règle dupliqué ; règle 603.3 localisée à la ligne 2592 dans la source courante.
-- `scripts/test_rules_index.py` est ajouté au job Python existant : couverture des identifiants, des lignes source, des 744 termes et des offsets UTF-8. Le test vérifie les offsets sur les octets bruts (CRLF inclus). CI verte : run `43892396267` ; les 7 tests Python passent, ainsi que typecheck, 8 tests card-data, 30 moteur, 56 serveur et 10 mobile.
+- `scripts/test_rules_index.py` est ajouté au job Python existant : couverture des identifiants, des lignes source, des 744 termes et des offsets UTF-8. Le test vérifie les offsets sur les octets bruts (CRLF inclus). CI verte : run `43893233739`, SHA `eac0913` ; les 8 tests Python passent, ainsi que typecheck, 8 tests card-data, 30 moteur, 56 serveur et 10 mobile.
 - Le générateur `Rules_Engine/tools/build_rule_index.py` doit être exécuté et ses sorties validées lors de chaque changement d'édition.
 - Les résumés et mots-clés sont des aides de navigation ; ils ne constituent pas une interprétation normative.
