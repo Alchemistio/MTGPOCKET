@@ -7,7 +7,7 @@ import type { PlayerSetup } from "@commander-pocket/game-engine";
 import { PregameCoordinator } from "../src/pregame-coordinator.js";
 import { PregameSessionRegistry } from "../src/pregame-session-registry.js";
 import { RoomRegistry } from "../src/room-registry.js";
-import { JsonFileRoomPersistence } from "../src/room-persistence.js";
+import { JsonFileRoomPersistence, type PersistedRoomRecord, type RoomPersistence } from "../src/room-persistence.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -139,6 +139,36 @@ describe("PregameSessionRegistry", () => {
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
+  });
+
+  it("rolls back a pregame mutation when durable checkpoint persistence fails", () => {
+    let saves = 0;
+    let persisted: PersistedRoomRecord[] = [];
+    const persistence: RoomPersistence = {
+      loadAll: () => persisted,
+      save: record => {
+        saves += 1;
+        if (saves === 3) throw new Error("DISK_FULL");
+        persisted = [JSON.parse(JSON.stringify(record)) as PersistedRoomRecord];
+      },
+      delete: () => undefined
+    };
+    const rooms = new RoomRegistry(undefined, undefined, undefined, persistence);
+    const credentials = rooms.create("pregame-rollback", players).credentials;
+    const sessions = new PregameSessionRegistry(rooms, {
+      create: (gameId, setup) => new PregameCoordinator(gameId, setup, catalog, {
+        isCommanderEligible: candidate => candidate.providerId === "cmd"
+      })
+    });
+    const alice = credentials[0]!;
+    const failed = sessions.submitDeck("pregame-rollback", alice.playerId, alice.token, deck);
+    expect(failed).toEqual({ accepted: false, code: "DISK_FULL" });
+    expect(rooms.getPregameCheckpoint("pregame-rollback")?.submittedDecks).toHaveLength(0);
+    expect(persisted[0]?.pregameCheckpoint?.submittedDecks).toHaveLength(0);
+
+    const retried = sessions.submitDeck("pregame-rollback", alice.playerId, alice.token, deck);
+    expect(retried).toMatchObject({ accepted: true, result: { accepted: true } });
+    expect(rooms.getPregameCheckpoint("pregame-rollback")?.submittedDecks).toHaveLength(1);
   });
 
   it("does not start until the coordinator confirms all players kept and bottomed", () => {
