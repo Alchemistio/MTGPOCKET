@@ -123,7 +123,8 @@ describe("WebSocket pregame transport", () => {
       await once(client, "open");
       client.send(JSON.stringify({ type: "create-room", gameId: "ws-restart-pregame", players }));
       const created = await firstQueue.next();
-      expect(created.type).toBe("room-created");
+      expect(created).toMatchObject({ type: "room-created", view: { status: "pregame" } });
+      expect(persistence.loadAll()[0]?.pregameCheckpoint?.submittedDecks).toHaveLength(0);
       const credentials = created.credentials as Array<{ playerId: string; token: string }>;
       const alice = credentials.find(item => item.playerId === "p1")!;
       client.send(JSON.stringify({ type: "pregame-submit-deck", deck }));
