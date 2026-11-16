@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
-  closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readdirSync,
-  renameSync, rmSync, statSync, unlinkSync, writeFileSync
+  chmodSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readdirSync,
+  renameSync, rmSync, unlinkSync, writeFileSync
 } from "node:fs";
 import { join } from "node:path";
 import type { GameRoomCheckpoint } from "./game-room.js";
@@ -54,6 +54,7 @@ export class JsonFileRoomPersistence implements RoomPersistence {
   save(record: PersistedRoomRecord): void {
     validateRecord(record);
     mkdirSync(this.directory, { recursive: true, mode: 0o700 });
+    chmodSync(this.directory, 0o700);
     const target = join(this.directory, fileNameFor(record.gameId));
     const temporary = target + "." + randomUUID() + ".tmp";
     const descriptor = openSync(temporary, "wx", 0o600);
