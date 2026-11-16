@@ -35,7 +35,7 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
 - [x] État de déconnexion visible dans le panneau pré-partie; délais bornés sur l'ouverture WebSocket et les handshakes de salle.
 - [x] Timeout des actions pré-partie individuelles avec verrouillage des nouvelles commandes jusqu'à reconnexion.
-- [ ] Reprise/réauthentification automatique après reconnexion, y compris après redémarrage du serveur à partir des jetons de siège persistés sous forme de hash.
+- [x] Reconnexion WebSocket automatique pendant que l’app reste active : jusqu’à cinq essais, réauthentification avec le jeton de siège en mémoire et resynchronisation de la vue serveur après redémarrage serveur.
 - [x] Résolution serveur d’un objet de pile après passes unanimes, via un handler d’effet injecté et rejouable.
 - [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, réponse d’un autre joueur, résolution LIFO via handler serveur et envoi au cimetière.
 - [ ] Étendre le lancement aux permanents, cibles, coûts alternatifs et handlers d’effets réels.
@@ -78,7 +78,7 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [x] Décision de retour du commandant acheminée au propriétaire et résolue côté serveur.
 - [x] Révisions et idempotence de commandes.
 - [ ] Commandes de jeu complètes, validation serveur et synchronisation de toutes les zones.
-- [ ] Découverte LAN, reconnexion, reprise de partie et gestion des conflits.
+- [ ] Découverte LAN, reprise de session après fermeture complète de l’app, gestion des conflits et reconnexion après épuisement des tentatives.
 - [ ] Sécurité : jetons à usage/rotation, TLS selon réseau, limitation de débit, anti-rejeu.
 - [ ] Tests quatre appareils, perte Wi-Fi, hôte quittant, paquets invalides.
 **Sortie :** quatre appareils peuvent terminer une partie sans divergence.
