@@ -11,7 +11,9 @@
 - Décision produit/process: merger la fondation après une courte stabilisation. La couverture exhaustive des Comprehensive Rules n'est pas un prérequis ; elle reste incrémentale dans M2.
 
 ## Dernier état connu
-- CI antérieure verte : run `43689458355` sur SHA `7d6b320983270638d829ec51995ca593cfa65f79`, jobs `validate` (typecheck + Vitest) et `python-data`. Ce run ne couvre PAS les commits de persistance ajoutés ensuite.
+- CI de référence avant persistance : run `43689458355` sur SHA `7d6b320983270638d829ec51995ca593cfa65f79`, jobs `validate` et `python-data` verts.
+- Première CI de la tranche persistence : run `43806846271` sur le merge ref de la PR correspondant au HEAD `66bae087`. Typecheck et `python-data` réussis ; Vitest échoue sur 3 tests pré-partie à cause d'un garde-fou incorrect (il supposait que l'état initial GameRoom avait `status=pregame`, alors que la salle vide est `active` avec `deckSetupComplete=false`).
+- Correctif appliqué dans `7df71f3` : les nouvelles salles pré-partie restent accessibles ; seules les salles restaurées depuis disque ou dont le deck est prêt sont bloquées. Les checkpoints ont ensuite été versionnés aussi par `engineVersion` (`c99b826` / `dd1c331`). Aucun run CI n'est encore observé sur le HEAD actuel.
 - Dernière tranche de code ajoutée :
   - `GameRoom.checkpoint` exporte une copie du snapshot autoritaire et du journal versionné.
   - `GameRoom.restore` reconstruit la salle en rejouant chaque commande acceptée et vérifie versions, révisions et résultats.
@@ -20,7 +22,7 @@
   - `RoomRegistry` restaure les salles au démarrage, persiste les commandes acceptées avant l'ACK WebSocket et restaure l'ancien checkpoint si l'écriture échoue.
   - Au démarrage de la partie, le snapshot validé et le seed log de pré-partie sont persistés. Les seeds ne sont jamais projetés dans les vues joueur.
   - Répertoire par défaut : `data/server-rooms`, exclu de Git.
-- Tests ajoutés pour restauration/rejeu du checkpoint, idempotence après redémarrage, intégrité du journal, stockage atomique, permissions, hash des jetons, persistance des seeds et rollback si le disque échoue. Résultat CI de ces nouveaux tests à vérifier.
+- Tests ajoutés pour restauration/rejeu du checkpoint, idempotence après redémarrage, intégrité du journal, stockage atomique, permissions, hash des jetons, persistance des seeds et rollback si le disque échoue. Sur le run 43806846271, les tests de stockage et RoomRegistry ont passé ; les tests de pré-partie ont révélé le garde-fou incorrect, corrigé ensuite. CI du HEAD actuel à vérifier.
 
 ## Fait précédemment
 - 4 sièges, salle LAN, jetons, WebSocket, vues privées par siège.
