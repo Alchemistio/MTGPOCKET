@@ -9,6 +9,18 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Index documentaire, fiches de référence, ADR et journal.
 **Sortie :** installation, typecheck et tests CI reproductibles.
 
+## M0.5 — Stabilisation et critères de merge de la PR #1
+Cette étape clôture la fondation avant intégration dans `main`. La PR reste en brouillon jusqu'à validation de ces critères.
+
+- [x] CI initiale verte sur le code précédent : run `43689458355`, SHA `7d6b320` (typecheck, Vitest, Python).
+- [x] Parcours automatisé à quatre sièges : soumission des decks, mulligan, démarrage, vues privées et première commande via WebSocket.
+- [ ] Vérifier la CI sur les nouveaux commits de persistance et de restauration.
+- [ ] Valider la sauvegarde atomique, la restauration après redémarrage, le rejeu et l'idempotence sur un serveur relancé.
+- [ ] Valider la reconnexion/réauthentification du client mobile avec les jetons de siège après redémarrage.
+- [ ] Tester au minimum deux appareils physiques sur un même Wi-Fi ; viser quatre appareils pour la validation LAN complète.
+- [ ] Relecture finale du diff, des limites connues, des permissions de stockage et des données privées.
+**Gate de merge :** CI verte sur le dernier code, récupération d'une partie active vérifiée, absence de défaut bloquant connu, et test physique minimal à deux appareils. La couverture complète des Comprehensive Rules et de toutes les cartes n'est pas un prérequis au merge ; elle reste un chantier incrémental de M2.
+
 ## M1 — Partie locale jouable — en cours ([issue #2](https://github.com/Alchemistio/MTGPOCKET/issues/2))
 - [x] Setup Commander : commandants en zone de commandement, 40 PV, mélange et main initiale.
 - [x] Mulligan de Londres multijoueur, premier mulligan gratuit et sélection des cartes à remettre.
@@ -23,7 +35,7 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [x] Intégration des opérations deck/mulligan/bottom/start dans le modal mobile, avec progression et retours de refus serveur.
 - [x] État de déconnexion visible dans le panneau pré-partie; délais bornés sur l'ouverture WebSocket et les handshakes de salle.
 - [x] Timeout des actions pré-partie individuelles avec verrouillage des nouvelles commandes jusqu'à reconnexion.
-- [ ] Reprise/réauthentification automatique après reconnexion.
+- [ ] Reprise/réauthentification automatique après reconnexion, y compris après redémarrage du serveur à partir des jetons de siège persistés sous forme de hash.
 - [x] Résolution serveur d’un objet de pile après passes unanimes, via un handler d’effet injecté et rejouable.
 - [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, réponse d’un autre joueur, résolution LIFO via handler serveur et envoi au cimetière.
 - [ ] Étendre le lancement aux permanents, cibles, coûts alternatifs et handlers d’effets réels.
@@ -33,7 +45,10 @@ Les cases ne passent à [x] qu'après implémentation et tests correspondants. C
 - [ ] Tester une partie complète sur appareils physiques.
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
 - [x] Capture serveur en mémoire des graines d'ouverture et de mulligan, hors vues client.
-- [ ] Persistance durable du snapshot, du journal et des graines; rejeu après redémarrage.
+- [ ] Finaliser et valider la persistance durable du snapshot autoritaire, du journal de commandes accepté et du seed log ; restauration/rejeu après redémarrage. Le code initial de checkpoint versionné, stockage JSON atomique et intégration serveur est présent, CI en attente.
+- [ ] Persister aussi l'état intermédiaire de pré-partie (decks soumis, décisions de mulligan, choix bottom et graines déjà générées) pour reprendre une pré-partie interrompue ; à ce stade, les seeds sont écrits au démarrage de la partie.
+- [ ] Vérifier l'atomicité de bout en bout : aucun ACK de commande acceptée avant écriture durable ; rollback de l'état mémoire si l'écriture échoue.
+
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.
 
 ## M2 — Fidélité du moteur ([issue #3](https://github.com/Alchemistio/MTGPOCKET/issues/3))
