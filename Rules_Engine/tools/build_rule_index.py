@@ -164,8 +164,8 @@ def main() -> None:
         while i < len(lines) and lines[i].strip():
             i += 1
         end = i - 1
-        definition = re.sub(r"\\s+", " ", " ".join(lines[start + 1:end + 1])).strip()
-        first_sentence_match = re.match(r"^.*?[.!?](?=\\s|$)", definition)
+        definition = re.sub(r"\s+", " ", " ".join(lines[start + 1:end + 1])).strip()
+        first_sentence_match = re.match(r"^.*?[.!?](?=\s|$)", definition)
         summary = first_sentence_match.group(0) if first_sentence_match else definition
         glossary.append({
             "term": term,
