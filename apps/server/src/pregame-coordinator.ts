@@ -21,6 +21,16 @@ export interface PregameSeedRecord {
   seed: string;
 }
 
+export interface PregameCoordinatorCheckpoint {
+  schemaVersion: 1;
+  gameId: string;
+  players: readonly PlayerSetup[];
+  state: GameState;
+  submittedDecks: readonly { playerId: string; deck: CommanderDeckList }[];
+  mulliganDeclarations: readonly { playerId: string; action: "keep" | "mulligan" }[];
+  generatedSeeds: readonly PregameSeedRecord[];
+}
+
 export interface MulliganProgress {
   roundResolved: boolean;
   readyToStart: boolean;
@@ -49,6 +59,43 @@ export class PregameCoordinator {
 
   get state(): GameState {
     return this.currentState;
+  }
+
+  /** A defensive, serializable snapshot of every pregame decision and its RNG material. */
+  get checkpoint(): PregameCoordinatorCheckpoint {
+    return clone({
+      schemaVersion: 1,
+      gameId: this.currentState.id,
+      players: this.players,
+      state: this.currentState,
+      submittedDecks: [...this.submittedDecks].map(([playerId, deck]) => ({ playerId, deck })),
+      mulliganDeclarations: [...this.mulliganDeclarations].map(([playerId, action]) => ({ playerId, action })),
+      generatedSeeds: this.generatedSeeds
+    });
+  }
+
+  /** Restore only a checkpoint belonging to this exact room and seat configuration. */
+  restoreCheckpoint(checkpoint: PregameCoordinatorCheckpoint): void {
+    if (!isValidCheckpoint(checkpoint) || checkpoint.gameId !== this.currentState.id ||
+        checkpoint.state.id !== this.currentState.id || checkpoint.state.status !== "pregame" ||
+        !samePlayers(checkpoint.players, this.players) || !samePlayers(checkpoint.state.players, this.players)) {
+      throw new Error("INVALID_PREGAME_CHECKPOINT");
+    }
+    const playerIds = new Set(this.players.map(player => player.id));
+    if (checkpoint.submittedDecks.some(item => !playerIds.has(item.playerId)) ||
+        new Set(checkpoint.submittedDecks.map(item => item.playerId)).size !== checkpoint.submittedDecks.length ||
+        checkpoint.mulliganDeclarations.some(item => !playerIds.has(item.playerId)) ||
+        new Set(checkpoint.mulliganDeclarations.map(item => item.playerId)).size !== checkpoint.mulliganDeclarations.length ||
+        checkpoint.generatedSeeds.some((item, index) => item.sequence !== index || !playerIds.has(item.playerId))) {
+      throw new Error("INVALID_PREGAME_CHECKPOINT");
+    }
+    const restored = clone(checkpoint);
+    this.currentState = restored.state;
+    this.submittedDecks.clear();
+    for (const item of restored.submittedDecks) this.submittedDecks.set(item.playerId, item.deck);
+    this.mulliganDeclarations.clear();
+    for (const item of restored.mulliganDeclarations) this.mulliganDeclarations.set(item.playerId, item.action);
+    this.generatedSeeds.splice(0, this.generatedSeeds.length, ...restored.generatedSeeds);
   }
 
   /** Server-only deterministic replay material; never included in player views. */
@@ -121,7 +168,7 @@ export class PregameCoordinator {
     }
 
     this.currentState = next;
-    this.submittedDecks.set(playerId, deck);
+    this.submittedDecks.set(playerId, clone(deck));
     return { accepted: true, allDecksSubmitted: nextDecks.size === this.players.length, revision: next.revision };
   }
 
@@ -180,4 +227,24 @@ export class PregameCoordinator {
         .map(player => [player.id, player.pendingBottomCount]))
     };
   }
+}
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function samePlayers(left: readonly PlayerSetup[], right: readonly PlayerSetup[]): boolean {
+  return left.length === right.length && left.every((player, index) => {
+    const other = right[index];
+    return other !== undefined && player.id === other.id && player.name === other.name && player.seat === other.seat;
+  });
+}
+
+function isValidCheckpoint(value: unknown): value is PregameCoordinatorCheckpoint {
+  if (typeof value !== "object" || value === null) return false;
+  const checkpoint = value as Partial<PregameCoordinatorCheckpoint>;
+  return checkpoint.schemaVersion === 1 && typeof checkpoint.gameId === "string" &&
+    Array.isArray(checkpoint.players) && typeof checkpoint.state === "object" && checkpoint.state !== null &&
+    Array.isArray(checkpoint.submittedDecks) && Array.isArray(checkpoint.mulliganDeclarations) &&
+    Array.isArray(checkpoint.generatedSeeds);
 }
