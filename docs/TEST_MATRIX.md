@@ -120,3 +120,13 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - WebSocket authentifié à quatre sièges : lancement d'un permanent vanilla, ETB pioche, puis ETB gain de vie ; vérification de la pile et de la confidentialité des mains.
 - Limites : deux effets targetless, sans cible ni choix ; APNAP, triggers simultanés et déclenchements d'autres événements non couverts.
 - CI verte : run `43872836544`, SHA `199194aa6f756bde42a8658aeb5a9595fbc6838a` ; typecheck, 56 tests serveur, 30 moteur, 10 mobile et `python-data` réussis.
+
+
+## Base documentaire des Comprehensive Rules — édition 2026-11-06
+
+- Source texte courante : `Rules_Engine/source/MagicCompRules_20261106.txt` ; archive utilisateur 2026-09-25 conservée séparément.
+- Vérification structurelle : 3 182 identifiants de règles/sous-règles uniques, 148 titres de chapitre/section, 744 entrées du glossaire.
+- Neuf index JSONL par chapitre et un index JSONL du glossaire ; chaque règle a des mots-clés, un résumé thématique et une plage de lignes inclusive.
+- Vérification de lecture des index : toutes les lignes JSONL parsées, aucun identifiant de règle dupliqué ; règle 603.3 localisée à la ligne 2592 dans la source courante.
+- Le générateur `Rules_Engine/tools/build_rule_index.py` doit être exécuté et ses sorties validées lors de chaque changement d'édition. Pas encore de job CI dédié au générateur.
+- Les résumés et mots-clés sont des aides de navigation ; ils ne constituent pas une interprétation normative.
