@@ -60,6 +60,9 @@ describe("toPlayerView", () => {
     game = addCardInstance(game, {
       instance_id: "public-creature", card_id: "scryfall-creature", owner_id: "p2", zone: "battlefield"
     });
+    game = addCardInstance(game, {
+      instance_id: "private-plains", card_id: "scryfall-plains", owner_id: "p1", zone: "hand"
+    });
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "scryfall-creature", oracleId: "oracle-creature",
       name: "Vanilla Creature", layout: "normal", manaCost: "{1}{G}", manaValue: 2,
@@ -71,12 +74,28 @@ describe("toPlayerView", () => {
         legalities: { commander: "legal" }, set: "tst", collector_number: "8"
       }
     };
-    const resolveCard = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const plains: CardDefinition = {
+      provider: "scryfall", providerId: "scryfall-plains", oracleId: "oracle-plains",
+      name: "Plains", layout: "normal", manaCost: "", manaValue: 0,
+      typeLine: "Basic Land — Plains", oracleText: "", colors: [], colorIdentity: [],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "scryfall-plains", name: "Plains", layout: "normal", mana_cost: "", cmc: 0,
+        type_line: "Basic Land — Plains", oracle_text: "", colors: [], color_identity: [],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "11"
+      }
+    };
+    const definitions = new Map([[definition.providerId, definition], [plains.providerId, plains]]);
+    const resolveCard = (cardId: string) => definitions.get(cardId);
     const ownerView = toPlayerView(game, "p1", resolveCard, true, () => true);
     const opponentView = toPlayerView(game, "p2", resolveCard, true, () => true);
     expect(ownerView.players[0]?.handCards[0]).toMatchObject({
       instanceId: "private-creature", isSupportedSpell: false, isSupportedPermanent: true
     });
+    expect(ownerView.players[0]?.handCards[1]).toMatchObject({
+      instanceId: "private-plains", isSupportedLand: true
+    });
+    expect(ownerView.players[0]?.landsPlayedThisTurn).toBe(0);
     expect(ownerView.players[1]?.handCards).toEqual([]);
     expect(opponentView.players[0]?.handCards).toEqual([]);
     expect(opponentView.players[1]?.battlefieldCards).toMatchObject([{
