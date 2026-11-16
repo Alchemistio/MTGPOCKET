@@ -256,7 +256,7 @@ describe("WebSocket pregame transport", () => {
     }
   });
 
-  it("casts and resolves a vanilla permanent through the authenticated four-seat WebSocket transport", async () => {
+  it("casts vanilla and ETB permanents through the authenticated four-seat WebSocket transport", async () => {
     const plains: CardDefinition = {
       ...card("ws-plains", "Plains", "Basic Land — Plains"),
       manaCost: "", manaValue: 0
@@ -265,10 +265,23 @@ describe("WebSocket pregame transport", () => {
       ...card("ws-scout", "Vanilla Scout", "Creature — Human Soldier", ["W"]),
       manaCost: "{W}", manaValue: 1
     };
+    const wall: CardDefinition = {
+      ...card("ws-wall-of-omens", "Wall of Omens", "Creature — Wall", ["W"]),
+      manaCost: "", manaValue: 0,
+      oracleText: "When Wall of Omens enters the battlefield, draw a card.",
+      raw: {
+        id: "ws-wall-of-omens", name: "Wall of Omens", layout: "normal", mana_cost: "",
+        cmc: 0, type_line: "Creature — Wall",
+        oracle_text: "When Wall of Omens enters the battlefield, draw a card.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "13"
+      }
+    };
     const libraryCard = card("ws-library-card", "Library Card", "Sorcery");
     const definitions = new Map([
       [plains.providerId, plains],
       [scout.providerId, scout],
+      [wall.providerId, wall],
       [libraryCard.providerId, libraryCard]
     ]);
     const runtime = createCommanderPocketServer({
@@ -304,6 +317,9 @@ describe("WebSocket pregame transport", () => {
       });
       state = addCardInstance(state, {
         instance_id: "scout-instance", card_id: scout.providerId, owner_id: "p1", zone: "hand"
+      });
+      state = addCardInstance(state, {
+        instance_id: "wall-instance", card_id: wall.providerId, owner_id: "p1", zone: "hand"
       });
       state = addCardInstance(state, {
         instance_id: "library-instance", card_id: libraryCard.providerId, owner_id: "p1", zone: "library"
@@ -382,6 +398,35 @@ describe("WebSocket pregame transport", () => {
           card.instanceId === "plains-hand-instance" && card.name === "Plains"
         );
       })).toBe(true);
+
+      const etbCastViews = await sendCommand(0, "cast-wall", "cast-spell", {
+        instanceId: "wall-instance"
+      });
+      expect(room.state.cards["wall-instance"]?.zone).toBe("stack");
+      expect(etbCastViews.every(view => view.stack.length === 1)).toBe(true);
+
+      let triggerViews: TransportView[] = [];
+      for (const [index, playerId] of [0, 1, 2, 3].entries()) {
+        triggerViews = await sendCommand(playerId, "resolve-wall-spell-" + index, "pass-priority");
+      }
+      expect(room.state.cards["wall-instance"]?.zone).toBe("battlefield");
+      expect(room.state.stack).toMatchObject([{
+        kind: "triggered-ability", controller_id: "p1", source_instance_id: "wall-instance",
+        payload: { effect: "etb-draw-one", sourceName: "Wall of Omens" }
+      }]);
+      expect(triggerViews.every(view => view.stack.length === 1)).toBe(true);
+
+      let resolvedViews: TransportView[] = [];
+      for (const [index, playerId] of [0, 1, 2, 3].entries()) {
+        resolvedViews = await sendCommand(playerId, "resolve-wall-trigger-" + index, "pass-priority");
+      }
+      expect(room.state.players[0]?.hand).toContain("library-instance");
+      expect(room.state.stack).toHaveLength(0);
+      for (const view of resolvedViews) {
+        for (const player of view.players.filter(item => item.id !== "p1")) {
+          expect(player.handCards).toEqual([]);
+        }
+      }
     } finally {
       await Promise.all(clients.map(client => new Promise<void>(resolve => {
         if (client.readyState === WebSocket.CLOSED) resolve();
