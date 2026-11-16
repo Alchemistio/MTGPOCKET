@@ -217,6 +217,25 @@ describe("RoomClient", () => {
     expect(events.filter(type => type === "room-joined")).toHaveLength(2);
     expect(events).toContain("reconnecting");
     expect(events).toContain("reconnected");
+    client.disconnect();
+  });
+
+  it("does not schedule automatic reconnect after an explicit disconnect", async () => {
+    const socket = new FakeSocket();
+    let createdSockets = 0;
+    const client = new RoomClient(() => {
+      createdSockets += 1;
+      return socket as unknown as WebSocket;
+    }, 100, 1, 3);
+    const connected = client.connect("ws://127.0.0.1:3000/ws");
+    socket.open();
+    await connected;
+    const joined = client.joinRoom("manual-close-room", "p1", "seat-token");
+    socket.message({ type: "room-joined", view: { revision: 1 } });
+    await joined;
+    client.disconnect();
+    await new Promise(resolve => setTimeout(resolve, 5));
+    expect(createdSockets).toBe(1);
   });
 
   it("rejects malformed server messages instead of trusting their shape", async () => {
