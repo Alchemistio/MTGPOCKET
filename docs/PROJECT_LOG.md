@@ -1,3 +1,11 @@
+## 2026-11-16 — Reconnexion automatique du client mobile
+
+- `RoomClient` mémorise en mémoire l'URL et les credentials du siège après création/rejoindre.
+- Après une fermeture inattendue, jusqu'à cinq tentatives exponentielles sont effectuées ; le client envoie `join-room` avec le jeton d'origine et reçoit la vue autoritaire (y compris une pré-partie restaurée).
+- L'UI conserve la dernière vue pendant la reconnexion, la remplace sur `room-joined`, puis signale une reconnexion réussie ou l'épuisement des essais.
+- Test ajouté avec sockets simulées pour vérifier la réauthentification et la resynchronisation.
+- Les credentials ne sont pas persistés après arrêt complet du processus mobile ; pas de découverte LAN ni de test appareil/réseau réel. CI de cette tranche requise.
+
 ## 2026-11-16 — Ajustement de l'assertion post-bottom
 
 - Run `43826793567` sur `97c1499` : typecheck et `python-data` passent ; Vitest échoue sur la taille de main attendue après le bottom.
