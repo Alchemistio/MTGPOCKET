@@ -109,7 +109,6 @@ describe("PregameSessionRegistry", () => {
       expect(finalDeck).toMatchObject({ accepted: true, result: { accepted: true, allDecksSubmitted: true } });
 
       const p1 = credentials[0]!;
-      const p2 = credentials[1]!;
       expect(restored.declareMulligan("resumable-pregame", p1.playerId, p1.token, "mulligan").accepted).toBe(true);
 
       const secondRestartRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
@@ -125,6 +124,7 @@ describe("PregameSessionRegistry", () => {
         .find(player => player.id === "p1")?.hand ?? [];
       expect(p1Hand).toHaveLength(8);
       expect(secondRestart.chooseBottomCards("resumable-pregame", p1.playerId, p1.token, [p1Hand[0]!]).accepted).toBe(true);
+      expect(secondRestart.declareMulligan("resumable-pregame", p1.playerId, p1.token, "keep").accepted).toBe(true);
 
       const thirdRestartRooms = new RoomRegistry(undefined, undefined, undefined, persistence);
       const thirdRestart = new PregameSessionRegistry(thirdRestartRooms, factory);
