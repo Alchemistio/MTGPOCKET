@@ -26,6 +26,7 @@ export type PersistedRoomEvent = GameEventEnvelope<{
 
 export interface GameRoomCheckpoint {
   schemaVersion: 1;
+  engineVersion: 1;
   gameId: string;
   /** Authoritative state immediately before the first event in the journal. */
   snapshot: GameState;
@@ -65,6 +66,7 @@ export class GameRoom {
   get checkpoint(): GameRoomCheckpoint {
     return {
       schemaVersion: 1,
+      engineVersion: GAME_ENGINE_VERSION,
       gameId: this.id,
       snapshot: cloneGameState(this.replayBaseState),
       events: this.eventLog
@@ -79,6 +81,7 @@ export class GameRoom {
     supportsSpell?: CardSpellSupport
   ): GameRoom {
     if (!isRecord(checkpoint) || checkpoint.schemaVersion !== 1 ||
+        checkpoint.engineVersion !== GAME_ENGINE_VERSION ||
         typeof checkpoint.gameId !== "string" || !isRecord(checkpoint.snapshot) ||
         checkpoint.gameId !== checkpoint.snapshot.id ||
         !Array.isArray(checkpoint.snapshot.players) || !Array.isArray(checkpoint.events)) {
