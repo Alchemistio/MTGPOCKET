@@ -49,6 +49,23 @@ describe("turn-based actions", () => {
     expect(drawStep.priorityPlayerId).toBe("p2");
   });
 
+  it("resets only the next active player's land play allowance at the start of their turn", () => {
+    let game = createGame("land-play-reset", players);
+    game = {
+      ...game,
+      deckSetupComplete: true,
+      phase: "ending",
+      step: "end",
+      priorityPlayerId: "p1",
+      players: game.players.map(player => ({ ...player, landsPlayedThisTurn: 1 }))
+    };
+    const cleanup = advanceAfterAllPass(passAll(game));
+    const nextTurn = advanceAutomaticStep(cleanup);
+    expect(nextTurn.activePlayerId).toBe("p2");
+    expect(nextTurn.players.find(player => player.id === "p2")?.landsPlayedThisTurn).toBe(0);
+    expect(nextTurn.players.find(player => player.id === "p1")?.landsPlayedThisTurn).toBe(1);
+  });
+
   it("clears marked damage and floating mana when cleanup begins", () => {
     let game = createGame("cleanup", players);
     game = addCardInstance(game, { instance_id: "perm", card_id: "permanent", owner_id: "p1", zone: "battlefield" });
