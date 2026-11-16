@@ -7,6 +7,8 @@ Capacités déclenchées par l'arrivée d'un permanent sur le champ de bataille 
 - [Recherche normative et technique](etb_research.md)
 - [Roadmap complète](etb_roadmap.md)
 
+Source normative indexée : Comprehensive Rules 2026-11-06. Positions consultables dans `Rules_Engine/index/rules_chapter_6.jsonl` et `rules_chapter_1.jsonl`.
+
 ## Règles principales
 - 603.6 / 603.6a–e — zone-change triggers et ETB.
 - 603.2 / 603.2c–h — occurrence réelle, répétition et événements remplacés/prévenus.
@@ -14,9 +16,9 @@ Capacités déclenchées par l'arrivée d'un permanent sur le champ de bataille 
 - 603.4–603.5 — intervening-if et capacités optionnelles.
 - 603.7 / 603.12 — capacités retardées et réflexives.
 - 603.10–603.11 — last known information, exceptions et capacités liées.
-- 113.6 / 113.6h–k — zones où les capacités fonctionnent et capacités qui modifient l'entrée.
+- 113.6 / 113.6h–k — zones où les capacités fonctionnent, modifications d'entrée et conditions de déclenchement hors battlefield.
 - 400.7 — identité d'objet lors des changements de zone.
-- 614.12 / 616.1 — remplacement de la manière dont un permanent entre et interaction des remplacements.
+- 614.12 / 614.12a / 616.1 — remplacement de la manière dont un permanent entre, choix pré-entrée et interaction des remplacements.
 - 613 — couches et caractéristiques continues.
 - 101.4, 117, 405 — APNAP, priorité et pile.
 
