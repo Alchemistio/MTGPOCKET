@@ -8,6 +8,7 @@ import WebSocket from "ws";
 import { createCommanderPocketServer } from "../src/server.js";
 
 import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
+import type { PlayerSetup } from "@commander-pocket/game-engine";
 import { PregameCoordinator } from "../src/pregame-coordinator.js";
 import { JsonFileRoomPersistence } from "../src/room-persistence.js";
 
@@ -106,11 +107,12 @@ describe("WebSocket pregame transport", () => {
     const directory = mkdtempSync(join(tmpdir(), "commander-pocket-ws-restart-"));
     const persistence = new JsonFileRoomPersistence(directory);
     const factory = {
-      create: (gameId: string, setup: typeof players) => new PregameCoordinator(gameId, setup, catalog, {
+      create: (gameId: string, setup: readonly PlayerSetup[]) => new PregameCoordinator(gameId, setup, catalog, {
         isCommanderEligible: candidate => candidate.providerId === "cmd"
       })
     };
     let runtime = createCommanderPocketServer({ persistence, pregameFactory: factory });
+    let runtimeClosed = false;
     let client: WebSocket | null = null;
     try {
       runtime.httpServer.listen(0, "127.0.0.1");
@@ -133,8 +135,10 @@ describe("WebSocket pregame transport", () => {
       client.close();
       await once(client, "close");
       await runtime.close();
+      runtimeClosed = true;
 
       runtime = createCommanderPocketServer({ persistence, pregameFactory: factory });
+      runtimeClosed = false;
       runtime.httpServer.listen(0, "127.0.0.1");
       await once(runtime.httpServer, "listening");
       const secondAddress = runtime.httpServer.address() as AddressInfo;
@@ -155,7 +159,7 @@ describe("WebSocket pregame transport", () => {
         client.close();
         await once(client, "close");
       }
-      await runtime.close();
+      if (!runtimeClosed) await runtime.close();
       rmSync(directory, { recursive: true, force: true });
     }
   });
