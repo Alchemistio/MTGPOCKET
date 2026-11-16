@@ -111,10 +111,12 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Le run CI **43827956587** sur `1747a4a` passe avec ce test. Il valide le cycle OS process restart en environnement CI, pas un déploiement en production ni le réseau physique.
 
 
-## ETB « When {nom} enters the battlefield, draw a card. » — ajout 2026-11-16
+## ETB simples — ajout 2026-11-16
 
-- `game-room.test.ts` : l'allowlist accepte uniquement le texte auto-référentiel exact ; un texte ETB voisin (scry) est refusé.
-- Le sort permanent résout vers le champ de bataille ; le trigger est ensuite ajouté comme `triggered-ability` distinct, avant la priorité, avec source et contrôleur conservés.
-- La résolution du trigger pioche une carte ; tests de pile, ordre, rejeu déterministe et restauration checkpoint.
+- Allowlist exacte de deux textes auto-référentiels : « When {nom} enters the battlefield, draw a card. » et « When {nom} enters the battlefield, you gain {N} life. » ; un texte proche (scry ou nombre écrit en lettres) est refusé.
+- Le sort permanent résout vers le champ de bataille ; chaque capacité est ensuite ajoutée comme `triggered-ability` distincte, avant la priorité, avec source et contrôleur conservés.
+- Résolution testée : pioche d'une carte ou gain de vie ; le changement d'état n'arrive qu'à la résolution du trigger. Rejeu déterministe et restauration checkpoint couverts.
 - `player-view.test.ts` : l'ETB supporté est signalé jouable dans la main privée du propriétaire ; aucune main adverse n'est exposée.
-- Limites : un seul trigger simple, sans cible ni choix ; APNAP, triggers simultanés et déclenchements d'autres événements non couverts. CI verte : run `43872357368`, SHA `76151c7` ; typecheck, 55 tests serveur, 30 moteur, 10 mobile et `python-data` réussis. Le test WebSocket quatre sièges couvre aussi l'empilement et la résolution du trigger ETB.
+- WebSocket authentifié à quatre sièges : lancement d'un permanent vanilla, ETB pioche, puis ETB gain de vie ; vérification de la pile et de la confidentialité des mains.
+- Limites : deux effets targetless, sans cible ni choix ; APNAP, triggers simultanés et déclenchements d'autres événements non couverts.
+- CI verte : run `43872836544`, SHA `199194aa6f756bde42a8658aeb5a9595fbc6838a` ; typecheck, 56 tests serveur, 30 moteur, 10 mobile et `python-data` réussis.
