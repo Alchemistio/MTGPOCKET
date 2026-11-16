@@ -6,6 +6,7 @@
 - Test négatif : lancer un permanent hors phase principale est refusé sans dépenser de mana.
 - `player-view.test.ts` : le propriétaire voit le permanent jouable dans sa main, les autres sièges ne voient pas sa main, et le champ de bataille expose le permanent public.
 - Les cartes avec texte Oracle non vide, les cartes multi-face, commandants, terrains, cibles et coûts non simples restent hors de cette tranche.
+- Run `43867856511` sur `f93d82b` : typecheck, Vitest et Python verts pour les tests unitaires de permanents et la projection. Le test WebSocket à quatre sièges ajouté après ce SHA attend sa propre CI.
 - CI et relecture complète du diff requises avant de cocher la roadmap.
 
 # Matrice de tests et couverture
