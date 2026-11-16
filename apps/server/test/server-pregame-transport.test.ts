@@ -1,4 +1,7 @@
 import { once } from "node:events";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { AddressInfo } from "node:net";
 import { describe, expect, it } from "vitest";
 import WebSocket from "ws";
@@ -6,6 +9,7 @@ import { createCommanderPocketServer } from "../src/server.js";
 
 import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
 import { PregameCoordinator } from "../src/pregame-coordinator.js";
+import { JsonFileRoomPersistence } from "../src/room-persistence.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 },
@@ -98,6 +102,64 @@ describe("WebSocket pregame transport", () => {
       await runtime.close();
     }
   });
+  it("restores a submitted deck when a WebSocket server runtime is recreated", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "commander-pocket-ws-restart-"));
+    const persistence = new JsonFileRoomPersistence(directory);
+    const factory = {
+      create: (gameId: string, setup: typeof players) => new PregameCoordinator(gameId, setup, catalog, {
+        isCommanderEligible: candidate => candidate.providerId === "cmd"
+      })
+    };
+    let runtime = createCommanderPocketServer({ persistence, pregameFactory: factory });
+    let client: WebSocket | null = null;
+    try {
+      runtime.httpServer.listen(0, "127.0.0.1");
+      await once(runtime.httpServer, "listening");
+      const firstAddress = runtime.httpServer.address() as AddressInfo;
+      client = new WebSocket(`ws://127.0.0.1:${firstAddress.port}/ws`);
+      const firstQueue = createMessageQueue(client);
+      await once(client, "open");
+      client.send(JSON.stringify({ type: "create-room", gameId: "ws-restart-pregame", players }));
+      const created = await firstQueue.next();
+      expect(created.type).toBe("room-created");
+      const credentials = created.credentials as Array<{ playerId: string; token: string }>;
+      const alice = credentials.find(item => item.playerId === "p1")!;
+      client.send(JSON.stringify({ type: "pregame-submit-deck", deck }));
+      expect(await firstQueue.next()).toMatchObject({
+        type: "pregame-result", accepted: true, result: { accepted: true }
+      });
+      expect((await firstQueue.next()).type).toBe("pregame-view");
+
+      client.close();
+      await once(client, "close");
+      await runtime.close();
+
+      runtime = createCommanderPocketServer({ persistence, pregameFactory: factory });
+      runtime.httpServer.listen(0, "127.0.0.1");
+      await once(runtime.httpServer, "listening");
+      const secondAddress = runtime.httpServer.address() as AddressInfo;
+      client = new WebSocket(`ws://127.0.0.1:${secondAddress.port}/ws`);
+      const secondQueue = createMessageQueue(client);
+      await once(client, "open");
+      client.send(JSON.stringify({
+        type: "join-room", gameId: "ws-restart-pregame", playerId: alice.playerId, token: alice.token
+      }));
+      expect(await secondQueue.next()).toMatchObject({ type: "room-joined" });
+
+      client.send(JSON.stringify({ type: "pregame-submit-deck", deck }));
+      expect(await secondQueue.next()).toMatchObject({
+        type: "pregame-result", accepted: true, result: { accepted: false, code: "DUPLICATE_SUBMISSION" }
+      });
+    } finally {
+      if (client && client.readyState !== WebSocket.CLOSED) {
+        client.close();
+        await once(client, "close");
+      }
+      await runtime.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("runs deck submission, mulligan, start and first priority across four private WebSocket seats", async () => {
     let seed = 0;
     const runtime = createCommanderPocketServer({
