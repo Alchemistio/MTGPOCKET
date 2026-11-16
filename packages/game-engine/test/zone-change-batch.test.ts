@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCardInstance, createGame, moveCardsToZoneSimultaneously } from "../src/index.js";
+import { addCardInstance, createGame, moveCardToZoneWithEvent, moveCardsToZoneSimultaneously } from "../src/index.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -51,5 +51,32 @@ describe("simultaneous zone-change batches", () => {
       { instanceId: "a", destination: "graveyard" }
     ], { eventGroupId: "invalid:1", cause: "effect" })).toThrow("DUPLICATE_INSTANCE_IN_ZONE_CHANGE_BATCH");
     expect(state.cards.a?.zone).toBe("hand");
+  });
+});
+
+describe("single zone-change processor", () => {
+  it("returns the committed event alongside the new state", () => {
+    let state = createGame("single-zone-change", players);
+    state = addCardInstance(state, {
+      instance_id: "single", card_id: "single-card", owner_id: "p1", zone: "hand"
+    });
+    const result = moveCardToZoneWithEvent(state, {
+      instanceId: "single", destination: "battlefield", destinationControllerId: "p2"
+    }, {
+      eventId: "cast:single:enter",
+      cause: "spell-resolution"
+    });
+
+    expect(result.state.cards.single?.zone).toBe("battlefield");
+    expect(result.event).toMatchObject({
+      eventId: "cast:single:enter",
+      fromZone: "hand",
+      toZone: "battlefield",
+      ownerId: "p1",
+      controllerBefore: "p1",
+      controllerAfter: "p2",
+      cause: "spell-resolution"
+    });
+    expect(state.cards.single?.zone).toBe("hand");
   });
 });
