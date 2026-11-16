@@ -1,3 +1,10 @@
+## 2026-11-16 — CI verte ETB pioche et gain de vie
+
+- Run `43872836544`, SHA `199194aa6f756bde42a8658aeb5a9595fbc6838a` : jobs `validate` et `python-data` réussis.
+- Typecheck réussi ; Vitest : 56 tests serveur, 30 moteur et 10 mobile réussis ; Python data réussi.
+- Deux modèles ETB strictement auto-référentiels sont maintenant acceptés : pioche d'une carte et gain d'un nombre entier de points de vie. Les effets sont mis en pile après l'arrivée du permanent et se produisent uniquement à la résolution.
+- Le test WebSocket authentifié à quatre sièges couvre les deux effets ; aucun test physique ni LAN réel sur appareils n'est revendiqué.
+
 ## 2026-11-16 — CI verte de la première capacité déclenchée ETB
 
 - Run `43872357368`, SHA `76151c79384ca6018e81b47fdc1534d51eeb18ff` : jobs `validate` et `python-data` réussis.
