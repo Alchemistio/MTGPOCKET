@@ -207,7 +207,7 @@ export class GameRoom {
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
         if (this.resolveStackEffect) {
-          let enteredPermanent: { instanceId: string; controllerId: string; definition: CardDefinition } | null = null;
+          const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition } | null } = { current: null };
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
@@ -215,7 +215,7 @@ export class GameRoom {
               const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
               const definition = cardId ? this.resolveCard?.(cardId) : undefined;
               if (definition && this.supportsSpell?.(definition)) {
-                enteredPermanent = { instanceId: item.source_instance_id, controllerId: item.controller_id, definition };
+                enteredPermanent.current = { instanceId: item.source_instance_id, controllerId: item.controller_id, definition };
               }
               return entered;
             }
@@ -228,11 +228,11 @@ export class GameRoom {
           });
           // The resolving spell is removed first; its ETB trigger is then put on the stack
           // before the server exposes the priority window to clients.
-          if (enteredPermanent) {
+          if (enteredPermanent.current) {
             const trigger = createBasicPermanentEtbTrigger(
-              enteredPermanent.instanceId,
-              enteredPermanent.controllerId,
-              enteredPermanent.definition,
+              enteredPermanent.current.instanceId,
+              enteredPermanent.current.controllerId,
+              enteredPermanent.current.definition,
               nextState.revision
             );
             if (trigger) nextState = pushStackItem(nextState, trigger);
