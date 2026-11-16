@@ -46,10 +46,22 @@ Ne pas committer de dump bulk, de données utilisateur ou de secrets. Provisionn
 
 Lorsque catalogue et policy sont tous deux configurés, le bootstrap injecte un résolveur volontairement limité aux cartes de layout `normal`, type Instant/Sorcery, coût simple (symboles W/U/B/R/G/C et générique numérique), sans cible, et texte Oracle exact : `Draw a card.`, `Draw two cards.`, `Draw three cards.` ou `You gain N life.`. Les autres textes ne sont pas interprétés et ne doivent pas être traités comme des effets résolus. Étendre cette liste seulement avec un handler et des tests dédiés.
 
+## Persistance des salles et reprise serveur
+
+Le serveur de production persiste les salles dans `data/server-rooms/` par défaut. Le chemin peut être remplacé avec `CPOCKET_ROOM_DATA_DIR`.
+
+- Un fichier JSON versionné par salle contient le snapshot autoritaire, le journal des commandes acceptées, les hashes SHA-256 des jetons de siège et, après le démarrage, le seed log de mélange/mulligan.
+- Chaque sauvegarde utilise un fichier temporaire, `fsync` puis `rename`; les permissions sont restreintes au serveur (répertoire 0700, fichier 0600).
+- Une commande acceptée est écrite durablement avant que son ACK soit envoyé. Si l'écriture échoue, l'état mémoire est restauré au checkpoint précédent et la commande est refusée.
+- Au démarrage, le serveur restaure les salles et rejoue le journal. Les versions et résultats sont vérifiés ; un journal incompatible fait échouer la restauration plutôt que de produire un état approximatif.
+- Les jetons bruts ne sont jamais enregistrés : seul leur hash est conservé. Les mains, bibliothèques et seeds restent des données privées serveur. Ne jamais exposer, committer ou servir ces fichiers.
+
+Cette première tranche ne persiste pas encore les actions intermédiaires de pré-partie (decks soumis, déclarations de mulligan et choix bottom). Les seeds sont écrits avec le snapshot au démarrage de la partie. La reconnexion automatique/réauthentification du client mobile et le test d'un redémarrage de processus réel restent à valider.
+
 ## Messages réseau
 
 Créer une salle avec create-room et quatre sièges, rejoindre avec join-room et jeton personnel, puis envoyer command pour les actions de jeu. Les vues sont projetées par joueur : les mains adverses et identités de bibliothèque ne sont pas envoyées.
 
 ## Limites
 
-Les commandes de jeu autres que pass-priority, la persistance, la découverte automatique LAN, TLS, la reconnexion et la reprise ne sont pas activés. Les jetons sont distribués par l'hôte : réserver ce mode au réseau local de confiance jusqu'à l'ajout d'un flux d'invitation sécurisé.
+Les commandes de jeu restent limitées aux actions explicitement implémentées et testées. La découverte automatique LAN, TLS, la reconnexion automatique du mobile, la reprise des états intermédiaires de pré-partie et la validation sur appareils physiques restent à faire. Les jetons sont distribués par l'hôte : réserver ce mode au réseau local de confiance jusqu'à l'ajout d'un flux d'invitation sécurisé.
