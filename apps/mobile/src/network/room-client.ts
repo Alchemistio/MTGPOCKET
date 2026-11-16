@@ -19,7 +19,10 @@ export type RoomClientEvent =
   | { type: "room-error"; code: string }
   | { type: "protocol-error"; code: string }
   | { type: "pong"; timestamp: number }
-  | { type: "disconnected"; reason: string };
+  | { type: "disconnected"; reason: string }
+  | { type: "reconnecting"; attempt: number }
+  | { type: "reconnected" }
+  | { type: "reconnect-failed" };
 
 type SocketFactory = (url: string) => WebSocket;
 
@@ -38,12 +41,22 @@ export class RoomClient {
   private pregameTimedOut = false;
   private ignoreLatePregameResult = false;
   private readonly listeners = new Set<(event: RoomClientEvent) => void>();
+  private lastUrl: string | null = null;
+  private lastSession: { gameId: string; playerId: string; token: string } | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempts = 0;
+  private reconnecting = false;
+  private manualDisconnect = false;
 
   constructor(
     private readonly createSocket: SocketFactory = url => new WebSocket(url),
-    private readonly timeoutMs = 10_000
+    private readonly timeoutMs = 10_000,
+    private readonly reconnectBaseDelayMs = 1_000,
+    private readonly maxReconnectAttempts = 5
   ) {
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new RangeError("timeoutMs must be a positive finite number.");
+    if (!Number.isFinite(reconnectBaseDelayMs) || reconnectBaseDelayMs < 0) throw new RangeError("reconnectBaseDelayMs must be non-negative.");
+    if (!Number.isInteger(maxReconnectAttempts) || maxReconnectAttempts < 0) throw new RangeError("maxReconnectAttempts must be a non-negative integer.");
   }
 
   onEvent(listener: (event: RoomClientEvent) => void): () => void {
@@ -53,6 +66,8 @@ export class RoomClient {
 
   async connect(url: string): Promise<void> {
     if (this.socket?.readyState === WebSocket.OPEN) return;
+    this.manualDisconnect = false;
+    this.lastUrl = url;
     if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
       throw new Error("Une connexion est déjà en cours.");
     }
@@ -104,18 +119,27 @@ export class RoomClient {
     });
   }
 
-  createRoom(gameId: string, players: readonly PlayerSetup[]): Promise<Extract<RoomClientEvent, { type: "room-created" }>> {
-    return this.handshake(
+  async createRoom(gameId: string, players: readonly PlayerSetup[]): Promise<Extract<RoomClientEvent, { type: "room-created" }>> {
+    const created = await this.handshake(
       "room-created",
       { type: "create-room", gameId, players }
-    ) as Promise<Extract<RoomClientEvent, { type: "room-created" }>>;
+    ) as Extract<RoomClientEvent, { type: "room-created" }>;
+    const host = players.find(player => player.seat === 0);
+    const credential = created.credentials.find(item => item.playerId === host?.id);
+    if (!host || !credential) throw new Error("ROOM_HOST_CREDENTIAL_MISSING");
+    this.lastSession = { gameId: created.gameId, playerId: credential.playerId, token: credential.token };
+    this.reconnectAttempts = 0;
+    return created;
   }
 
-  joinRoom(gameId: string, playerId: string, token: string): Promise<Extract<RoomClientEvent, { type: "room-joined" }>> {
-    return this.handshake(
+  async joinRoom(gameId: string, playerId: string, token: string): Promise<Extract<RoomClientEvent, { type: "room-joined" }>> {
+    const joined = await this.handshake(
       "room-joined",
       { type: "join-room", gameId, playerId, token }
-    ) as Promise<Extract<RoomClientEvent, { type: "room-joined" }>>;
+    ) as Extract<RoomClientEvent, { type: "room-joined" }>;
+    this.lastSession = { gameId, playerId, token };
+    this.reconnectAttempts = 0;
+    return joined;
   }
 
   sendCommand(command: GameCommandEnvelope): void {
@@ -146,6 +170,10 @@ export class RoomClient {
   }
 
   disconnect(): void {
+    this.manualDisconnect = true;
+    this.lastSession = null;
+    this.lastUrl = null;
+    this.clearReconnectTimer();
     this.socket?.close();
   }
 
@@ -253,6 +281,46 @@ export class RoomClient {
       pending.reject(new Error("Connexion fermée avant la fin de l’opération."));
     }
     this.emit({ type: "disconnected", reason: event.reason || "Connexion fermée." });
+    if (!this.manualDisconnect && this.lastSession && this.lastUrl) this.scheduleReconnect();
+  }
+
+  private scheduleReconnect(): void {
+    if (this.manualDisconnect || this.reconnectTimer !== null || this.reconnecting || !this.lastSession || !this.lastUrl) return;
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.emit({ type: "reconnect-failed" });
+      return;
+    }
+    const attempt = ++this.reconnectAttempts;
+    const delay = Math.min(this.reconnectBaseDelayMs * (2 ** (attempt - 1)), 15_000);
+    this.emit({ type: "reconnecting", attempt });
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.tryReconnect();
+    }, delay);
+  }
+
+  private async tryReconnect(): Promise<void> {
+    const url = this.lastUrl;
+    const session = this.lastSession;
+    if (this.manualDisconnect || !url || !session) return;
+    this.reconnecting = true;
+    try {
+      await this.connect(url);
+      await this.joinRoom(session.gameId, session.playerId, session.token);
+      this.reconnecting = false;
+      this.reconnectAttempts = 0;
+      this.emit({ type: "reconnected" });
+    } catch {
+      this.reconnecting = false;
+      if (this.socket?.readyState === WebSocket.OPEN) this.socket.close();
+      else this.scheduleReconnect();
+    }
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimer !== null) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    this.reconnectAttempts = 0;
   }
 
   private emit(event: RoomClientEvent): void {
