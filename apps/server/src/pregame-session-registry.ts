@@ -96,8 +96,9 @@ export class PregameSessionRegistry {
 
   private getAuthorizedSession(gameId: string, playerId: string, token: string): PregameCoordinator | null {
     const room = this.rooms.authenticate(gameId, playerId, token);
-    if (!room || room.state.status !== "pregame" || room.state.deckSetupComplete ||
-        this.rooms.wasRestored(gameId)) return null;
+    // RoomRegistry creates an empty active GameState before the separate pregame coordinator is hydrated.
+    // deckSetupComplete and wasRestored distinguish an active game from an unrecoverable pregame after restart.
+    if (!room || room.state.deckSetupComplete || this.rooms.wasRestored(gameId)) return null;
     let session = this.sessions.get(gameId);
     if (!session) {
       const players = room.state.players.map(player => ({
