@@ -12,6 +12,7 @@ export interface HandCardView {
   layout: string;
   isCommander: boolean;
   isSupportedSpell: boolean;
+  isSupportedPermanent: boolean;
 }
 
 export interface BattlefieldCardView {
@@ -95,9 +96,14 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
       const isSupportedSpell = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
         (/\bInstant\b/.test(typeLine) || /\bSorcery\b/.test(typeLine)) &&
         !/\btarget\b/i.test(oracleText) && simpleManaCost && (!supportsSpell || supportsSpell(definition)));
+      const isSupportedPermanent = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
+        !/\b(?:Instant|Sorcery)\b/.test(typeLine) &&
+        /\b(?:Creature|Artifact|Enchantment)\b/.test(typeLine) &&
+        oracleText.trim().length === 0 && simpleManaCost && (!supportsSpell || supportsSpell(definition)));
       return [{
         instanceId, cardId: runtimeCard.card_id, name: definition?.name ?? runtimeCard.card_id,
-        manaCost, typeLine, oracleText, layout, isCommander: runtimeCard.is_commander, isSupportedSpell
+        manaCost, typeLine, oracleText, layout, isCommander: runtimeCard.is_commander,
+        isSupportedSpell, isSupportedPermanent
       }];
     }) : [],
     hasKeptHand: player.hasKeptHand,
