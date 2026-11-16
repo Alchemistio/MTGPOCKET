@@ -17,6 +17,7 @@ export interface SeatCredential {
 
 export class RoomRegistry {
   private readonly entries = new Map<string, RoomEntry>();
+  private readonly restoredGameIds = new Set<string>();
 
   constructor(
     private readonly resolveStackEffect?: StackEffectResolver,
@@ -31,6 +32,7 @@ export class RoomRegistry {
         tokenHashes: new Map(Object.entries(record.seatTokenHashes)),
         seedLog: record.seedLog.map(seed => ({ ...seed }))
       });
+      this.restoredGameIds.add(record.gameId);
     }
   }
 
@@ -51,6 +53,11 @@ export class RoomRegistry {
 
   get(gameId: string): GameRoom | undefined {
     return this.entries.get(gameId)?.room;
+  }
+
+  /** True when this room was loaded from disk and its pregame coordinator is not hydrated. */
+  wasRestored(gameId: string): boolean {
+    return this.restoredGameIds.has(gameId);
   }
 
   /** Apply and durably journal an accepted command before the caller acknowledges it. */
