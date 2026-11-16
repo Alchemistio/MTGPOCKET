@@ -83,6 +83,83 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
+  it("plays one basic land from hand without using the stack or paying mana", () => {
+    const plains: CardDefinition = {
+      provider: "scryfall", providerId: "plains-id", oracleId: "plains-oracle",
+      name: "Plains", layout: "normal", manaCost: "", manaValue: 0,
+      typeLine: "Basic Land — Plains", oracleText: "", colors: [], colorIdentity: [],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "plains-id", oracle_id: "plains-oracle", name: "Plains", layout: "normal",
+        mana_cost: "", cmc: 0, type_line: "Basic Land — Plains", oracle_text: "",
+        colors: [], color_identity: [], legalities: { commander: "legal" }, set: "tst", collector_number: "9"
+      }
+    };
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = {
+      ...initialGame, deckSetupComplete: true, phase: "precombat-main", step: "main-1"
+    };
+    let initial = addCardInstance(base, {
+      instance_id: "plains-one", card_id: plains.providerId, owner_id: "p1", zone: "hand"
+    });
+    initial = addCardInstance(initial, {
+      instance_id: "plains-two", card_id: plains.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, initial, undefined,
+      cardId => cardId === plains.providerId ? plains : undefined);
+    const first = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "play-first-land",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "play-land", payload: { instanceId: "plains-one" }
+    });
+    expect(first).toMatchObject({ accepted: true, outcome: "land-played" });
+    expect(room.state.cards["plains-one"]).toMatchObject({
+      zone: "battlefield", owner_id: "p1", controller_id: "p1", is_tapped: false
+    });
+    expect(room.state.players[0]?.landsPlayedThisTurn).toBe(1);
+    expect(room.state.players[0]?.manaPool).toEqual({});
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.state.players[0]?.battlefield).toContain("plains-one");
+
+    const second = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "play-second-land",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "play-land", payload: { instanceId: "plains-two" }
+    });
+    expect(second).toMatchObject({ accepted: false, code: "LAND_PLAY_LIMIT" });
+    expect(room.state.cards["plains-two"]?.zone).toBe("hand");
+    expect(room.replay()).toEqual(room.state);
+  });
+
+  it("rejects a land play outside a main phase without moving the card", () => {
+    const plains: CardDefinition = {
+      provider: "scryfall", providerId: "timing-plains", oracleId: "timing-plains-oracle",
+      name: "Plains", layout: "normal", manaCost: "", manaValue: 0,
+      typeLine: "Basic Land — Plains", oracleText: "", colors: [], colorIdentity: [],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "timing-plains", name: "Plains", layout: "normal", mana_cost: "", cmc: 0,
+        type_line: "Basic Land — Plains", oracle_text: "", colors: [], color_identity: [],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "10"
+      }
+    };
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = { ...initialGame, deckSetupComplete: true };
+    const initial = addCardInstance(base, {
+      instance_id: "timing-plains-instance", card_id: plains.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, initial, undefined,
+      cardId => cardId === plains.providerId ? plains : undefined);
+    const result = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "play-land-at-upkeep",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "play-land", payload: { instanceId: "timing-plains-instance" }
+    });
+    expect(result).toMatchObject({ accepted: false, code: "LAND_TIMING" });
+    expect(room.state.cards["timing-plains-instance"]?.zone).toBe("hand");
+    expect(room.state.players[0]?.landsPlayedThisTurn).toBe(0);
+  });
+
   it("casts an instant and a response, completes the turn through cleanup, and replays", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "test-instant", oracleId: "test-oracle",
