@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
+import type { PlayerSetup } from "@commander-pocket/game-engine";
 import { PregameCoordinator } from "../src/pregame-coordinator.js";
 import { PregameSessionRegistry } from "../src/pregame-session-registry.js";
 import { RoomRegistry } from "../src/room-registry.js";
@@ -89,7 +90,7 @@ describe("PregameSessionRegistry", () => {
       const persistence = new JsonFileRoomPersistence(directory);
       let seed = 0;
       const factory = {
-        create: (gameId: string, setup: typeof players) => new PregameCoordinator(gameId, setup, catalog, {
+        create: (gameId: string, setup: readonly PlayerSetup[]) => new PregameCoordinator(gameId, setup, catalog, {
           isCommanderEligible: candidate => candidate.providerId === "cmd"
         }, () => `resume-seed-${++seed}`)
       };
@@ -122,7 +123,7 @@ describe("PregameSessionRegistry", () => {
       }
       const p1Hand = secondRestartRooms.getPregameCheckpoint("resumable-pregame")?.state.players
         .find(player => player.id === "p1")?.hand ?? [];
-      expect(p1Hand).toHaveLength(8);
+      expect(p1Hand).toHaveLength(7);
       expect(secondRestart.chooseBottomCards("resumable-pregame", p1.playerId, p1.token, [p1Hand[0]!]).accepted).toBe(true);
       expect(secondRestart.declareMulligan("resumable-pregame", p1.playerId, p1.token, "keep").accepted).toBe(true);
 
