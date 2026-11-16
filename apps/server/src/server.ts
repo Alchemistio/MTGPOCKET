@@ -64,7 +64,15 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
         if (!room) { send(socket, { type: "room-error", code: "INVALID_SEAT_CREDENTIALS" }); return; }
         session = { socket, gameId: parsed.gameId, playerId: parsed.playerId, token: parsed.token };
         clients.add(session);
-        send(socket, { type: "room-joined", view: toPlayerView(room.state, parsed.playerId, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) });
+        try {
+          const resumedPregameView = pregame?.viewForSeat(parsed.gameId, parsed.playerId, parsed.token);
+          send(socket, { type: "room-joined", view: resumedPregameView ??
+            toPlayerView(room.state, parsed.playerId, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) });
+        } catch {
+          clients.delete(session);
+          session = null;
+          send(socket, { type: "room-error", code: "PREGAME_RECOVERY_UNAVAILABLE" });
+        }
         return;
       }
       if (parsed.type.startsWith("pregame-")) { handlePregameMessage(socket, session, parsed, pregame, clients); return; }
