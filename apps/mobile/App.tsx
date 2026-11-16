@@ -11,7 +11,7 @@ import {
   ScryfallClient, ScryfallRepository, type CardDefinition
 } from "@commander-pocket/card-data";
 import { createMobileCardRepository } from "./src/data/card-repository.js";
-import { NetworkRoomModal, type MobileGameView, type MobileStackItemView, type RoomSession } from "./src/network/NetworkRoomModal.js";
+import { NetworkRoomModal, type MobileGameView, type MobileStackItemView, type MobileBattlefieldCardView, type RoomSession } from "./src/network/NetworkRoomModal.js";
 import { RoomClient } from "./src/network/room-client.js";
 import { NetworkPregameModal } from "./src/network/NetworkPregameModal.js";
 
@@ -32,6 +32,7 @@ interface PlayerPanelData {
   life: number;
   handCount: number;
   battlefieldCount: number;
+  battlefieldCards: readonly MobileBattlefieldCardView[];
   graveyardCount: number;
   libraryCount: number;
   commanderCastCount: Readonly<Record<string, number>>;
@@ -65,6 +66,17 @@ function PlayerPanel({ player, hasPriority, canPass, onPass }: {
           <View style={styles.cardPile}><Text style={styles.pileTitle}>Cimetière</Text><Text style={styles.pileCount}>{player.graveyardCount}</Text></View>
           <View style={styles.cardPile}><Text style={styles.pileTitle}>Bibliothèque</Text><Text style={styles.pileCount}>{player.libraryCount}</Text></View>
         </View>
+        {player.battlefieldCards.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.permanentRow}>
+            {player.battlefieldCards.map(card => (
+              <View key={card.instanceId} style={[styles.permanentChip, card.isTapped && styles.permanentTapped]}>
+                <Text numberOfLines={1} style={styles.permanentText}>
+                  {card.isCommander ? "CMD · " : ""}{card.isTapped ? "ENG · " : ""}{card.name}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        ) : <Text style={styles.noPermanents}>Aucun permanent</Text>}
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel={`Passer la priorité pour ${player.name}`} disabled={!canPass} onPress={onPass} style={[styles.priorityButton, !canPass && styles.priorityButtonDisabled]}>
         <Text style={styles.priorityButtonText}>{canPass ? "PASSER LA PRIORITÉ" : player.isEliminated ? "ÉLIMINÉ" : hasPriority ? "PRIORITÉ ADVERSE" : "EN ATTENTE"}</Text>
@@ -192,13 +204,13 @@ export default function App() {
   const displayPlayers: PlayerPanelData[] = roomView
     ? roomView.players.map(player => ({
         id: player.id, name: player.name, life: player.life, handCount: player.handCount,
-        battlefieldCount: player.battlefield.length, graveyardCount: player.graveyard.length,
+        battlefieldCount: player.battlefield.length, battlefieldCards: player.battlefieldCards, graveyardCount: player.graveyard.length,
         libraryCount: player.libraryCount, commanderCastCount: player.commanderCastCount,
         manaPool: player.manaPool, isEliminated: player.isEliminated
       }))
     : game.players.map(player => ({
         id: player.id, name: player.name, life: player.life, handCount: player.hand.length,
-        battlefieldCount: player.battlefield.length, graveyardCount: player.graveyard.length,
+        battlefieldCount: player.battlefield.length, battlefieldCards: [], graveyardCount: player.graveyard.length,
         libraryCount: player.library.length, commanderCastCount: player.commanderCastCount,
         manaPool: player.manaPool, isEliminated: player.isEliminated
       }));
@@ -262,7 +274,7 @@ export default function App() {
       return;
     }
     const ownPlayer = roomView.players.find(player => player.id === roomSession.playerId);
-    const hasSupportedResponse = ownPlayer?.handCards.some(card => card.isSupportedSpell) ?? false;
+    const hasSupportedResponse = ownPlayer?.handCards.some(card => card.isSupportedSpell || card.isSupportedPermanent) ?? false;
     const hasPendingChoice = roomView.pendingDiscardPlayerId === roomSession.playerId ||
       roomView.pendingCommanderChoices.length > 0;
     if (hasSupportedResponse || hasPendingChoice || autoYieldRevision.current === roomView.revision) return;
@@ -463,7 +475,7 @@ export default function App() {
               {discardPending
                 ? "Choisis " + roomView.pendingDiscardCount + " carte(s) à défausser"
                 : roomView.spellCastingAvailable
-                  ? roomView.priorityPlayerId === roomSession.playerId ? "Sélectionne un instant ou rituel simple" : "En attente de priorité"
+                  ? roomView.priorityPlayerId === roomSession.playerId ? "Sélectionne un sort ou permanent simple" : "En attente de priorité"
                   : "Effets de cartes serveur non configurés"}
             </Text>
           </View>
@@ -487,13 +499,13 @@ export default function App() {
             {ownHandCards.map(card => {
               const selected = selectedDiscardIds.includes(card.instanceId);
               const canCast = !discardPending && roomView.spellCastingAvailable &&
-                roomView.priorityPlayerId === roomSession.playerId && card.isSupportedSpell;
+                roomView.priorityPlayerId === roomSession.playerId && (card.isSupportedSpell || card.isSupportedPermanent);
               const disabled = !discardPending && !canCast;
               const actionLabel = discardPending
                 ? selected ? "À DÉFAUSSER" : "CHOISIR"
                 : canCast ? "JOUER"
                   : !roomView.spellCastingAvailable ? "EFFETS OFF"
-                    : card.isSupportedSpell ? "ATTENDRE" : "NON PRIS EN CHARGE";
+                    : (card.isSupportedSpell || card.isSupportedPermanent) ? "ATTENDRE" : "NON PRIS EN CHARGE";
               return (
                 <Pressable
                   key={card.instanceId}
@@ -578,6 +590,11 @@ const styles = StyleSheet.create({
   cardPile: { minWidth: 70, borderRadius: 6, backgroundColor: "#202d3e", padding: 7, alignItems: "center" },
   pileTitle: { color: "#b7c3d2", fontSize: 9, fontWeight: "700" },
   pileCount: { color: "#f1f5f9", fontSize: 12, fontWeight: "900", marginTop: 2 },
+  permanentRow: { flexDirection: "row", gap: 4, paddingTop: 5, paddingBottom: 1 },
+  permanentChip: { maxWidth: 116, borderRadius: 4, borderWidth: 1, borderColor: "#526b83", backgroundColor: "#1b2c3d", paddingHorizontal: 5, paddingVertical: 3 },
+  permanentTapped: { borderColor: "#a88754", backgroundColor: "#352d22" },
+  permanentText: { color: "#dce8f5", fontSize: 8, fontWeight: "800" },
+  noPermanents: { color: "#607086", fontSize: 8, textAlign: "center", paddingTop: 4 },
   priorityButton: { minHeight: 28, borderRadius: 5, backgroundColor: "#2f795d", alignItems: "center", justifyContent: "center", marginTop: 5 },
   priorityButtonDisabled: { backgroundColor: "#263243" },
   priorityButtonText: { color: "#edf8f2", fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
