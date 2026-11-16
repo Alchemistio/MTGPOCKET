@@ -1,3 +1,9 @@
+## 2026-11-16 — Correction du test de timing des permanents
+
+- CI run `43867439926` : `pnpm typecheck` passe et `python-data` passe ; Vitest détecte un fixture de test incomplet, qui n'avait pas positionné `deckSetupComplete=true`. Le serveur rejetait donc à juste titre avec `GAME_NOT_STARTED` avant d'atteindre le contrôle de timing.
+- Le fixture a été corrigé pour représenter une partie démarrée à l'upkeep ; des assertions ajoutées couvrent aussi les artefacts, enchantements et layouts multi-face non supportés.
+- Correctifs de test : commits `7601209` et `c8ff02a`. CI du HEAD corrigé encore requise ; aucun défaut de logique produit n'a été observé dans les autres tests.
+
 ## 2026-11-16 — Première tranche de lancement des permanents
 
 - Le serveur autorise désormais les créatures, artefacts et enchantements vanilla de layout normal, coût simple et texte Oracle vide.
