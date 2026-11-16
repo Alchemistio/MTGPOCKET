@@ -1,3 +1,9 @@
+## 2026-11-16 — CI verte pour la première tranche de permanents
+
+- Run `43867856511`, SHA `f93d82b2e769b991b87a9fb074c57b9bbc78c196` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+- La CI couvre le lancement/résolution/rejeu d'une créature vanilla, le rejet du mauvais timing sans dépense de mana, la projection privée/publique et les tests existants de persistance/reconnexion.
+- Un test WebSocket à quatre sièges a ensuite été ajouté pour vérifier le lancement et la visibilité publique du permanent ; il est postérieur à ce SHA et attend sa CI.
+
 ## 2026-11-16 — Correction du test de timing des permanents
 
 - CI run `43867439926` : `pnpm typecheck` passe et `python-data` passe ; Vitest détecte un fixture de test incomplet, qui n'avait pas positionné `deckSetupComplete=true`. Le serveur rejetait donc à juste titre avec `GAME_NOT_STARTED` avant d'atteindre le contrôle de timing.
