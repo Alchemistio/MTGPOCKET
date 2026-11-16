@@ -103,7 +103,8 @@ function parseRecord(source: string): PersistedRoomRecord {
 function validateRecord(value: unknown): asserts value is PersistedRoomRecord {
   if (!isRecord(value) || value.schemaVersion !== 1 || typeof value.gameId !== "string" ||
       value.gameId.trim().length === 0 || !isRecord(value.checkpoint) ||
-      value.checkpoint.schemaVersion !== 1 || value.checkpoint.gameId !== value.gameId ||
+      value.checkpoint.schemaVersion !== 1 || value.checkpoint.engineVersion !== 1 ||
+      value.checkpoint.gameId !== value.gameId ||
       !isRecord(value.checkpoint.snapshot) || value.checkpoint.snapshot.id !== value.gameId ||
       !Array.isArray(value.checkpoint.events) || !isRecord(value.seatTokenHashes) ||
       !Array.isArray(value.seedLog)) {
