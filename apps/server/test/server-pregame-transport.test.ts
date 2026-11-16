@@ -310,7 +310,16 @@ describe("WebSocket pregame transport", () => {
       room.replaceStateFromPregame(state);
       let revision = room.state.revision;
 
-      async function sendCommand(playerIndex: number, commandId: string, type: string, payload: unknown = {}) {
+      type TransportView = {
+        revision: number;
+        stack: unknown[];
+        players: Array<{
+          id: string;
+          handCards: unknown[];
+          battlefieldCards: Array<{ instanceId: string; name: string }>;
+        }>;
+      };
+      async function sendCommand(playerIndex: number, commandId: string, type: string, payload: unknown = {}): Promise<TransportView[]> {
         const player = players[playerIndex]!;
         clients[playerIndex]?.send(JSON.stringify({
           type: "command",
@@ -323,9 +332,9 @@ describe("WebSocket pregame transport", () => {
         expect(result).toMatchObject({ type: "command-result", result: { accepted: true } });
         const views = await Promise.all(queues.map(queue => queue.next()));
         expect(views.every(message => message.type === "game-view")).toBe(true);
-        const hostView = views[0]?.view as { revision: number };
-        revision = hostView.revision;
-        return hostView;
+        const projectedViews = views.map(message => message.view as TransportView);
+        revision = projectedViews[0]!.revision;
+        return projectedViews;
       }
 
       // Advance upkeep and draw, then reach the active player's first main phase.
@@ -335,19 +344,25 @@ describe("WebSocket pregame transport", () => {
       expect(room.state.step).toBe("main-1");
 
       await sendCommand(0, "tap-plains", "tap-for-mana", { instanceId: "plains-instance", color: "W" });
-      const castView = await sendCommand(0, "cast-scout", "cast-spell", { instanceId: "scout-instance" });
+      const castViews = await sendCommand(0, "cast-scout", "cast-spell", { instanceId: "scout-instance" });
       expect(room.state.cards["scout-instance"]?.zone).toBe("stack");
       expect(room.state.players[0]?.manaPool.W).toBe(0);
-      expect(castView.revision).toBe(room.state.revision);
+      expect(castViews.every(view => view.stack.length === 1)).toBe(true);
 
+      let finalViews: TransportView[] = [];
       for (const [index, playerId] of [0, 1, 2, 3].entries()) {
-        await sendCommand(playerId, "resolve-scout-" + index, "pass-priority");
+        finalViews = await sendCommand(playerId, "resolve-scout-" + index, "pass-priority");
       }
       expect(room.state.cards["scout-instance"]?.zone).toBe("battlefield");
       expect(room.state.players[0]?.battlefield).toContain("scout-instance");
-      for (const queue of queues) {
-        // The most recent view was consumed by sendCommand; inspect the authoritative projection directly as well.
-        expect(room.state.cards["scout-instance"]?.controller_id).toBe("p1");
+      expect(room.state.cards["scout-instance"]?.controller_id).toBe("p1");
+      for (const view of finalViews) {
+        expect(view.players.find(player => player.id === "p1")?.battlefieldCards).toContainEqual({
+          instanceId: "scout-instance", name: "Vanilla Scout"
+        });
+        for (const player of view.players.filter(item => item.id !== "p1")) {
+          expect(player.handCards).toEqual([]);
+        }
       }
     } finally {
       await Promise.all(clients.map(client => new Promise<void>(resolve => {
