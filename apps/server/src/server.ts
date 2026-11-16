@@ -48,9 +48,9 @@ export function createCommanderPocketServer(options: CommanderPocketServerOption
           const host = parsed.players.find(player => player.seat === 0);
           const hostCredential = credentials.find(credential => credential.playerId === host?.id);
           if (!host || !hostCredential) throw new Error("HOST_SEAT_MISSING");
+          const initialPregameView = pregame?.viewForSeat(parsed.gameId, host.id, hostCredential.token);
           session = { socket, gameId: parsed.gameId, playerId: host.id, token: hostCredential.token };
           clients.add(session);
-          const initialPregameView = pregame?.viewForSeat(parsed.gameId, host.id, hostCredential.token);
           send(socket, { type: "room-created", gameId: room.id, credentials, view: initialPregameView ??
             toPlayerView(room.state, host.id, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) });
         } catch (error) {
