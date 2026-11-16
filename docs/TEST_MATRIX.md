@@ -24,7 +24,7 @@ Dernière revue : 2026-11-16. Cette matrice décrit les tests présents dans le 
 | Registre de salle | `apps/server/test/room-registry.test.ts` | création, hash des jetons, restauration après redémarrage, persistance des seeds, rollback si écriture échoue | rotation/expiration des jetons, test multi-processus |
 | Persistance disque | `apps/server/test/room-persistence.test.ts` | round-trip versionné, écriture atomique, permissions 0600, absence de jeton brut, validation JSON/credentials/seeds | crash injection entre fsync/rename, corruption du snapshot complet, migrations de schéma |
 | Checkpoint / replay | `apps/server/test/game-room.test.ts` | checkpoint défensif, restauration par rejeu, idempotence après restauration, refus d'un résultat d'événement altéré | tests de redémarrage du processus serveur et compatibilité entre versions moteur |
-| Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées, rejet de message mal formé, fermeture avant ouverture, timeouts de connexion/handshake/action pré-partie, fermeture explicite et rejet d'un ACK tardif | reconnexion/réauthentification automatique, tests UI et appareils |
+| Client mobile réseau | `apps/mobile/test/room-client.test.ts` | handshake, commandes versionnées, rejet de message mal formé, fermeture avant ouverture, timeouts de connexion/handshake/action pré-partie, fermeture explicite, rejet d'un ACK tardif, reconnexion automatique avec jeton de siège et resynchronisation de la vue | reprise après fermeture complète de l'app, tests UI et appareils |
 
 ## Données
 
@@ -72,3 +72,12 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Le test `pregame-session-registry.test.ts` reconstruit plusieurs registres à partir du même stockage et vérifie la reprise après decks partiels, déclaration mulligan en attente, cartes bottomées et seeds.
 - La restauration revalide les decks avec le catalogue et la policy injectés ; une salle pré-partie restaurée sans checkpoint, ou avec checkpoint invalide, reste fermée.
 - Tests écrits mais pas encore validés par CI sur le nouveau HEAD. Ce scénario reconstruit les registres dans le même processus de test ; il ne remplace pas encore un redémarrage de processus serveur réel.
+
+
+## Reconnexion mobile — ajout 2026-11-16
+
+- `RoomClient` conserve en mémoire l'URL et les credentials du siège après create/join.
+- Après une fermeture inattendue, il effectue jusqu'à cinq tentatives exponentielles, rejoint de nouveau la salle avec le même jeton et émet la vue autoritaire restaurée.
+- L'app conserve le dernier plateau pendant la reconnexion, applique la nouvelle vue au `room-joined` et signale l'échec après épuisement des essais.
+- Test unitaire avec sockets simulées : perte de connexion, réauthentification et réception de la nouvelle vue.
+- Les credentials ne sont pas persistés après fermeture complète de l'app ; aucun test sur appareil ni sur réseau mobile réel n'est effectué. CI de cette tranche à confirmer.
