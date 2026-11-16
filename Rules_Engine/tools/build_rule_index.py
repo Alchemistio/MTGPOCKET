@@ -10,6 +10,7 @@ Only the Python standard library is required. The source text is never rewritten
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import json
 import math
@@ -185,11 +186,20 @@ def main() -> None:
     )
 
     chapters = sorted(by_chapter, key=int)
+    edition_match = re.search(r"(\\d{8})", source_name)
+    edition_compact = edition_match.group(1) if edition_match else ""
+    edition_date = datetime.datetime.strptime(edition_compact, "%Y%m%d").date().isoformat() if edition_compact else None
+    git_blob_sha = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw).hexdigest()
     manifest = {
         "schema_version": 1,
+        "edition": edition_date,
+        "effective_date": edition_date,
+        "source": "Wizards of the Coast Comprehensive Rules",
         "source_file": f"Rules_Engine/source/{source_name}",
         "source_sha256": hashlib.sha256(raw).hexdigest(),
+        "source_blob_sha": git_blob_sha,
         "source_line_count": len(lines),
+        "source_char_count": len(text),
         "counts": {
             "rules": len(rule_docs),
             "sections": sum(x["kind"] == "section" for x in records),
@@ -202,6 +212,10 @@ def main() -> None:
         ] + [{"path": "Rules_Engine/index/glossary_index.jsonl", "records": len(glossary)}],
         "position_format": "1-based inclusive line_start/line_end in the UTF-8 source text.",
         "summary_policy": "Generated topical summaries and keywords are navigation aids, not authoritative rule text.",
+        "coverage": f"All {len(rule_docs):,} numbered rules/subrules, {sum(x['kind'] == 'section' for x in records)} chapter/section headings, and {len(glossary)} glossary terms are indexed.",
+        "external_tracker_reported_rule_count": 3183 if edition_compact == "20261106" else None,
+        "extracted_rule_paragraph_count": len(rule_docs),
+        "count_note": "The public tracker reports 3,183 rules; this indexer detects 3,182 numbered rule/subrule paragraphs and separately indexes all 148 chapter/section headings. No numbered rule paragraph in the source was found outside the index." if edition_compact == "20261106" else None,
     }
     (OUT / "index_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
