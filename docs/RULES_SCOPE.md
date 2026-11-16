@@ -36,3 +36,10 @@ Référence → modèle de données → commande/transition → test positif →
 
 ## Données et propriété intellectuelle
 Respecter les conditions des fournisseurs, les limites de débit et les droits des ayants droit. Conserver identifiants et provenance. Ne pas committer de dumps ou images sans autorisation.
+
+
+## Première capacité déclenchée ETB — tranche ciblée
+
+Le premier handler accepte uniquement un permanent de layout normal (créature, artefact ou enchantement), à coût simple, dont le texte Oracle est exactement « When {nom de la carte} enters the battlefield, draw a card. ». À la résolution du sort permanent, la carte entre d'abord sur le champ de bataille ; l'objet de sort est retiré de la pile, puis le déclenchement est ajouté à la pile avant l'ouverture de la priorité suivante (référence de travail : CR 117.5 et 603.3 du PDF Comprehensive Rules fourni, édition 25 septembre 2026).
+
+La capacité se résout comme un objet de pile distinct et fait piocher une carte au contrôleur qui contrôlait la source au déclenchement. Les capacités inconnues, textes approchants, cibles, choix, plusieurs déclenchements simultanés, ordre APNAP et déclenchements d'autres événements ne sont pas pris en charge. Il ne s'agit pas d'un parseur Oracle général.
