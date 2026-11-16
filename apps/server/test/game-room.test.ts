@@ -352,6 +352,57 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
+  it("resolves an allowlisted ETB life-gain trigger only after it leaves the stack", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "lone-missionary-fixture", oracleId: "lone-missionary-oracle",
+      name: "Lone Missionary", layout: "normal", manaCost: "", manaValue: 0,
+      typeLine: "Creature — Kor Monk", oracleText: "When Lone Missionary enters the battlefield, you gain 4 life.",
+      colors: ["W"], colorIdentity: ["W"], legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "lone-missionary-fixture", oracle_id: "lone-missionary-oracle", name: "Lone Missionary",
+        layout: "normal", mana_cost: "", cmc: 0, type_line: "Creature — Kor Monk",
+        oracle_text: "When Lone Missionary enters the battlefield, you gain 4 life.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "14"
+      }
+    };
+    expect(supportsBasicSpell(definition)).toBe(true);
+    expect(supportsBasicSpell({
+      ...definition, oracleText: "When Lone Missionary enters the battlefield, you gain four life."
+    })).toBe(false);
+    const base: GameState = {
+      ...advanceAutomaticStep(createGame("room-1", players)),
+      deckSetupComplete: true, phase: "precombat-main", step: "main-1"
+    };
+    const initial = addCardInstance(base, {
+      instance_id: "lone-missionary", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-missionary",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "lone-missionary" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "missionary-spell-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.players[0]?.life).toBe(40);
+    expect(room.state.stack).toMatchObject([{
+      kind: "triggered-ability", controller_id: "p1", source_instance_id: "lone-missionary",
+      payload: { effect: "etb-gain-life", amount: 4, sourceName: "Lone Missionary" }
+    }]);
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "missionary-trigger-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.players[0]?.life).toBe(44);
+    expect(room.replay()).toEqual(room.state);
+  });
+
   it("casts a vanilla creature during a main phase and puts it onto its controller's battlefield", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "vanilla-creature", oracleId: "vanilla-creature-oracle",
