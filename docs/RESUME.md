@@ -40,6 +40,13 @@
 
 - Action spéciale « jouer un terrain de base » ajoutée : un par tour, joueur actif en phase principale avec priorité et pile vide ; déplacement direct sur le champ de bataille sans pile/paiement. Compteur visible et UI mobile mis à jour. Migrations rétrocompatibles des checkpoints salle/pré-partie. CI verte : run `43869469546`, SHA `d163da9` (`validate` + `python-data`). Tests physiques non effectués.
 
+## Base de règles et mémoire de recherche
+- Source courante importée : Comprehensive Rules 2026-11-06 ; édition 2026-09-25 archivée depuis le PDF fourni.
+- Index : 3 182 règles/sous-règles, 148 titres, 744 entrées de glossaire ; fichiers JSONL par chapitre, index maître, manifest et générateur Python.
+- Recherche et plans de modules : `memory/memory_index.md`, `memory/rules/rules_index.md`, `memory/rules/engine_architecture.md` et `memory/rules/etb/`.
+- La stratégie générique complète M0–M6 ; elle ne remplace aucune priorité réseau, mobile, données ou validation déjà planifiée.
+- Les résumés et mots-clés automatiques servent à retrouver les paragraphes ; le texte officiel et ses renvois font autorité.
+
 ## Limites et blocages
 - Aucun test sur appareils physiques ni LAN réel à deux/quatre téléphones.
 - Découverte LAN et TLS/gestion de secrets de production non implémentées.
