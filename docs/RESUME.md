@@ -30,7 +30,7 @@
 ## Limites et blocages
 - Les dernières CI ont révélé deux assertions de test erronées, corrigées dans `eca67c0` ; le nouveau HEAD doit encore passer CI.
 - Le test de reprise pré-partie reconstruit plusieurs registres dans le même processus de test. Il faut encore valider un vrai arrêt/redémarrage du processus serveur.
-- La reconnexion/réauthentification automatique mobile n'est pas implémentée.
+- Reconnexion/réauthentification mobile implémentée en mémoire : cinq essais exponentiels, join avec jeton de siège et resynchronisation de la vue serveur. Les credentials ne survivent pas à la fermeture complète de l'app ; CI de cette tranche à obtenir.
 - Le snapshot Scryfall réel et la policy Commander de production ne sont pas provisionnés/validés.
 - Le moteur ne couvre pas les Comprehensive Rules ni toutes les cartes : permanents avancés, cibles, coûts alternatifs, combat détaillé et SBA générales restent incomplets.
 - Aucun test sur appareils physiques ; aucun test LAN à quatre téléphones.
