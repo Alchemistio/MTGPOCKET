@@ -1,17 +1,34 @@
-# Index des règles — navigation
+# Index maître — Comprehensive Rules 2026-11-06
 
-Les 3 166 règles et sous-règles sont indexées sans exclusion et réparties par chapitre. Chaque ligne JSONL représente un numéro CR précis.
+Cet index couvre **tous les paragraphes de règles et sous-règles détectés**, ainsi que tous les titres de chapitre/section. Chaque entrée JSONL comprend un résumé thématique, des mots-clés et une position inclusive dans le fichier source courant.
 
-| Chapitre | Fichier | Entrées |
-|---|---|---:|
-| 1. Game Concepts | [01_game_concepts.jsonl](rules/01_game_concepts.jsonl) | 506 |
-| 2. Parts of a Card | [02_parts_of_a_card.jsonl](rules/02_parts_of_a_card.jsonl) | 120 |
-| 3. Card Types | [03_card_types.jsonl](rules/03_card_types.jsonl) | 164 |
-| 4. Zones | [04_zones.jsonl](rules/04_zones.jsonl) | 78 |
-| 5. Turn Structure | [05_turn_structure.jsonl](rules/05_turn_structure.jsonl) | 149 |
-| 6. Spells, Abilities, and Effects | [06_spells_abilities_and_effects.jsonl](rules/06_spells_abilities_and_effects.jsonl) | 320 |
-| 7. Additional Rules | [07_additional_rules.jsonl](rules/07_additional_rules.jsonl) | 1527 |
-| 8. Multiplayer Rules | [08_multiplayer_rules.jsonl](rules/08_multiplayer_rules.jsonl) | 171 |
-| 9. Casual Variants | [09_casual_variants.jsonl](rules/09_casual_variants.jsonl) | 131 |
+| Chapitre | Index JSONL |
+|---|---|
+| 1. Game Concepts | [rules_chapter_1.jsonl](rules_chapter_1.jsonl) |
+| 2. Parts of a Card | [rules_chapter_2.jsonl](rules_chapter_2.jsonl) |
+| 3. Card Types | [rules_chapter_3.jsonl](rules_chapter_3.jsonl) |
+| 4. Zones | [rules_chapter_4.jsonl](rules_chapter_4.jsonl) |
+| 5. Turn Structure | [rules_chapter_5.jsonl](rules_chapter_5.jsonl) |
+| 6. Spells, Abilities, and Effects | [rules_chapter_6.jsonl](rules_chapter_6.jsonl) |
+| 7. Additional Rules | [rules_chapter_7.jsonl](rules_chapter_7.jsonl) |
+| 8. Multiplayer Rules | [rules_chapter_8.jsonl](rules_chapter_8.jsonl) |
+| 9. Casual Variants | [rules_chapter_9.jsonl](rules_chapter_9.jsonl) |
 
-Voir aussi [glossaire](glossary_index.jsonl), [sections](sections_index.jsonl), [manifest](manifest.json) et [méthode](README.md).
+- [Glossary index — 744 terms](glossary_index.jsonl)
+- [Manifest and counts](index_manifest.json)
+- [Source 2026-11-06](../source/MagicCompRules_20261106.txt)
+- [Archived source 2026-09-25](../source/MagicCompRules_20260925.txt)
+- [Rebuild script](../tools/build_rule_index.py)
+
+## Coverage
+
+- **3 182** règles/sous-règles numérotées.
+- **148** en-têtes de chapitre/section.
+- **744** entrées du glossaire.
+- Chaque règle/sous-règle est une entrée distincte ; les en-têtes et le glossaire ont leurs propres entrées.
+
+## Schéma JSONL
+
+`id`, `kind`, `summary`, `keywords`, `chapter`, `chapter_title`, `section_id`, `section_title`, `source_file`, `line_start`, `line_end`, et `related_rules` pour les règles.
+
+Les résumés et mots-clés sont des aides de recherche automatiques. Ils ne remplacent jamais le texte normatif. Lire la source et les règles référencées avant d'implémenter un comportement.
