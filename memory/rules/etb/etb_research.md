@@ -1,6 +1,6 @@
 # ETB — recherche normative et technique
 
-Date : 16 novembre 2026. Référence normative la plus récente consultée : Comprehensive Rules effectives au 6 novembre 2026. L'index local détaillé reste basé sur la version fournie du 25 septembre ; vérifier les changements de version.
+Date : 16 novembre 2026. Référence normative et index consultés : Comprehensive Rules effectives au 6 novembre 2026. La version du 25 septembre 2026 fournie dans le projet est conservée comme archive. Source officielle : https://magic.wizards.com/en/rules ; PDF : https://media.wizards.com/2026/downloads/MagicCompRules%2020261106.pdf.
 
 ## 1. Définition et distinctions
 Un ETB n'est pas un simple callback après ajout au battlefield. C'est une famille de zone-change triggers (CR 603.6).
@@ -45,7 +45,19 @@ Les notifications UI/journal sont postérieures à la décision métier ; l'Even
 - `StackItem` : IR/texte figé, contrôleur, cibles/modes/choix, source/LKI et identifiant déterministe.
 Ces types sont des propositions, pas des types déjà présents dans le code.
 
-## 6. Recherche externe
+## 6. Règles précises à garder dans la matrice de conformité
+- 603.6a : tous les permanents présents, y compris les nouveaux entrants, sont examinés pour chaque événement qui met un ou plusieurs permanents sur le champ de bataille.
+- 603.6b : les effets continus qui modifient les caractéristiques s'appliquent dès que le permanent est sur le champ de bataille ; ils peuvent donc changer si la capacité ETB existe au moment pertinent.
+- 603.6d : « enters tapped/with », « as this enters » et « enters as » sont des capacités statiques dont l'effet fait partie de l'événement d'entrée, pas des triggers.
+- 113.6h : les capacités qui modifient la manière dont leur propre objet entre fonctionnent pendant l'entrée ; 113.6k couvre les conditions de déclenchement qui ne peuvent pas déclencher depuis le champ de bataille.
+- 614.12 / 614.12a : déterminer les remplacements à partir des caractéristiques que le permanent aurait sur le champ de bataille ; les choix requis sont faits avant l'entrée.
+- 117.5 : avant qu'un joueur reçoive la priorité, traiter les SBA, puis les triggers, et répéter jusqu'à stabilisation.
+- 400.7 : un objet qui change de zone devient un nouvel objet, sous réserve des exceptions listées.
+
+## 7. Recherche externe
+- Wizards Comprehensive Rules (référence normative) : https://magic.wizards.com/en/rules ; version 2026-11-06 : https://media.wizards.com/2026/downloads/MagicCompRules%2020261106.pdf.
+- Magic Judges — classe 7 sur les capacités déclenchées : https://blogs.magicjudges.org/judgeclasses/english/class-7-en/.
+- FAQ Magic Rules Tips — triggers simultanés et APNAP : https://blogs.magicjudges.org/rulestips/faq/.
 - Ironsmith : https://github.com/Chiplis/ironsmith — compilation Oracle en phases et moteur déterministe.
 - Argentum : https://github.com/ITC-MSM/commander/blob/main/docs/architecture-principles.md — AST/IR, effets composables et transitions fonctionnelles.
 - Majik : https://github.com/bg9m9r/majik — event bus, événements métier, gestion des zones et registre de capacités.
