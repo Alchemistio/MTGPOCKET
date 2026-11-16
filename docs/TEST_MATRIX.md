@@ -62,4 +62,4 @@ Ne jamais déduire la validation native de la seule réussite de TypeScript ou V
 
 ## Persistance et reprise — ajout 2026-11-16
 
-Les tests de checkpoint et de stockage ont été ajoutés au dépôt, mais ne sont pas considérés comme validés tant que la CI du nouveau SHA n'a pas réussi. Le dernier run CI connu (43689458355) précède ces changements. Aucun test de redémarrage de processus réel ni test sur appareil n'est revendiqué.
+Les tests de checkpoint, stockage disque et RoomRegistry passent dans le run 43806846271 ; le même run a échoué sur trois tests pré-partie à cause d'un garde-fou erroné. Le typecheck et python-data étaient verts. Le garde-fou a été corrigé dans 7df71f3, puis le checkpoint a reçu un champ engineVersion. Aucun run CI n'est encore observé sur le HEAD actuel ; aucune validation de cette tranche n'est revendiquée. Aucun test de redémarrage de processus réel ni test sur appareil n'est revendiqué.
