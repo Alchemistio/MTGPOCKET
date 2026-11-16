@@ -1,5 +1,5 @@
 
-## Jouer un terrain de base — ajout 2026-11-16, CI en attente
+## Jouer un terrain de base — ajout 2026-11-16, CI verte
 
 - Moteur : le compteur `landsPlayedThisTurn` est initialisé à zéro et réinitialisé uniquement quand le joueur devient actif au début de son tour.
 - Serveur : `play-land` déplace un terrain de base de la main au champ de bataille sans pile ni paiement ; une deuxième pose est rejetée ; hors phase principale, la carte reste en main.
@@ -9,7 +9,7 @@
 - Run `43869469546` sur `d163da9` : typecheck, 53 tests serveur, 30 tests moteur, 10 tests mobile et `python-data` verts ; la pose de terrain WebSocket, les migrations et le reset du compteur sont couverts.
 
 
-## Permanents vanilla — ajout 2026-11-16, CI en attente
+## Permanents vanilla — ajout 2026-11-16, CI verte
 - Run `43867439926` : typecheck et Python réussis ; Vitest échoue uniquement sur le test négatif de timing car son état de fixture n'indiquait pas que le setup de deck était terminé. Fixture corrigé dans `7601209`, assertions de frontières élargies dans `c8ff02a`. Nouveau run CI requis.
 
 - `game-room.test.ts` : lancer une créature vanilla depuis la main, payer un coût coloré + générique, empiler le sort, résoudre après les quatre passes, déplacer l'instance sur le champ de bataille du contrôleur et vérifier le rejeu.
