@@ -22,7 +22,7 @@
   - `RoomRegistry` restaure les salles au démarrage, persiste les commandes acceptées avant l'ACK WebSocket et restaure l'ancien checkpoint si l'écriture échoue.
   - Au démarrage de la partie, le snapshot validé et le seed log de pré-partie sont persistés. Les seeds ne sont jamais projetés dans les vues joueur.
   - Répertoire par défaut : `data/server-rooms`, exclu de Git.
-- Tests ajoutés pour restauration/rejeu du checkpoint, idempotence après redémarrage, intégrité du journal, stockage atomique, permissions, hash des jetons, persistance des seeds et rollback si le disque échoue. Sur le run 43806846271, les tests de stockage et RoomRegistry ont passé ; les tests de pré-partie ont révélé le garde-fou incorrect, corrigé ensuite. CI du HEAD actuel à vérifier.
+- Tests ajoutés pour restauration/rejeu du checkpoint, idempotence après redémarrage, intégrité du journal, stockage atomique, permissions, hash des jetons, persistance des seeds, rollback disque et refus de recréer un coordinateur de pré-partie volatil après redémarrage. Sur le run 43806846271, les tests de stockage et RoomRegistry ont passé ; les tests de pré-partie ont révélé le garde-fou incorrect, corrigé ensuite. CI du HEAD actuel à vérifier.
 
 ## Fait précédemment
 - 4 sièges, salle LAN, jetons, WebSocket, vues privées par siège.
