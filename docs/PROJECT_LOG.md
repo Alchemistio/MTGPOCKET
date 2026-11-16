@@ -1,3 +1,10 @@
+## 2026-11-16 — CI verte de la tranche de permanents et du transport WebSocket
+
+- Run `43868236829`, SHA `0c55bdb39ad9093674dc78ae61b99a625601cc85` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
+- Vitest serveur : 49 tests verts, dont le scénario WebSocket à quatre sièges qui lance une créature vanilla, paie le mana, la résout sur le champ de bataille et vérifie la projection publique ainsi que la confidentialité des mains.
+- Le test de rejeu checkpoint d'un sort permanent, les limites de timing, layouts et texte Oracle sont aussi couverts.
+- Aucun test sur appareil physique n'est revendiqué.
+
 ## 2026-11-16 — CI verte pour la première tranche de permanents
 
 - Run `43867856511`, SHA `f93d82b2e769b991b87a9fb074c57b9bbc78c196` : jobs `validate` (typecheck + Vitest) et `python-data` réussis.
