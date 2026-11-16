@@ -1,7 +1,7 @@
 import type { PlayerSetup } from "@commander-pocket/game-engine";
 import type { CardDefinition, CommanderDeckList } from "@commander-pocket/card-data";
 import type { CardSpellSupport } from "./game-room.js";
-import { PregameCoordinator } from "./pregame-coordinator.js";
+import { PregameCoordinator, type PregameCoordinatorCheckpoint } from "./pregame-coordinator.js";
 import { RoomRegistry } from "./room-registry.js";
 import { toPlayerView, type GameView } from "./player-view.js";
 
@@ -18,6 +18,7 @@ export interface PregameCoordinatorFactory {
 /**
  * Authenticated adapter between seat credentials and the server-owned
  * pregame coordinator. Every returned view is projected for its requesting seat.
+ * Mutations are checkpointed before their WebSocket acknowledgement.
  */
 export class PregameSessionRegistry {
   private readonly sessions = new Map<string, PregameCoordinator>();
@@ -35,7 +36,9 @@ export class PregameSessionRegistry {
     try {
       const session = this.getAuthorizedSession(gameId, playerId, token);
       if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
+      const before = session.checkpoint;
       const result = session.submitDeck(playerId, deck);
+      if (result.accepted) this.persistOrRollback(session, before);
       return { accepted: true, result, view: toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable, this.supportsSpell) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
@@ -46,8 +49,10 @@ export class PregameSessionRegistry {
     AuthenticatedPregameResult<ReturnType<PregameCoordinator["declareMulligan"]>> | { accepted: false; code: string } {
     const session = this.getAuthorizedSession(gameId, playerId, token);
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
+    const before = session.checkpoint;
     try {
       const result = session.declareMulligan(playerId, action);
+      this.persistOrRollback(session, before);
       return { accepted: true, result, view: toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable, this.supportsSpell) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
@@ -58,8 +63,10 @@ export class PregameSessionRegistry {
     AuthenticatedPregameResult<ReturnType<PregameCoordinator["chooseBottomCards"]>> | { accepted: false; code: string } {
     const session = this.getAuthorizedSession(gameId, playerId, token);
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
+    const before = session.checkpoint;
     try {
       const result = session.chooseBottomCards(playerId, instanceIds);
+      this.persistOrRollback(session, before);
       return { accepted: true, result, view: toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable, this.supportsSpell) };
     } catch (error) {
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
@@ -77,34 +84,48 @@ export class PregameSessionRegistry {
     { accepted: true; revision: number; view: GameView } | { accepted: false; code: string } {
     const session = this.getAuthorizedSession(gameId, playerId, token);
     if (!session) return { accepted: false, code: "UNAUTHENTICATED" };
+    const before = session.checkpoint;
     try {
       const room = this.rooms.get(gameId);
       if (!room) return { accepted: false, code: "UNKNOWN_GAME" };
-      const previousState = session.state;
       const state = session.start();
-      try {
-        this.rooms.replaceStateFromPregame(gameId, state, session.seedLog);
-      } catch (error) {
-        session.restoreStateAfterFailedStart(previousState);
-        throw error;
-      }
+      this.rooms.replaceStateFromPregame(gameId, state, session.seedLog);
       return { accepted: true, revision: room.state.revision, view: toPlayerView(room.state, playerId, this.resolveCard, this.spellCastingAvailable, this.supportsSpell) };
     } catch (error) {
+      session.restoreCheckpoint(before);
       return { accepted: false, code: error instanceof Error ? error.message : "PREGAME_ERROR" };
+    }
+  }
+
+  private persistOrRollback(session: PregameCoordinator, previous: PregameCoordinatorCheckpoint): void {
+    try {
+      this.rooms.savePregameCheckpoint(previous.gameId, session.checkpoint);
+    } catch (error) {
+      session.restoreCheckpoint(previous);
+      throw error;
     }
   }
 
   private getAuthorizedSession(gameId: string, playerId: string, token: string): PregameCoordinator | null {
     const room = this.rooms.authenticate(gameId, playerId, token);
-    // RoomRegistry creates an empty active GameState before the separate pregame coordinator is hydrated.
-    // deckSetupComplete and wasRestored distinguish an active game from an unrecoverable pregame after restart.
-    if (!room || room.state.deckSetupComplete || this.rooms.wasRestored(gameId)) return null;
+    if (!room || room.state.deckSetupComplete) return null;
     let session = this.sessions.get(gameId);
     if (!session) {
       const players = room.state.players.map(player => ({
         id: player.id, name: player.name, seat: player.seat
       }));
+      const persisted = this.rooms.getPregameCheckpoint(gameId);
+      if (this.rooms.wasRestored(gameId) && !persisted) return null;
       session = this.factory.create(gameId, players);
+      if (persisted) session.restoreCheckpoint(persisted);
+      else {
+        try {
+          // Save an empty checkpoint before accepting the first pregame mutation.
+          this.rooms.savePregameCheckpoint(gameId, session.checkpoint);
+        } catch {
+          return null;
+        }
+      }
       this.sessions.set(gameId, session);
     }
     return session;
