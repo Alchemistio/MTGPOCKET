@@ -1,3 +1,10 @@
+## 2026-11-16 — CI finale de l'index et du générateur
+
+- Run `43893233739`, SHA `eac0913314130afff0a6f723759713579d0503e5` : jobs `validate` et `python-data` réussis.
+- Les 8 tests Python passent, dont la validation des 3 182 identifiants, des 744 entrées du glossaire, des positions/offsets et la syntaxe du générateur.
+- TypeScript : typecheck réussi ; Vitest : 8 card-data, 30 moteur, 56 serveur et 10 mobile réussis.
+- Aucun code runtime de jeu n'a été modifié dans cette tranche.
+
 ## 2026-11-16 — Validation CI de l'index des règles
 
 - Run `43892396267`, HEAD `df4987b22556909960fa225dc4830a4c581b11d6` : jobs `validate` et `python-data` réussis.
