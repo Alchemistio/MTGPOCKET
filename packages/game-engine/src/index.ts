@@ -7,3 +7,4 @@ export * from "./library.js";
 export * from "./players.js";
 export * from "./pregame.js";
 export * from "./zone-events.js";
+export * from "./zone-change-batch.js";
