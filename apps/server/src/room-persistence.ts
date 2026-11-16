@@ -5,7 +5,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import type { GameRoomCheckpoint } from "./game-room.js";
-import type { PregameSeedRecord } from "./pregame-coordinator.js";
+import type { PregameCoordinatorCheckpoint, PregameSeedRecord } from "./pregame-coordinator.js";
 
 export interface PersistedRoomRecord {
   schemaVersion: 1;
@@ -15,6 +15,8 @@ export interface PersistedRoomRecord {
   seatTokenHashes: Readonly<Record<string, string>>;
   /** Server-only shuffle/mulligan replay material; never project this to a player. */
   seedLog: readonly PregameSeedRecord[];
+  /** Private, resumable pregame state; absent once the game starts. */
+  pregameCheckpoint?: PregameCoordinatorCheckpoint;
 }
 
 export interface RoomPersistence {
@@ -109,6 +111,16 @@ function validateRecord(value: unknown): asserts value is PersistedRoomRecord {
       !Array.isArray(value.checkpoint.events) || !isRecord(value.seatTokenHashes) ||
       !Array.isArray(value.seedLog)) {
     throw new Error("ROOM_PERSISTENCE_INVALID_RECORD");
+  }
+
+  if (value.pregameCheckpoint !== undefined) {
+    const pregame = value.pregameCheckpoint;
+    if (!isRecord(pregame) || pregame.schemaVersion !== 1 || pregame.gameId !== value.gameId ||
+        !isRecord(pregame.state) || pregame.state.id !== value.gameId || pregame.state.status !== "pregame" ||
+        !Array.isArray(pregame.players) || !Array.isArray(pregame.submittedDecks) ||
+        !Array.isArray(pregame.mulliganDeclarations) || !Array.isArray(pregame.generatedSeeds)) {
+      throw new Error("ROOM_PERSISTENCE_INVALID_PREGAME_CHECKPOINT");
+    }
   }
 
   const playerIds = new Set<string>();
