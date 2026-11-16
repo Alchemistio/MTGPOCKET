@@ -66,5 +66,8 @@
   "position_format": "1-based inclusive line_start/line_end in the UTF-8 source text. Lines identify the complete numbered paragraph; the source is plain text for stable lookup.",
   "summary_policy": "Generated topical summaries and keyword extraction are navigation aids, not authoritative rule text. Always inspect the referenced source paragraph for interpretation.",
   "coverage": "All 3,182 numbered rules/subrules, 148 chapter/section headings, and 744 glossary terms are indexed.",
-  "source_blob_sha": "17a632c0faa2594991057e18e3722f4b5fd76377"
+  "source_blob_sha": "17a632c0faa2594991057e18e3722f4b5fd76377",
+  "external_tracker_reported_rule_count": 3183,
+  "extracted_rule_paragraph_count": 3182,
+  "count_note": "The public tracker reports 3,183 rules; this indexer detects 3,182 numbered rule/subrule paragraphs and separately indexes all 148 chapter/section headings. No numbered rule paragraph in the source was found outside the index."
 }
