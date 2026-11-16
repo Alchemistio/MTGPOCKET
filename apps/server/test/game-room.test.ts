@@ -341,6 +341,7 @@ describe("GameRoom", () => {
     const initialGame = advanceAutomaticStep(createGame("room-1", players));
     const base: GameState = {
       ...initialGame,
+      deckSetupComplete: true,
       players: initialGame.players.map(player => player.id === "p1"
         ? { ...player, manaPool: { W: 1 } }
         : player)
