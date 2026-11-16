@@ -1,3 +1,10 @@
+## 2026-11-16 — Correction du test de reprise après CI
+
+- Run `43826473231` sur le merge ref associé à `b0162da` : typecheck et Python passent ; Vitest échoue sur une assertion du test de reprise pré-partie.
+- Cause : le test attendait un choix bottom après le premier mulligan, alors que le premier mulligan est gratuit. La règle de bottom intervient après le mulligan suivant.
+- Test corrigé dans `a58a513` : la séquence reprend le premier mulligan, effectue un second mulligan, choisit les cartes à bottomer, garde puis démarre.
+- Nouvelle CI sur le HEAD corrigé requise ; ne pas considérer la tranche comme validée avant le résultat.
+
 ## 2026-11-16 — Reprise durable des pré-parties interrompues
 
 - `PregameCoordinator.checkpoint` sérialise l'état de pré-partie, les decks soumis, les déclarations keep/mulligan, les seeds déjà générées et les sièges, avec copie défensive.
