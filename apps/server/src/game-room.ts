@@ -4,7 +4,7 @@ import {
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { basicLandManaOptions } from "./basic-spell-effects.js";
+import { basicLandManaOptions, createBasicPermanentEtbTrigger } from "./basic-spell-effects.js";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
@@ -207,17 +207,36 @@ export class GameRoom {
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
         if (this.resolveStackEffect) {
+          let enteredPermanent: { instanceId: string; controllerId: string; definition: CardDefinition } | null = null;
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             const payload = isRecord(item.payload) ? item.payload : {};
-            const resolved = item.kind === "spell" && payload.permanent === true && item.source_instance_id
-              ? moveCardToZone(state, item.source_instance_id, "battlefield", item.controller_id)
-              : this.resolveStackEffect!(state, item);
+            if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
+              const entered = moveCardToZone(state, item.source_instance_id, "battlefield", item.controller_id);
+              const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
+              const definition = cardId ? this.resolveCard?.(cardId) : undefined;
+              if (definition && this.supportsSpell?.(definition)) {
+                enteredPermanent = { instanceId: item.source_instance_id, controllerId: item.controller_id, definition };
+              }
+              return entered;
+            }
+            const resolved = this.resolveStackEffect!(state, item);
             if (item.kind === "spell" && item.source_instance_id &&
                 resolved.cards[item.source_instance_id]?.zone === "stack") {
               return moveCardToZone(resolved, item.source_instance_id, "graveyard");
             }
             return resolved;
           });
+          // The resolving spell is removed first; its ETB trigger is then put on the stack
+          // before the server exposes the priority window to clients.
+          if (enteredPermanent) {
+            const trigger = createBasicPermanentEtbTrigger(
+              enteredPermanent.instanceId,
+              enteredPermanent.controllerId,
+              enteredPermanent.definition,
+              nextState.revision
+            );
+            if (trigger) nextState = pushStackItem(nextState, trigger);
+          }
           outcome = "stack-resolved";
         } else {
           outcome = "resolution-required";
@@ -355,7 +374,8 @@ export class GameRoom {
     }
     const definition = this.resolveCard(card.card_id);
     if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
-    if (this.supportsSpell && !this.supportsSpell(definition)) return this.reject(cacheKey, "UNSUPPORTED_SPELL_EFFECT");
+    const supportedByHandler = this.supportsSpell?.(definition) ?? false;
+    if (this.supportsSpell && !supportedByHandler) return this.reject(cacheKey, "UNSUPPORTED_SPELL_EFFECT");
     if (definition.layout !== "normal") return this.reject(cacheKey, "UNSUPPORTED_CARD_LAYOUT");
     const isInstant = /\bInstant\b/.test(definition.typeLine);
     const isSorcery = /\bSorcery\b/.test(definition.typeLine);
@@ -363,7 +383,9 @@ export class GameRoom {
       /\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine);
     if (!isInstant && !isSorcery && !isPermanent) return this.reject(cacheKey, "UNSUPPORTED_SPELL_TYPE");
     if (/\btarget\b/i.test(definition.oracleText)) return this.reject(cacheKey, "TARGET_SELECTION_NOT_SUPPORTED");
-    if (isPermanent && definition.oracleText.trim().length > 0) return this.reject(cacheKey, "UNSUPPORTED_PERMANENT_ABILITIES");
+    if (isPermanent && definition.oracleText.trim().length > 0 && !supportedByHandler) {
+      return this.reject(cacheKey, "UNSUPPORTED_PERMANENT_ABILITIES");
+    }
     if ((isSorcery || isPermanent) && (this.currentState.activePlayerId !== command.playerId ||
         (this.currentState.phase !== "precombat-main" && this.currentState.phase !== "postcombat-main") ||
         this.currentState.stack.length > 0 || this.currentState.awaitingResolutionId !== null)) {

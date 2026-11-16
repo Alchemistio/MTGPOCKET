@@ -101,7 +101,7 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
       const isSupportedPermanent = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
         !/\b(?:Instant|Sorcery)\b/.test(typeLine) &&
         /\b(?:Creature|Artifact|Enchantment)\b/.test(typeLine) &&
-        oracleText.trim().length === 0 && simpleManaCost && (!supportsSpell || supportsSpell(definition)));
+        simpleManaCost && (supportsSpell ? supportsSpell(definition) : oracleText.trim().length === 0));
       const isSupportedLand = Boolean(definition && !runtimeCard.is_commander && layout === "normal" &&
         /\bBasic\b.*\bLand\b/.test(typeLine) &&
         (manaCost === null || manaCost === "") && basicLandManaOptions(definition).length > 0);

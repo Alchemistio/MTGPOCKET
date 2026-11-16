@@ -40,7 +40,9 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [x] Infrastructure de lancement d’instants/rituels simples depuis la main : coût générique/couleur, pile, réponse d’un autre joueur, résolution LIFO via handler serveur et envoi au cimetière.
 - [x] CI verte sur la tranche complète de permanents vanilla, y compris le test WebSocket quatre sièges : run `43868236829`, SHA `0c55bdb` (`validate` + `python-data`).
 - [x] CI verte sur l’action spéciale « jouer un terrain de base » (un par tour, timing de phase principale, sans pile), tests de migration des checkpoints et transport WebSocket : run `43869469546`, SHA `d163da9` (`validate` + `python-data`).
-- [ ] Étendre le lancement aux permanents avec capacités, cibles, coûts alternatifs, commandants et handlers d’effets réels.
+- [x] Première capacité déclenchée ETB strictement allowlistée : permanent normal avec le texte exact « When {nom} enters the battlefield, draw a card. », trigger sur la pile puis pioche à sa résolution.
+- [ ] Étendre les déclenchements à plusieurs triggers simultanés/APNAP, cibles, choix, autres événements et handlers déclaratifs.
+- [ ] Étendre le lancement aux permanents avec capacités complexes, cibles, coûts alternatifs et commandants.
 - [x] Cleanup serveur : défausse de fin de tour contrôlée par le siège concerné, puis progression automatique vers l'upkeep du joueur suivant.
 - [x] Test serveur d'un tour de p1 depuis main 1 jusqu'à l'upkeep p2 : instant, réponse adverse, résolution LIFO, passes des étapes de combat, cleanup et défausse.
 - [x] Raccorder à l'UI mobile la main privée, les sorts serveur supportés et la défausse de cleanup.

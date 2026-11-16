@@ -413,6 +413,68 @@ describe("GameRoom", () => {
     expect(restored.state).toEqual(room.state);
   });
 
+  it("puts a supported ETB draw trigger on the stack after its permanent resolves", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "wall-of-omens-fixture", oracleId: "wall-of-omens-oracle",
+      name: "Wall of Omens", layout: "normal", manaCost: "{1}{W}", manaValue: 2,
+      typeLine: "Creature — Wall", oracleText: "When Wall of Omens enters the battlefield, draw a card.",
+      colors: ["W"], colorIdentity: ["W"], legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "wall-of-omens-fixture", oracle_id: "wall-of-omens-oracle", name: "Wall of Omens",
+        layout: "normal", mana_cost: "{1}{W}", cmc: 2, type_line: "Creature — Wall",
+        oracle_text: "When Wall of Omens enters the battlefield, draw a card.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "12"
+      }
+    };
+    expect(supportsBasicSpell(definition)).toBe(true);
+    expect(supportsBasicSpell({ ...definition, oracleText: "When Wall of Omens enters the battlefield, scry 1." })).toBe(false);
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = {
+      ...initialGame, deckSetupComplete: true, phase: "precombat-main", step: "main-1",
+      players: initialGame.players.map(player => player.id === "p1" ? { ...player, manaPool: { W: 1, C: 1 } } : player)
+    };
+    let initial = addCardInstance(base, {
+      instance_id: "wall-of-omens", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    initial = addCardInstance(initial, {
+      instance_id: "top-card", card_id: "draw-fixture", owner_id: "p1", zone: "library"
+    });
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-wall",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "wall-of-omens" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "wall-spell-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.cards["wall-of-omens"]?.zone).toBe("battlefield");
+    expect(room.state.stack).toMatchObject([{
+      kind: "triggered-ability", controller_id: "p1", source_instance_id: "wall-of-omens",
+      payload: { effect: "etb-draw-one", sourceName: "Wall of Omens" }
+    }]);
+    expect(room.state.players[0]?.hand).not.toContain("top-card");
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "wall-trigger-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.players[0]?.hand).toContain("top-card");
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.replay()).toEqual(room.state);
+    const restored = GameRoom.restore(
+      room.checkpoint,
+      resolveBasicSpellEffect,
+      cardId => cardId === definition.providerId ? definition : undefined,
+      supportsBasicSpell
+    );
+    expect(restored.state).toEqual(room.state);
+  });
+
   it("rejects a permanent spell outside its controller's main phase without spending mana", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "timing-creature", oracleId: "timing-creature-oracle",

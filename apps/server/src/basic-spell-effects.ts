@@ -7,6 +7,19 @@ function hasSimpleManaCost(manaCost: string | null): boolean {
   return symbols.join("") === manaCost && symbols.every(symbol => /^\{(?:\d+|[WUBRGC])\}$/.test(symbol));
 }
 
+/** One deliberately narrow, targetless ETB template; this is not general Oracle parsing. */
+function isExactEtbDrawOne(definition: CardDefinition): boolean {
+  return definition.oracleText.trim() ===
+    `When ${definition.name} enters the battlefield, draw a card.`;
+}
+
+/** Supported permanent definitions: vanilla or the exact self-referential ETB draw template. */
+export function supportsBasicPermanent(definition: CardDefinition): boolean {
+  if (definition.layout !== "normal" || !hasSimpleManaCost(definition.manaCost) ||
+      !/\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine)) return false;
+  return definition.oracleText.trim().length === 0 || isExactEtbDrawOne(definition);
+}
+
 /** Deliberately narrow support list: unknown Oracle text must never resolve as a no-op. */
 export function supportsBasicSpell(definition: CardDefinition): boolean {
   if (definition.layout !== "normal" || !hasSimpleManaCost(definition.manaCost)) return false;
@@ -14,9 +27,24 @@ export function supportsBasicSpell(definition: CardDefinition): boolean {
   if (/\b(?:Instant|Sorcery)\b/.test(definition.typeLine)) {
     return /^Draw (?:a|two|three) cards\.$/.test(text) || /^You gain \d+ life\.$/.test(text);
   }
-  // First permanent slice: vanilla creatures, artifacts and enchantments only.
-  // Cards with abilities, targets, multi-face layouts or advanced costs stay disabled.
-  return /\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine) && text.length === 0;
+  return supportsBasicPermanent(definition);
+}
+
+/** Creates the server-known stack object for the first supported ETB ability. */
+export function createBasicPermanentEtbTrigger(
+  instanceId: string,
+  controllerId: string,
+  definition: CardDefinition,
+  revision: number
+): StackItem | null {
+  if (!supportsBasicPermanent(definition) || !isExactEtbDrawOne(definition)) return null;
+  return {
+    id: `trigger:etb:${instanceId}:${revision}`,
+    controller_id: controllerId,
+    source_instance_id: instanceId,
+    kind: "triggered-ability",
+    payload: { effect: "etb-draw-one", sourceName: definition.name }
+  };
 }
 
 export function basicLandManaOptions(definition: CardDefinition): string[] {
@@ -31,13 +59,19 @@ export function basicLandManaOptions(definition: CardDefinition): string[] {
   return /^\{T\}: Add \{C\}\.$/.test(definition.oracleText.trim()) ? ["C"] : [];
 }
 
-/** Resolves only exact, targetless Oracle-text patterns covered by this first rules slice. */
+/** Resolves only explicit server-authored effects covered by this first rules slice. */
 export function resolveBasicSpellEffect(state: GameState, item: StackItem): GameState {
-  if (item.kind !== "spell") throw new Error("UNSUPPORTED_STACK_ITEM");
   if (typeof item.payload !== "object" || item.payload === null || Array.isArray(item.payload)) {
     throw new Error("INVALID_SPELL_PAYLOAD");
   }
   const payload = item.payload as Record<string, unknown>;
+  if (item.kind === "triggered-ability") {
+    if (payload.effect === "etb-draw-one" && typeof payload.sourceName === "string") {
+      return drawCards(state, item.controller_id, 1).state;
+    }
+    throw new Error("UNSUPPORTED_TRIGGERED_ABILITY");
+  }
+  if (item.kind !== "spell") throw new Error("UNSUPPORTED_STACK_ITEM");
   const text = typeof payload.oracleText === "string" ? payload.oracleText.trim() : "";
   const drawMatch = /^Draw (a|two|three) cards\.$/.exec(text);
   if (drawMatch) {

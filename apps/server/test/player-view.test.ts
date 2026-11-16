@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addCardInstance, applyStateBasedActions, createGame, createPregameGame, moveCardToZone } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
 import { toPlayerView } from "../src/player-view.js";
+import { supportsBasicSpell } from "../src/basic-spell-effects.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -101,6 +102,33 @@ describe("toPlayerView", () => {
     expect(opponentView.players[1]?.battlefieldCards).toMatchObject([{
       instanceId: "public-creature", name: "Vanilla Creature", isTapped: false
     }]);
+  });
+
+  it("marks the exact supported ETB permanent playable without exposing an opponent's hand", () => {
+    let game = createGame("hand-etb-view", players);
+    game = addCardInstance(game, {
+      instance_id: "private-wall", card_id: "wall-of-omens-fixture", owner_id: "p1", zone: "hand"
+    });
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "wall-of-omens-fixture", oracleId: "wall-of-omens-oracle",
+      name: "Wall of Omens", layout: "normal", manaCost: "{1}{W}", manaValue: 2,
+      typeLine: "Creature — Wall", oracleText: "When Wall of Omens enters the battlefield, draw a card.",
+      colors: ["W"], colorIdentity: ["W"], legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "wall-of-omens-fixture", name: "Wall of Omens", layout: "normal", mana_cost: "{1}{W}",
+        cmc: 2, type_line: "Creature — Wall",
+        oracle_text: "When Wall of Omens enters the battlefield, draw a card.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "12"
+      }
+    };
+    const resolveCard = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const ownerView = toPlayerView(game, "p1", resolveCard, true, supportsBasicSpell);
+    const opponentView = toPlayerView(game, "p2", resolveCard, true, supportsBasicSpell);
+    expect(ownerView.players[0]?.handCards[0]).toMatchObject({
+      instanceId: "private-wall", isSupportedPermanent: true
+    });
+    expect(opponentView.players[0]?.handCards).toEqual([]);
   });
 
   it("shows a pending commander-return choice only to its owner", () => {
