@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import unittest
 from pathlib import Path
@@ -61,6 +62,10 @@ class ComprehensiveRulesIndexTests(unittest.TestCase):
             byte_end = byte_start + sum(len(line) for line in self.raw_lines[start:end]) + len(self.raw_lines[end].rstrip(b"\r\n"))
             self.assertEqual(loc["utf8_byte_start"], byte_start)
             self.assertEqual(loc["utf8_byte_end_exclusive"], byte_end)
+
+    def test_index_generator_is_valid_python(self) -> None:
+        generator = RULES / "tools" / "build_rule_index.py"
+        ast.parse(generator.read_text(encoding="utf-8"))
 
     def test_manifest_points_to_the_current_source(self) -> None:
         self.assertEqual(self.manifest["edition"], "2026-11-06")
