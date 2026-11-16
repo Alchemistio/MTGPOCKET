@@ -46,8 +46,8 @@ Cette étape clôture la fondation avant intégration dans `main`. La PR reste e
 - [x] Journal mémoire des commandes acceptées et rejeu déterministe depuis le snapshot autoritaire du démarrage (versions moteur/protocole inscrites).
 - [x] Capture serveur en mémoire des graines d'ouverture et de mulligan, hors vues client.
 - [ ] Finaliser la validation de la persistance durable du snapshot autoritaire, du journal accepté et du seed log : stockage JSON atomique et restauration/rejeu implémentés ; test de processus serveur réel encore requis.
-- [ ] Persister aussi l'état intermédiaire de pré-partie (decks soumis, décisions de mulligan, choix bottom et graines déjà générées) pour reprendre une pré-partie interrompue ; à ce stade, les seeds sont écrits au démarrage de la partie.
-- [ ] Vérifier l'atomicité de bout en bout : aucun ACK de commande acceptée avant écriture durable ; rollback de l'état mémoire si l'écriture échoue.
+- [x] Persister l'état intermédiaire de pré-partie (decks soumis, déclarations de mulligan, choix bottom et seeds déjà générées) dans un checkpoint privé versionné, après chaque transition acceptée.
+- [x] Persister les transitions pré-partie avant leur ACK et restaurer le checkpoint précédent si l'écriture échoue ; le démarrage remplace le checkpoint pré-partie par le snapshot de partie dans une écriture durable.
 
 **Sortie :** scénario bout en bout avec cartes de test, historique rejouable et aucune mutation d'état client autoritaire.
 
