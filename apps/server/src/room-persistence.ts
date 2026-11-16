@@ -133,6 +133,28 @@ function validateRecord(value: unknown): asserts value is PersistedRoomRecord {
     playerIds.add(player.id);
   }
 
+  if (value.pregameCheckpoint !== undefined) {
+    const pregame = value.pregameCheckpoint as Record<string, any>;
+    const pregamePlayers = pregame.players as unknown[];
+    const statePlayers = pregame.state.players as unknown[];
+    if (pregame.state.deckSetupComplete !== false || pregamePlayers.length !== 4 ||
+        !Array.isArray(statePlayers) || statePlayers.length !== 4) {
+      throw new Error("ROOM_PERSISTENCE_INVALID_PREGAME_CHECKPOINT");
+    }
+    const pregameIds = new Set<string>();
+    for (let index = 0; index < pregamePlayers.length; index += 1) {
+      const player = pregamePlayers[index];
+      const statePlayer = statePlayers[index];
+      if (!isRecord(player) || !isRecord(statePlayer) || typeof player.id !== "string" ||
+          playerIds.has(player.id) === false || pregameIds.has(player.id) ||
+          player.id !== statePlayer.id || player.name !== statePlayer.name || player.seat !== statePlayer.seat) {
+        throw new Error("ROOM_PERSISTENCE_INVALID_PREGAME_CHECKPOINT");
+      }
+      pregameIds.add(player.id);
+    }
+    if (pregameIds.size !== playerIds.size) throw new Error("ROOM_PERSISTENCE_INVALID_PREGAME_CHECKPOINT");
+  }
+
   const hashes = value.seatTokenHashes;
   const hashIds = Object.keys(hashes);
   if (hashIds.length !== playerIds.size || hashIds.some(id =>
