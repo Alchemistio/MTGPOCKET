@@ -2,14 +2,16 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-**Avancement 2026-11-16 :** premier contrat `ZoneChangeEvent` et raccordement au chemin de résolution des sorts permanents. ETB-0 reste ouvert : les remplacements, les groupes simultanés et la centralisation de toutes les sources ne sont pas encore implémentés.
+**Avancement 2026-11-16 :** contrat `ZoneChangeEvent` raccordé à la résolution des sorts permanents ; primitive `moveCardsToZoneSimultaneously` ajoutée avec snapshots depuis le même état initial, groupe partagé et événements par instance. ETB-0 reste ouvert : le batch ne réalise pas encore les remplacements/préventions, et les autres sources de changement de zone ne sont pas centralisées.
 
 ## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
 - [ ] Centraliser chaque changement de zone dans un processeur métier.
-- [ ] Introduire événements proposés/commis et groupe de simultanéité.
+- [x] Introduire un groupe de simultanéité et des événements commis pour les déplacements batchés indépendants.
+- [ ] Modéliser explicitement les événements proposés et leur pipeline de remplacement avant commit.
 - [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
 - [ ] Préparer l'interception par remplacements/préventions (614.12, 616.1) et distinguer entrée modifiée d'un trigger (603.6d).
-- [ ] Tests : événement remplacé, mouvements simultanés, token, contrôle et nouvelle identité.
+- [x] Tests : mouvements simultanés, groupe partagé, snapshots pré-événement, no-op et requêtes dupliquées.
+- [ ] Tests : événement remplacé, token, contrôle et nouvelle identité.
 
 ## ETB-1 — Détection générique (toutes sources pertinentes)
 - [ ] Compiler « When this enters », « Whenever a creature enters », « Whenever another permanent enters », etc. vers TriggerSpec.

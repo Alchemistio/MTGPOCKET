@@ -492,3 +492,12 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Tests moteur ajoutés pour les snapshots avant/après, le LKI, le transfert de contrôleur, l'absence d'événement sur un no-op et le rejet d'instances incohérentes. Les deux effets ETB existants restent inchangés ; aucun texte Oracle supplémentaire n'est accepté.
 - Limites : pas encore de remplacement/prévention, de batching simultané, de dispatcher de toutes les sources, ni d'identité d'objet complète après changement de zone. Cette tranche ne coche donc pas ETB-0 comme terminé.
 - Validation : tests ajoutés, exécution locale impossible dans l'environnement de reprise ; attendre la CI du SHA de ce commit. Aucun test sur appareils revendiqué.
+
+
+## 2026-11-16 — ETB-0 : batch de changements de zone simultanés
+- Ajout de `moveCardsToZoneSimultaneously` et `ZoneChangeBatchResult` au moteur partagé.
+- Les snapshots avant sont lus depuis le même état initial ; les transitions validées sont appliquées dans un état immuable interne, puis un événement par carte reçoit le même groupe de simultanéité. Les transitions no-op sont ignorées.
+- Validation en amont des identifiants répétés et des instances inconnues ; tests pour deux entrants depuis des zones différentes, état source non muté et no-op.
+- Cette primitive ne prétend pas implémenter les effets de remplacement/prévention 614/616 : pas de registre de remplacements, choix APNAP, événements imbriqués, coûts ou choix d'entrée. Les triggers ETB ne consomment pas encore ce batch.
+- Source normative vérifiée : PDF Comprehensive Rules fourni, édition 2026-09-25, notamment 603.2c/g, 603.3a-b, 603.6a-d, 614.12-13, 616.1a-g, 700.1 et 608.2e-f.
+- CI non encore disponible sur le commit de code ; aucune exécution locale revendiquée.

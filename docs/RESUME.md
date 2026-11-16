@@ -75,3 +75,12 @@
 - La détection ETB existante reste limitée aux deux templates targetless ; le contrat ne prétend pas encore traiter les remplacements, les changements simultanés, les SBA induites ou les autres sources d'entrée.
 - Tests moteur dédiés au contrat (transition, LKI, contrôleur avant/après, no-op et incohérence d'instance) et tests du transport serveur pour vérifier l'identifiant d'événement dans les deux triggers déjà supportés. Tests non exécutés depuis cet environnement ; la CI doit valider le commit.
 - Prochaine tranche : faire passer les autres transitions de zone par un dispatcher métier unique, puis traiter remplacements et groupes simultanés avant d'élargir le parseur Oracle.
+
+
+## ETB — tranche batch simultané (2026-11-16)
+- Ajout de `moveCardsToZoneSimultaneously` dans le moteur partagé, avec une liste de requêtes, validation des identifiants dupliqués/instances inconnues, snapshots pris sur le même état pré-événement et un `simultaneousGroupId` commun.
+- Un événement commis par carte est émis pour chaque transition réelle ; les no-op n'émettent pas d'événement. Les mouvements sont immuables et aucun état intermédiaire n'est retourné.
+- Tests ajoutés pour deux cartes entrant depuis des zones distinctes, groupe partagé, état initial inchangé, no-op et requêtes dupliquées.
+- Limite : ce batch est une primitive d'agrégation, pas le moteur complet 614/616. Il ne choisit pas lui-même les remplacements, ne gère pas les coûts/choix de 614.12a-b, ni les événements imbriqués de 614.13 ; les règles Commander déjà existantes restent traitées par le chemin existant.
+- Commit de code : `104ae254fac73bb7a068ccd025b9d78b0b2c26bb`. CI non encore visible sur ce SHA ; tests non exécutés localement.
+- Références étudiées dans le PDF CR fourni (2026-09-25) : 603.2c, 603.2g, 603.3a-b, 603.6a-d, 614.12-614.13, 616.1a-g, 700.1 et 608.2e-f.

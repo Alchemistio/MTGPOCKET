@@ -131,3 +131,6 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - `scripts/test_rules_index.py` est ajouté au job Python existant : couverture des identifiants, des lignes source, des 744 termes et des offsets UTF-8. Le test vérifie les offsets sur les octets bruts (CRLF inclus). CI verte : run `43893233739`, SHA `eac0913` ; les 8 tests Python passent, ainsi que typecheck, 8 tests card-data, 30 moteur, 56 serveur et 10 mobile.
 - Le générateur `Rules_Engine/tools/build_rule_index.py` doit être exécuté et ses sorties validées lors de chaque changement d'édition.
 - Les résumés et mots-clés sont des aides de navigation ; ils ne constituent pas une interprétation normative.
+
+
+| Zone-change batch | 2 instances depuis des zones distinctes, groupe simultané commun, snapshots pré-événement, no-op, identifiant dupliqué | `packages/game-engine/test/zone-change-batch.test.ts` | Ajouté, CI en attente |
