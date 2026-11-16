@@ -439,3 +439,10 @@
 - Prochaine étape : exposer ces opérations via un protocole de pré-partie authentifié, avec réponses ciblées au joueur et tests d'intégration de transport.
 
 Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l'historique.
+## 2026-11-16 — Première capacité déclenchée ETB
+
+- Ajout d'une allowlist étroite pour le texte exact « When {nom} enters the battlefield, draw a card. » sur créature/artefact/enchantement normal à coût simple.
+- Après la résolution du sort permanent et son arrivée sur le champ de bataille, le serveur ajoute un objet `triggered-ability` à la pile avant d'ouvrir la priorité suivante ; la résolution de cet objet fait piocher une carte au contrôleur.
+- Tests : texte approchant refusé, ordre spell puis trigger, carte en champ de bataille, pioche uniquement après résolution du trigger, rejeu et restauration du checkpoint ; projection privée jouable.
+- Limites : un trigger targetless, aucun APNAP ou ordre de plusieurs triggers, aucune autre famille d'événement ni parsing Oracle générique. CI du nouveau SHA requise ; pas de test physique ou WebSocket ETB dédié.
+
