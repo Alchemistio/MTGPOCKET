@@ -11,7 +11,7 @@
 
 ## Dernière validation connue
 - Dernière CI verte observée avant la tranche de pré-partie persistante : run `43807266906`, commit `e00d679a03b0ddfacae7c1d95eacff8daf349245`, conclusion `success`.
-- Ce run ne couvre PAS les commits de pré-partie persistante ci-dessous. Run `43826473231` (merge ref associé à `b0162da`) : typecheck et `python-data` verts, Vitest a échoué sur une assertion du nouveau test de reprise. La cause était une hypothèse erronée : le premier mulligan est gratuit et ne requiert pas de bottom ; le test effectue maintenant un second mulligan avant bottom (`a58a513`). CI sur le HEAD corrigé encore à obtenir.
+- Ce run ne couvre PAS les commits de pré-partie persistante ci-dessous. Runs `43826473231` et `43826793567` : typecheck et `python-data` verts ; Vitest a révélé deux assertions erronées du test de reprise. Le test suit maintenant le premier mulligan gratuit, le second mulligan, puis six cartes après bottom (`eca67c0`). CI sur le HEAD corrigé et sur le rejoin WebSocket avec vue restaurée encore à obtenir.
 - Aucun test local n'a été exécuté depuis cet environnement. Aucun test de processus serveur réellement arrêté/redémarré, aucun test physique, aucun test LAN à quatre téléphones n'est revendiqué.
 
 ## État du code
@@ -24,11 +24,11 @@
   - Échec d'écriture : le coordinateur revient au checkpoint précédent et l'action est refusée.
   - Au redémarrage, le coordinateur est reconstruit à partir du checkpoint et les decks sont revalidés avec le catalogue/policy injectés.
   - Le démarrage remplace le checkpoint pré-partie par le snapshot actif du GameRoom et le seed log.
-  - Les tests couvrent plusieurs reconstructions de RoomRegistry au cours d'une pré-partie, dont les decks partiels, mulligan en attente, second mulligan, cartes bottomées et seeds ; un test WebSocket reconstruit aussi le runtime serveur et vérifie qu'un deck déjà soumis reste reconnu.
+  - Les tests couvrent plusieurs reconstructions de RoomRegistry au cours d'une pré-partie, dont les decks partiels, mulligan en attente, second mulligan, cartes bottomées et seeds ; un test WebSocket reconstruit aussi le runtime serveur, vérifie qu'un deck déjà soumis reste reconnu et que `join-room` renvoie la vue `pregame` restaurée.
 - Le serveur de production conserve les fichiers sous `data/server-rooms`, exclu de Git. Les mains, bibliothèques et seeds ne sont jamais projetées dans les vues client.
 
 ## Limites et blocages
-- La dernière CI sur le code courant a révélé une seule assertion de test erronée ; le correctif est commité, mais le nouveau HEAD doit encore passer CI.
+- Les dernières CI ont révélé deux assertions de test erronées, corrigées dans `eca67c0` ; le nouveau HEAD doit encore passer CI.
 - Le test de reprise pré-partie reconstruit plusieurs registres dans le même processus de test. Il faut encore valider un vrai arrêt/redémarrage du processus serveur.
 - La reconnexion/réauthentification automatique mobile n'est pas implémentée.
 - Le snapshot Scryfall réel et la policy Commander de production ne sont pas provisionnés/validés.
