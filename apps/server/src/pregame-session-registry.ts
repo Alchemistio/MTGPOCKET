@@ -73,6 +73,16 @@ export class PregameSessionRegistry {
     }
   }
 
+  /** Hydrate and return the current private pregame view during a reconnect handshake. */
+  viewForSeat(gameId: string, playerId: string, token: string): GameView | null {
+    const room = this.rooms.authenticate(gameId, playerId, token);
+    if (!room) return null;
+    if (room.state.deckSetupComplete) return null;
+    const session = this.getAuthorizedSession(gameId, playerId, token);
+    if (!session) throw new Error("PREGAME_RECOVERY_UNAVAILABLE");
+    return toPlayerView(session.state, playerId, this.resolveCard, this.spellCastingAvailable, this.supportsSpell);
+  }
+
   /** Build a distinct privacy-filtered view for every seat after a pregame mutation. */
   viewsForGame(gameId: string): readonly { playerId: string; view: GameView }[] {
     const session = this.sessions.get(gameId);
