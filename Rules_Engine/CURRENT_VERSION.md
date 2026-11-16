@@ -23,7 +23,7 @@ Dernière vérification : **16 novembre 2026**.
 - Texte normalisé consulté : https://github.com/muz/mtgrulediff/blob/main/rules/MagicCompRules%2020261106.txt
 - Diff 2026-09-25 → 2026-11-06 : https://muz.github.io/mtgrulediff/releases/20260925_to_20261106.html
 
-Le tracker de différences rapporte 28 règles ajoutées, 11 retirées, 34 modifiées et 237 renumérotées. Les identifiants, références et positions ont donc été reconstruits plutôt que simplement renommés. L'index courant comporte 3 182 paragraphes de règles/sous-règles détectés ; les 148 titres de chapitre/section sont indexés séparément.
+Le tracker de différences rapporte 28 règles ajoutées, 11 retirées, 34 modifiées et 237 renumérotées. Les identifiants, références et positions ont donc été reconstruits plutôt que simplement renommés. Notre extraction détecte 3 182 paragraphes numérotés de règles/sous-règles, tous indexés avec identifiants uniques ; les 148 titres de chapitre/section sont indexés séparément. Le tracker public affiche 3 183 « rules » : son décompte diffère d'une unité de notre décompte des paragraphes, sans qu'un paragraphe numéroté non indexé ait été trouvé dans la source.
 
 ## Procédure de mise à jour
 
