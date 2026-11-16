@@ -489,6 +489,6 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 ## 2026-11-16 — ETB-0 : contrat initial de changement de zone
 - Ajout de `ZoneChangeEvent` : snapshots avant/après, zones source/destination, propriétaire, contrôleur avant/après, cause, groupe simultané, trace de remplacement et last known information.
 - Le premier raccordement concerne la résolution des sorts permanents : l'événement est construit après le mouvement vers le champ de bataille et son identifiant déterministe est conservé dans le trigger ETB.
-- Les deux effets ETB existants restent inchangés ; aucun texte Oracle supplémentaire n'est accepté.
+- Tests moteur ajoutés pour les snapshots avant/après, le LKI, le transfert de contrôleur, l'absence d'événement sur un no-op et le rejet d'instances incohérentes. Les deux effets ETB existants restent inchangés ; aucun texte Oracle supplémentaire n'est accepté.
 - Limites : pas encore de remplacement/prévention, de batching simultané, de dispatcher de toutes les sources, ni d'identité d'objet complète après changement de zone. Cette tranche ne coche donc pas ETB-0 comme terminé.
 - Validation : tests ajoutés, exécution locale impossible dans l'environnement de reprise ; attendre la CI du SHA de ce commit. Aucun test sur appareils revendiqué.
