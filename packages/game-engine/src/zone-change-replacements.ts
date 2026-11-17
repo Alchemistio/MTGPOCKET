@@ -118,3 +118,28 @@ export function commitReplacedZoneChange(
 function snapshotCard(card: RuntimeCardState): RuntimeCardState {
   return { ...card, counters: { ...card.counters, custom: { ...card.counters.custom } } };
 }
+
+export type ZoneChangePipelineResult =
+  | { status: "choice-required"; state: GameState; session: ZoneChangeReplacementSession; candidates: readonly ZoneChangeReplacementEffect[] }
+  | CommitReplacedZoneChangeResult;
+
+/**
+ * End-to-end single-event entry point: propose -> evaluate replacements -> commit.
+ * A choice-required result is deliberately non-mutating and can be resumed by the caller.
+ */
+export function processZoneChangeWithReplacements(
+  state: GameState,
+  request: { instanceId: InstanceId; destination: Zone; destinationControllerId?: PlayerId },
+  effects: readonly ZoneChangeReplacementEffect[],
+  context: CommitReplacedZoneChangeContext,
+  selectedEffectId?: string
+): ZoneChangePipelineResult {
+  const session = createZoneChangeReplacementSession(
+    state, request.instanceId, request.destination, request.destinationControllerId
+  );
+  const evaluation = evaluateZoneChangeReplacements(state, session, effects, selectedEffectId);
+  if (evaluation.status === "choice-required") {
+    return { status: "choice-required", state, session: evaluation.session, candidates: evaluation.candidates };
+  }
+  return commitReplacedZoneChange(state, evaluation, context);
+}

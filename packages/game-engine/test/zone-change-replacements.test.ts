@@ -88,7 +88,37 @@ describe("zone-change replacement pipeline", () => {
       eventId: "stale-commit", cause: "effect"
     })).toThrow("STALE_ZONE_CHANGE_REPLACEMENT_SESSION");
   });
-  it("rejects a replacement that changes event identity or origin", () => {
+
+  it("runs proposal, replacement evaluation and commit through one entry point", async () => {
+    const { processZoneChangeWithReplacements } = await import("../src/index.js");
+    const state = fixture();
+    const redirect = effect("redirect", "general", proposal => ({
+      ...proposal, toZone: "exile"
+    }));
+    const result = processZoneChangeWithReplacements(state, {
+      instanceId: "entrant", destination: "battlefield"
+    }, [redirect], { eventId: "pipeline-entry", cause: "spell-resolution" });
+    expect(result.status).toBe("committed");
+    if (result.status !== "committed") throw new Error("EXPECTED_COMMIT");
+    expect(result.state.cards.entrant?.zone).toBe("exile");
+    expect(result.event?.replacementTrace).toEqual(["redirect"]);
+  });
+
+  it("returns a pending decision without mutating state when effects compete", async () => {
+    const { processZoneChangeWithReplacements } = await import("../src/index.js");
+    const state = fixture();
+    const effects = [
+      effect("copy-a", "copy", proposal => ({ ...proposal, toZone: "battlefield" })),
+      effect("copy-b", "copy", proposal => ({ ...proposal, toZone: "exile" }))
+    ];
+    const pending = processZoneChangeWithReplacements(state, {
+      instanceId: "entrant", destination: "graveyard"
+    }, effects, { eventId: "pending-entry", cause: "spell-resolution" });
+    expect(pending.status).toBe("choice-required");
+    expect(pending.state).toBe(state);
+    expect(state.cards.entrant?.zone).toBe("hand");
+  });
+\n  it("rejects a replacement that changes event identity or origin", () => {
     const state = fixture(), invalid = effect("invalid", "general", proposal => ({ ...proposal, instanceId: "other" }));
     expect(() => evaluateZoneChangeReplacements(state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), [invalid])).toThrow("ZONE_CHANGE_REPLACEMENT_CHANGED_EVENT_IDENTITY");
   });

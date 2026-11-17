@@ -2,16 +2,17 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-**Avancement 2026-11-17 :** pipeline typé de remplacement avant commit ajouté : proposition immuable, catégories 616.1a-e, réévaluation après chaque application, choix explicite en cas de concurrence, prévention sans commit et trace sur l'événement. Les effets Oracle concrets, événements imbriqués et choix APNAP simultanés restent à implémenter.
+**Avancement 2026-11-17 :** pipeline typé de remplacement avant commit ajouté et désormais utilisé par la résolution des sorts permanents via `processZoneChangeWithReplacements`. Le serveur lui passe encore un registre vide : les effets Oracle concrets, choix 614.12, événements imbriqués et choix APNAP simultanés restent à implémenter.
 
 ## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
-- [ ] Centraliser chaque changement de zone dans un processeur métier (un wrapper single-move est maintenant utilisé pour l'entrée par résolution de sort ; les autres chemins restent à migrer).
+- [ ] Centraliser chaque changement de zone dans un processeur métier (la résolution des sorts permanents utilise maintenant le pipeline proposition → remplacements → commit ; le registre d'effets et les autres chemins restent à migrer).
 - [x] Introduire un groupe de simultanéité et des événements commis pour les déplacements batchés indépendants.
 - [x] Modéliser explicitement les événements proposés et leur pipeline de remplacement avant commit.
 - [x] Respecter les catégories 616.1a-e, réévaluer après chaque remplacement et ne pas appliquer deux fois le même effet au même événement (614.5).
 - [x] Suspendre l'évaluation lorsqu'un choix entre plusieurs remplacements concurrents est requis, avec garde de révision pour rejeter les décisions périmées.
 - [x] Une prévention annule le commit et ne produit pas d'événement de changement de zone.
 - [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
+- [ ] Brancher un registre d'effets de remplacement au serveur et gérer les choix en attente.
 - [ ] Brancher les effets concrets et choix pré-entrée (614.12), événements imbriqués (614.13, 616.1f-g) et caractéristiques d'entrée ; distinguer entrée modifiée d'un trigger (603.6d).
 - [x] Tests : mouvements simultanés, groupe partagé, snapshots pré-événement, no-op et requêtes dupliquées.
 - [x] Test du wrapper single-move : snapshot avant/après, transfert de contrôleur et état source immuable.

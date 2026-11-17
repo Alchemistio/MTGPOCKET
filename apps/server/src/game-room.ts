@@ -1,5 +1,5 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, moveCardToZoneWithEvent, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, processZoneChangeWithReplacements, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
   type GameState, type PlayerSetup, type StackItem, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
@@ -211,14 +211,17 @@ export class GameRoom {
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
-              const transition = moveCardToZoneWithEvent(state, {
+              const transition = processZoneChangeWithReplacements(state, {
                 instanceId: item.source_instance_id,
                 destination: "battlefield",
                 destinationControllerId: item.controller_id
-              }, {
+              }, [], {
                 eventId: "zone-change:" + item.id,
                 cause: "spell-resolution"
               });
+              // No replacement registry is wired into GameRoom yet; the empty registry
+              // still routes this event through the canonical propose/evaluate/commit path.
+              if (transition.status !== "committed") return state;
               const entered = transition.state;
               const zoneChangeEvent = transition.event;
               const cardId = typeof payload.cardId === "string" ? payload.cardId : null;

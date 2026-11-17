@@ -146,3 +146,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 
 
 - Complément : les sessions de remplacement suspendues capturent la révision du jeu ; toute reprise/validation après mutation de l'état est rejetée comme stale au lieu de committer une décision prise sur un état ancien.
+
+
+## Pipeline unifié — intégration serveur (2026-11-17)
+- `processZoneChangeWithReplacements` orchestre proposition, évaluation et commit en une seule API ; un choix concurrent renvoie un résultat suspendu sans mutation.
+- La résolution des sorts permanents dans `GameRoom` passe désormais par cette API. Le registre passé est actuellement vide : cela centralise le point d'entrée mais n'active pas encore les remplacements de cartes réels.
+- Tests moteur ajoutés pour commit redirigé et suspension non mutante. CI à confirmer sur ce commit.
