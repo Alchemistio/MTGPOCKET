@@ -10,6 +10,7 @@ export interface ZoneChangeProposal {
   readonly toZone: Zone;
   readonly destinationControllerId?: PlayerId;
   readonly entersTapped?: boolean;
+  readonly entersWithP1P1Counters?: number;
   readonly lastKnownInfo: RuntimeCardState;
 }
 export interface ZoneChangeReplacementEffect {
@@ -111,7 +112,8 @@ export function commitReplacedZoneChange(
     instanceId: proposal.instanceId, destination: proposal.toZone,
     ...(proposal.destinationControllerId === undefined ? {} : { destinationControllerId: proposal.destinationControllerId }),
     ...(context.commanderReplacementChoice === undefined ? {} : { commanderReplacementChoice: context.commanderReplacementChoice }),
-    ...(proposal.entersTapped === undefined ? {} : { entersTapped: proposal.entersTapped })
+    ...(proposal.entersTapped === undefined ? {} : { entersTapped: proposal.entersTapped }),
+    ...(proposal.entersWithP1P1Counters === undefined ? {} : { entersWithP1P1Counters: proposal.entersWithP1P1Counters })
   }, {
     eventId: context.eventId, cause: context.cause, replacementTrace: evaluation.session.replacementTrace
   });

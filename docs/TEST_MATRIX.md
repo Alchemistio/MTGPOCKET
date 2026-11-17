@@ -160,3 +160,11 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Le pipeline applique `entersTapped` pendant le commit et avant la création du `ZoneChangeEvent`, donc `instanceAfter` reflète l'état engagé.
 - Test moteur : `zone-change-replacements.test.ts`, vérifie permanent engagé, snapshot après entrée et trace de remplacement.
 - Les choix 614.12, compteurs d'entrée, effets continus et événements imbriqués ne sont pas couverts par cette tranche.
+
+
+## Compteurs à l'entrée — ajout 2026-11-17
+
+- Extension du remplacement self aux textes Oracle exacts auto-référentiels « {nom} enters the battlefield with N +1/+1 counters on it. ».
+- Le nombre est validé comme entier positif sûr ; les compteurs sont ajoutés après la remise à zéro liée au changement de zone, mais avant le snapshot de l'événement.
+- Test moteur : compteurs présents dans l'état final et dans `event.instanceAfter`.
+- Les effets génériques d'autres permanents, les choix 614.12 et les compteurs autres que +1/+1 ne sont pas couverts.

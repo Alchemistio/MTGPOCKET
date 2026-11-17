@@ -30,24 +30,45 @@ function basicEtbEffect(definition: CardDefinition): BasicEtbEffect | null {
 export function supportsBasicPermanent(definition: CardDefinition): boolean {
   if (definition.layout !== "normal" || !hasSimpleManaCost(definition.manaCost) ||
       !/\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine)) return false;
-  return definition.oracleText.trim().length === 0 || basicEtbEffect(definition) !== null || hasSelfEntersTappedText(definition);
+  return definition.oracleText.trim().length === 0 || basicEtbEffect(definition) !== null ||
+    hasSelfEntersTappedText(definition) || selfEntryP1P1CounterAmount(definition) !== null;
 }
 
 function hasSelfEntersTappedText(definition: CardDefinition): boolean {
   return definition.oracleText.trim() === `${definition.name} enters the battlefield tapped.`;
 }
 
-/** Explicit, structured replacement adapter for the self-replacement template. */
+function selfEntryP1P1CounterAmount(definition: CardDefinition): number | null {
+  const prefix = `${definition.name} enters the battlefield with `;
+  const suffix = " +1/+1 counters on it.";
+  const text = definition.oracleText.trim();
+  if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
+  const amountText = text.slice(prefix.length, -suffix.length);
+  if (!/^[1-9]\\d*$/.test(amountText)) return null;
+  const amount = Number(amountText);
+  return Number.isSafeInteger(amount) ? amount : null;
+}
+
+/** Explicit, structured replacement adapter for narrowly allowlisted self-entry templates. */
 export function createBasicPermanentEntryReplacements(
   definition: CardDefinition, controllerId: string
 ): readonly ZoneChangeReplacementEffect[] {
-  if (!supportsBasicPermanent(definition) || !hasSelfEntersTappedText(definition)) return [];
-  return [{
+  if (!supportsBasicPermanent(definition)) return [];
+  if (hasSelfEntersTappedText(definition)) return [{
     id: `self-enters-tapped:${definition.providerId}`,
     kind: "self",
     controllerId,
     applies: proposal => proposal.toZone === "battlefield",
     replace: proposal => ({ ...proposal, entersTapped: true })
+  }];
+  const counters = selfEntryP1P1CounterAmount(definition);
+  if (counters === null) return [];
+  return [{
+    id: `self-enters-with-p1p1:${definition.providerId}`,
+    kind: "self",
+    controllerId,
+    applies: proposal => proposal.toZone === "battlefield",
+    replace: proposal => ({ ...proposal, entersWithP1P1Counters: counters })
   }];
 }
 

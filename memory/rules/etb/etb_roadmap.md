@@ -2,7 +2,7 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-**Avancement 2026-11-17 :** le pipeline typé est utilisé par la résolution des sorts permanents. Un premier adaptateur explicite compile le modèle Oracle exact « {nom} enters the battlefield tapped. » en remplacement self ; l’état engagé est appliqué avant la création de l’événement. Les autres effets Oracle, choix 614.12, événements imbriqués et choix APNAP simultanés restent à implémenter.
+**Avancement 2026-11-17 :** le pipeline typé est utilisé par la résolution des sorts permanents. Un adaptateur explicite compile deux modèles Oracle auto-référentiels exacts : « {nom} enters the battlefield tapped. » et « {nom} enters the battlefield with N +1/+1 counters on it. » ; les modifications sont appliquées avant la création de l’événement. Les autres effets Oracle, choix 614.12, événements imbriqués et choix APNAP simultanés restent à implémenter.
 
 ## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
 - [ ] Centraliser chaque changement de zone dans un processeur métier (la résolution des sorts permanents utilise maintenant le pipeline proposition → remplacements → commit ; le registre d'effets et les autres chemins restent à migrer).
@@ -12,12 +12,12 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [x] Suspendre l'évaluation lorsqu'un choix entre plusieurs remplacements concurrents est requis, avec garde de révision pour rejeter les décisions périmées.
 - [x] Une prévention annule le commit et ne produit pas d'événement de changement de zone.
 - [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
-- [x] Brancher au serveur un premier registre dérivé de la définition Scryfall pour le remplacement self « enters the battlefield tapped » (allowlist exacte, sans parseur Oracle général).
+- [x] Brancher au serveur un registre dérivé de la définition Scryfall pour les modèles self « enters tapped » et « enters with N +1/+1 counters » (allowlist exacte, sans parseur Oracle général).
 - [ ] Gérer les choix de remplacement en attente dans le protocole serveur.
 - [ ] Brancher les effets concrets et choix pré-entrée (614.12), événements imbriqués (614.13, 616.1f-g) et caractéristiques d'entrée ; distinguer entrée modifiée d'un trigger (603.6d).
 - [x] Tests : mouvements simultanés, groupe partagé, snapshots pré-événement, no-op et requêtes dupliquées.
 - [x] Test du wrapper single-move : snapshot avant/après, transfert de contrôleur et état source immuable.
-- [x] Test : entrée engagée appliquée avant snapshot `instanceAfter` de l’événement.
+- [x] Tests : entrée engagée et compteurs +1/+1 appliqués avant snapshot `instanceAfter` de l’événement.
 - [ ] Tests : événement remplacé, token et nouvelle identité.
 
 ## ETB-1 — Détection générique (toutes sources pertinentes)
