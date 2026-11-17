@@ -79,3 +79,11 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Le constructeur vérifie la révision de partie, la destination battlefield, l'identité de l'entrant, l'unicité et l'exhaustivité des sources battlefield ; les tableaux de caractéristiques sont copiés défensivement.
 - Les caractéristiques sont fournies par la couche card-data après sélection de face/layout ; aucune interprétation du texte Oracle ni application des couches n'est effectuée ici.
 - Cette tranche fournit le contrat d'entrée à un futur évaluateur 614.12 ; elle ne calcule pas encore les effets continus propres à l'entrant ou provenant d'autres permanents.
+
+
+## Couche 4 — effets de changement de types (2026-11-17)
+
+- Ajout de Layer4TypeChangingEffect : source explicite, timestamp, sélecteur structuré (contrôleur, types/sous-types/super-types présents) et opération d'ajout/retrait.
+- evaluateEnteringPermanentLayer4 applique les effets fournis à l'entrant seulement, en ordre timestamp, en réévaluant chaque sélecteur sur les caractéristiques résultantes ; source possible : entrant lui-même ou permanent déjà présent.
+- Le résultat est une copie indépendante et expose les identifiants appliqués.
+- Limites : pas de compilation Oracle, pas de dépendances 613.7 ni de couches 1–3/5–7 ; les effets fournis doivent déjà être applicables et ordonnés par le résolveur de règles.

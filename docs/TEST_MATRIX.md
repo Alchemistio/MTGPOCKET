@@ -174,3 +174,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - `createEnteringPermanentCharacteristicsContext` valide et capture les caractéristiques structurées du permanent entrant et de tous les permanents battlefield existants, avec garde de révision et modifications d'entrée sélectionnées.
 - Tests : couverture complète des sources, absence/duplication de source, source hors battlefield, copie défensive des tableaux, destination invalide et session périmée.
 - Ce contexte ne parse pas Oracle et ne calcule pas les couches/effets continus ; les caractéristiques face-spécifiques doivent être résolues par card-data avant l'appel.
+
+
+## Évaluation de couche 4 — ajout 2026-11-17
+
+- Tests : ordre timestamp, sélecteur réévalué après chaque modification, source entrant, filtrage par contrôleur, non-mutation du contexte et validation des entrées.
+- Le calcul est limité au permanent entrant ; les autres permanents ne sont pas recalculés. La dépendance et l'ordre CR 613.7 ne sont pas inférés. Aucun texte Oracle n'est compilé.
