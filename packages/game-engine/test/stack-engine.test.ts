@@ -27,6 +27,6 @@ describe("generic stack engine", () => {
   it("rejects a non-top resolution and duplicate stack ids", () => {
     const state = appendStackObject(advanceAutomaticStep(createGame("stack-invalid", players)), item);
     expect(() => appendStackObject(state, item)).toThrow("déjà utilisé");
-    expect(() => markTopStackObjectResolving(state, "other")).toThrow("STACK_ITEM_MISMATCH");
+    expect(() => markTopStackObjectResolving(state, "other")).toThrow("pas au sommet");
   });
 });
