@@ -180,3 +180,5 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 
 - Tests : ordre timestamp, sélecteur réévalué après chaque modification, source entrant, filtrage par contrôleur, non-mutation du contexte et validation des entrées.
 - Le calcul est limité au permanent entrant ; les autres permanents ne sont pas recalculés. La dépendance et l'ordre CR 613.7 ne sont pas inférés. Aucun texte Oracle n'est compilé.
+
+- Cas complémentaires : ordre fourni conservé en cas d'égalité de timestamp, déduplication des types ajoutés et rejet des sélecteurs vides.

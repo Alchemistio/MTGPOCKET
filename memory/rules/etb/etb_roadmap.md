@@ -87,3 +87,5 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - evaluateEnteringPermanentLayer4 applique les effets fournis à l'entrant seulement, en ordre timestamp, en réévaluant chaque sélecteur sur les caractéristiques résultantes ; source possible : entrant lui-même ou permanent déjà présent.
 - Le résultat est une copie indépendante et expose les identifiants appliqués.
 - Limites : pas de compilation Oracle, pas de dépendances 613.7 ni de couches 1–3/5–7 ; les effets fournis doivent déjà être applicables et ordonnés par le résolveur de règles.
+
+- Précision d'ordre : timestamp croissant ; les égalités conservent l'ordre pré-résolu fourni par l'appelant. Les listes d'ajout sont dédupliquées et les sélecteurs explicitement vides sont rejetés.

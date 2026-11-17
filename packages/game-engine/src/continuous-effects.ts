@@ -49,7 +49,8 @@ export function evaluateEnteringPermanentLayer4(
     validateOperation(effect.operation);
     validateSelector(effect.selector);
   }
-  const ordered = [...effects].sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id));
+  // Array#sort is stable: equal timestamps retain the caller's pre-resolved order.
+  const ordered = [...effects].sort((a, b) => a.timestamp - b.timestamp);
   let characteristics = cloneCharacteristics(context.entrant.characteristics);
   const appliedEffectIds: string[] = [];
   for (const effect of ordered) {
@@ -62,7 +63,7 @@ export function evaluateEnteringPermanentLayer4(
 
 function validateSelector(selector: TypeChangingEffectSelector): void {
   for (const values of [selector.cardTypesAny, selector.supertypesAny, selector.subtypesAny]) {
-    if (values?.some(value => value.trim().length === 0)) throw new Error("INVALID_LAYER4_EFFECT_SELECTOR");
+    if (values && (values.length === 0 || values.some(value => value.trim().length === 0))) throw new Error("INVALID_LAYER4_EFFECT_SELECTOR");
   }
 }
 function validateOperation(operation: TypeChangingOperation): void {
@@ -85,7 +86,11 @@ function applyOperation(
 ): PermanentCharacteristics {
   const transform = <T extends string>(values: readonly T[], changes: readonly T[] | undefined): readonly T[] => {
     if (!changes) return [...values];
-    if (operation.kind === "add") return [...values, ...changes.filter(value => !values.includes(value))];
+    if (operation.kind === "add") {
+      const next = [...values];
+      for (const value of changes) if (!next.includes(value)) next.push(value);
+      return next;
+    }
     return values.filter(value => !changes.includes(value));
   };
   return {

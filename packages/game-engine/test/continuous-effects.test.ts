@@ -64,7 +64,21 @@ describe("entering permanent layer-4 type changes", () => {
     expect(result.characteristics.cardTypes).toEqual(["Creature", "Enchantment"]);
     expect(result.appliedEffectIds).toEqual(["only-p2"]);
   });
-  it("rejects duplicate ids, invalid timestamps, unknown sources and empty operations", () => {
+
+  it("preserves caller order for equal timestamps and deduplicates added types", () => {
+    const result = evaluateEnteringPermanentLayer4(makeContext(), [
+      effect("first", 10, { kind: "add", cardTypes: ["Artifact", "Artifact"] }),
+      effect("second", 10, { kind: "remove", cardTypes: ["Creature"] })
+    ]);
+    expect(result.characteristics.cardTypes).toEqual(["Artifact"]);
+    expect(result.appliedEffectIds).toEqual(["first", "second"]);
+  });
+  it("rejects an explicitly empty selector list", () => {
+    expect(() => evaluateEnteringPermanentLayer4(makeContext(), [
+      effect("empty-selector", 1, { kind: "add", cardTypes: ["Artifact"] }, { cardTypesAny: [] })
+    ])).toThrow("INVALID_LAYER4_EFFECT_SELECTOR");
+  });
+\n  it("rejects duplicate ids, invalid timestamps, unknown sources and empty operations", () => {
     const input = makeContext();
     const valid = effect("same", 1, { kind: "add", cardTypes: ["Artifact"] });
     expect(() => evaluateEnteringPermanentLayer4(input, [valid, valid])).toThrow("INVALID_OR_DUPLICATE_LAYER4_EFFECT_ID");
