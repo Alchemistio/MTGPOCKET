@@ -44,7 +44,7 @@ function selfEntryP1P1CounterAmount(definition: CardDefinition): number | null {
   const text = definition.oracleText.trim();
   if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
   const amountText = text.slice(prefix.length, -suffix.length);
-  if (!/^[1-9]\\d*$/.test(amountText)) return null;
+  if (!/^[1-9]\d*$/.test(amountText)) return null;
   const amount = Number(amountText);
   return Number.isSafeInteger(amount) ? amount : null;
 }
