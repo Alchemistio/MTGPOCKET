@@ -38,7 +38,7 @@ describe("zone-change replacement pipeline", () => {
     expect(resumed.status).toBe("ready");
     if (resumed.status !== "ready") throw new Error("EXPECTED_READY");
     expect(resumed.session.proposal.toZone).toBe("exile");
-    expect(resumed.session.replacementTrace).toEqual(["copy-a", "general"]);
+    expect(resumed.session.replacementTrace).toEqual(["copy-a", "copy-b", "general"]);
   });
   it("applies each replacement at most once to one proposed event", () => {
     const state = fixture(), once = effect("once", "general", proposal => ({ ...proposal, toZone: "graveyard" }));
