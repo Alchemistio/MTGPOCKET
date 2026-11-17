@@ -71,3 +71,11 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Aucun trigger supporté perdu ou résolu au mauvais moment dans scénarios simultanés/APNAP.
 - Les textes non compilés sont explicitement non supportés, jamais ignorés silencieusement.
 - Rejeu, persistance, confidentialité et scénarios à quatre sièges couverts.
+
+
+## Caractéristiques d'entrée — frontière 614.12 (2026-11-17)
+
+- Nouveau contrat typé `EnteringPermanentCharacteristicsContext` : caractéristiques face-spécifiques du permanent entrant, contrôleur de destination, modifications d'entrée déjà sélectionnées et inventaire complet des permanents actuellement sur le champ de bataille.
+- Le constructeur vérifie la révision de partie, la destination battlefield, l'identité de l'entrant, l'unicité et l'exhaustivité des sources battlefield ; les tableaux de caractéristiques sont copiés défensivement.
+- Les caractéristiques sont fournies par la couche card-data après sélection de face/layout ; aucune interprétation du texte Oracle ni application des couches n'est effectuée ici.
+- Cette tranche fournit le contrat d'entrée à un futur évaluateur 614.12 ; elle ne calcule pas encore les effets continus propres à l'entrant ou provenant d'autres permanents.

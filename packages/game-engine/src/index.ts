@@ -9,3 +9,4 @@ export * from "./pregame.js";
 export * from "./zone-events.js";
 export * from "./zone-change-batch.js";
 export * from "./zone-change-replacements.js";
+export * from "./entering-characteristics.js";

@@ -168,3 +168,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Le nombre est validé comme entier positif sûr ; les compteurs sont ajoutés après la remise à zéro liée au changement de zone, mais avant le snapshot de l'événement.
 - Test moteur : compteurs présents dans l'état final et dans `event.instanceAfter`.
 - Les effets génériques d'autres permanents, les choix 614.12 et les compteurs autres que +1/+1 ne sont pas couverts.
+
+
+## Contexte de caractéristiques « tel qu'il entrerait » — ajout 2026-11-17
+- `createEnteringPermanentCharacteristicsContext` valide et capture les caractéristiques structurées du permanent entrant et de tous les permanents battlefield existants, avec garde de révision et modifications d'entrée sélectionnées.
+- Tests : couverture complète des sources, absence/duplication de source, source hors battlefield, copie défensive des tableaux, destination invalide et session périmée.
+- Ce contexte ne parse pas Oracle et ne calcule pas les couches/effets continus ; les caractéristiques face-spécifiques doivent être résolues par card-data avant l'appel.
