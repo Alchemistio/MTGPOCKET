@@ -401,8 +401,10 @@ describe("GameRoom", () => {
     const initial = addCardInstance(base, {
       instance_id: "lone-missionary", card_id: definition.providerId, owner_id: "p1", zone: "hand"
     });
-    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
-      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const room = new GameRoom("room-1", players, initial, (state, item) => {
+      if (item.kind === "triggered-ability") throw new Error("ETB_TRIGGER_SHOULD_USE_TYPED_HANDLER");
+      return resolveBasicSpellEffect(state, item);
+    }, cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
     const cast = room.apply({
       protocolVersion: 1, gameId: "room-1", commandId: "cast-missionary",
       playerId: "p1", expectedRevision: room.state.revision,
@@ -518,8 +520,10 @@ describe("GameRoom", () => {
     initial = addCardInstance(initial, {
       instance_id: "top-card", card_id: "draw-fixture", owner_id: "p1", zone: "library"
     });
-    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
-      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const room = new GameRoom("room-1", players, initial, (state, item) => {
+      if (item.kind === "triggered-ability") throw new Error("ETB_TRIGGER_SHOULD_USE_TYPED_HANDLER");
+      return resolveBasicSpellEffect(state, item);
+    }, cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
     const cast = room.apply({
       protocolVersion: 1, gameId: "room-1", commandId: "cast-wall",
       playerId: "p1", expectedRevision: room.state.revision,

@@ -207,3 +207,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - stack-handlers.test.ts : dispatch par catégorie, décodage runtime, effet immutable, handler absent, payload invalide et refus d'un objet qui n'est pas le sommet verrouillé.
 - Les tests vérifient qu'un échec de lookup/décodage conserve l'objet et son verrou de résolution ; le registre n'effectue pas le retrait.
 - Cette tranche ne migre pas encore le callback du serveur et ne valide aucune famille Oracle métier.
+
+
+## Dispatch ETB typé côté serveur — 2026-11-17
+- Les tests GameRoom du gain de vie ETB et de la pioche ETB utilisent un résolveur legacy qui échoue si un triggered-ability lui est transmis. Ils valident que les deux payloads ETB allowlistés passent par le registre typé.
+- Le décodage du gain de vie exige un entier strictement positif et sûr ; les métadonnées de source et d'événement sont validées.
+- Les autres familles de triggers conservent le fallback legacy ; les sorts et leur pipeline de zone ne changent pas.

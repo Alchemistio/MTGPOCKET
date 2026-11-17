@@ -25,3 +25,11 @@ Chaque objet possède un id stable, contrôleur, source d'instance éventuelle, 
 - L'absence de handler et le payload invalide sont des résultats distincts, sans retrait ni déverrouillage de l'objet.
 - Le handler retourne un nouvel état immuable ; il ne retire pas l'objet de pile et ne distribue pas la priorité.
 - Le coordinateur reste responsable du retrait, des SBA, des triggers et de la priorité après l'effet.
+
+
+## Première intégration serveur
+
+- Le serveur utilise le registre typé pour les deux payloads ETB compilés : pioche d'une carte et gain de vie.
+- Un ETB reconnu mais mal formé est rejeté ; il n'est pas silencieusement transmis à un résolveur alternatif.
+- Les familles de capacités inconnues continuent d'utiliser le résolveur injecté historique.
+- Les sorts et leur pipeline de déplacement de zone restent inchangés dans cette tranche.

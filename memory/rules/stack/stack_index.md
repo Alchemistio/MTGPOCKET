@@ -10,3 +10,6 @@ Point d'entrée runtime : `packages/game-engine/src/stack-engine.ts`.
 Le modèle conserve un objet de pile typé par catégorie avec payload opaque. Le moteur possède le cycle de vie (ajout, sommet, verrou de résolution, retrait) ; le contenu est fourni par des interpréteurs injectés.
 
 Nouvelle frontière de dispatch : packages/game-engine/src/stack-handlers.ts. Elle décode les payloads et délègue l'effet sans posséder le retrait, les SBA ou la priorité.
+
+
+Le serveur migre les triggers ETB basiques vers le registre via basicStackHandlers dans apps/server/src/basic-spell-effects.ts. Les sorts et triggers inconnus gardent leur chemin de résolution existant.

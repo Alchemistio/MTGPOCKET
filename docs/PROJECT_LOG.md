@@ -557,3 +557,11 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Tests ajoutés pour le chemin nominal, l'absence de handler, le payload invalide, la non-mutation et l'identité de l'objet en résolution.
 - Le callback serveur existant n'est pas encore migré ; priorité, SBA, triggers et retrait restent au coordinateur.
 - Typecheck et CI du nouveau SHA requis ; aucune exécution locale revendiquée.
+
+
+## 2026-11-17 — Première migration de handler serveur : ETB basiques
+- GameRoom exécute maintenant via executeStackItemHandler les ETB explicitement supportés : pioche d'une carte et gain de vie.
+- Le décodeur valide sourceName, zoneChangeEventId optionnel et amount entier positif sûr. Un payload ETB reconnu mais invalide produit une erreur explicite au lieu d'un fallback.
+- Les tests d'intégration ETB interdisent l'appel du résolveur legacy pour ces capacités, tout en conservant le fallback pour les familles non migrées.
+- Les sorts, le pipeline de zone, le retrait de pile et les fenêtres de priorité restent inchangés.
+- Typecheck et CI du nouveau SHA requis ; aucune exécution locale revendiquée.

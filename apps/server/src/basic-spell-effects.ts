@@ -1,5 +1,5 @@
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { changeLife, drawCards, type GameState, type StackItem, type ZoneChangeReplacementEffect } from "@commander-pocket/game-engine";
+import { changeLife, drawCards, type GameState, type StackItem, type StackHandlerRegistry, type ZoneChangeReplacementEffect } from "@commander-pocket/game-engine";
 
 function hasSimpleManaCost(manaCost: string | null): boolean {
   if (manaCost === null) return false;
@@ -139,4 +139,51 @@ export function resolveBasicSpellEffect(state: GameState, item: StackItem): Game
   const lifeMatch = /^You gain (\d+) life\.$/.exec(text);
   if (lifeMatch) return changeLife(state, item.controller_id, Number(lifeMatch[1]));
   throw new Error("UNSUPPORTED_SPELL_EFFECT");
+}
+
+export type BasicEtbTriggerPayload =
+  | { effect: "etb-draw-one"; sourceName: string; zoneChangeEventId?: string }
+  | { effect: "etb-gain-life"; amount: number; sourceName: string; zoneChangeEventId?: string };
+
+type BasicStackPayloads = {
+  spell: unknown;
+  "activated-ability": unknown;
+  "triggered-ability": BasicEtbTriggerPayload;
+  copy: unknown;
+};
+
+/** Server registry for the two explicitly compiled ETB triggers. */
+export const basicStackHandlers: StackHandlerRegistry<BasicStackPayloads> = {
+  "triggered-ability": {
+    decode(payload) {
+      if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+        return { ok: false, reason: "ETB trigger payload must be an object" };
+      }
+      const value = payload as Record<string, unknown>;
+      if (typeof value.sourceName !== "string" || value.sourceName.length === 0 ||
+          (value.zoneChangeEventId !== undefined && typeof value.zoneChangeEventId !== "string")) {
+        return { ok: false, reason: "ETB trigger source metadata is invalid" };
+      }
+      if (value.effect === "etb-draw-one") return { ok: true, value: {
+        effect: "etb-draw-one", sourceName: value.sourceName,
+        ...(typeof value.zoneChangeEventId === "string" ? { zoneChangeEventId: value.zoneChangeEventId } : {})
+      } };
+      if (value.effect === "etb-gain-life" && typeof value.amount === "number" &&
+          Number.isSafeInteger(value.amount) && value.amount > 0) return { ok: true, value: {
+        effect: "etb-gain-life", amount: value.amount, sourceName: value.sourceName,
+        ...(typeof value.zoneChangeEventId === "string" ? { zoneChangeEventId: value.zoneChangeEventId } : {})
+      } };
+      return { ok: false, reason: "Unsupported or malformed basic ETB trigger" };
+    },
+    resolve(state, item, payload) {
+      if (payload.effect === "etb-draw-one") return drawCards(state, item.controller_id, 1).state;
+      return changeLife(state, item.controller_id, payload.amount);
+    }
+  }
+};
+
+export function isBasicEtbTriggerPayload(payload: unknown): boolean {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return false;
+  const effect = (payload as Record<string, unknown>).effect;
+  return effect === "etb-draw-one" || effect === "etb-gain-life";
 }

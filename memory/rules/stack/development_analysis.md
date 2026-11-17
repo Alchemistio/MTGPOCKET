@@ -24,3 +24,17 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 - Le serveur n'est pas encore migré vers ce registre ; ses callbacks existants restent compatibles.
 - Aucun payload métier ni parseur Oracle n'est ajouté dans le moteur partagé.
 - Étape suivante : migrer une seule famille de stack item du serveur vers le registre, avec tests de rejeu et d'échec, puis généraliser après validation.
+
+
+## 2026-11-17 — Première famille migrée vers le registre
+
+### Décision
+- Les triggers ETB sont la meilleure première migration : contrat serveur étroit, deux effets explicitement compilés et tests d'intégration existants qui vérifient leur timing.
+- Le registre serveur décode sourceName, l'identifiant optionnel de changement de zone et le montant positif et sûr du gain de vie.
+- Un payload d'une famille ETB reconnue mais mal formé échoue explicitement. Un autre type de trigger reste compatible avec le résolveur injecté historique.
+- Les tests ETB sont renforcés avec un résolveur legacy qui lève une erreur s'il est appelé pour ces triggers.
+
+### Portée et risques
+- Le déplacement de la carte permanente, le retrait du trigger et la priorité restent orchestrés par GameRoom / resolveStackItem.
+- Le registre n'effectue pas le retrait et ne change pas les fenêtres de priorité.
+- Les capacités activées, les triggers non ETB, les copies et les sorts ne sont pas migrés.

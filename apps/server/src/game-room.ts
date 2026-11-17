@@ -1,10 +1,10 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, moveCardToZone, processZoneChangeWithReplacements, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, executeStackItemHandler, moveCardToZone, processZoneChangeWithReplacements, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
   type GameState, type PlayerSetup, type StackItem, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { basicLandManaOptions, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger } from "./basic-spell-effects.js";
+import { basicLandManaOptions, basicStackHandlers, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger, isBasicEtbTriggerPayload } from "./basic-spell-effects.js";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
@@ -209,6 +209,11 @@ export class GameRoom {
         if (this.resolveStackEffect) {
           const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition; zoneChangeEvent: ZoneChangeEvent } | null } = { current: null };
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
+            if (item.kind === "triggered-ability" && isBasicEtbTriggerPayload(item.payload)) {
+              const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
+              if (handled.status === "resolved") return handled.state;
+              if (handled.status === "invalid-payload") throw new Error("INVALID_BASIC_ETB_TRIGGER_PAYLOAD");
+            }
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
               const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
