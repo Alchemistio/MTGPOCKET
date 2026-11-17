@@ -118,7 +118,8 @@ describe("zone-change replacement pipeline", () => {
     expect(pending.state).toBe(state);
     expect(state.cards.entrant?.zone).toBe("hand");
   });
-\n  it("rejects a replacement that changes event identity or origin", () => {
+
+  it("rejects a replacement that changes event identity or origin", () => {
     const state = fixture(), invalid = effect("invalid", "general", proposal => ({ ...proposal, instanceId: "other" }));
     expect(() => evaluateZoneChangeReplacements(state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), [invalid])).toThrow("ZONE_CHANGE_REPLACEMENT_CHANGED_EVENT_IDENTITY");
   });
