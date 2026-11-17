@@ -13,3 +13,5 @@ Nouvelle frontière de dispatch : packages/game-engine/src/stack-handlers.ts. El
 
 
 Le serveur migre les triggers ETB basiques vers le registre via basicStackHandlers dans apps/server/src/basic-spell-effects.ts. Les sorts et triggers inconnus gardent leur chemin de résolution existant.
+
+Les sorts instantanés/rituels simples (pioche ciblée par modèle exact, gain de vie numérique) utilisent également basicStackHandlers ; la branche des permanents reste prioritaire et distincte.

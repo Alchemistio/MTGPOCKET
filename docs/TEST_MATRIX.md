@@ -213,3 +213,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Les tests GameRoom du gain de vie ETB et de la pioche ETB utilisent un résolveur legacy qui échoue si un triggered-ability lui est transmis. Ils valident que les deux payloads ETB allowlistés passent par le registre typé.
 - Le décodage du gain de vie exige un entier strictement positif et sûr ; les métadonnées de source et d'événement sont validées.
 - Les autres familles de triggers conservent le fallback legacy ; les sorts et leur pipeline de zone ne changent pas.
+
+
+## Sorts simples via handlers typés — 2026-11-17
+- Les tests Divination et gain de vie instantané échouent si le résolveur legacy reçoit un objet de pile de kind spell, validant le dispatch typé.
+- Les modèles couverts sont Draw a/two/three cards. et You gain N life. ; le gain de vie doit être un entier positif sûr.
+- Les permanents, les autres textes Oracle et les familles non migrées gardent leurs chemins existants.

@@ -4,7 +4,7 @@ import {
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { basicLandManaOptions, basicStackHandlers, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger, isBasicEtbTriggerPayload } from "./basic-spell-effects.js";
+import { basicLandManaOptions, basicStackHandlers, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger, isBasicEtbTriggerPayload, isBasicSpellPayload } from "./basic-spell-effects.js";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
@@ -209,6 +209,11 @@ export class GameRoom {
         if (this.resolveStackEffect) {
           const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition; zoneChangeEvent: ZoneChangeEvent } | null } = { current: null };
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
+            if (item.kind === "spell" && isBasicSpellPayload(item.payload)) {
+              const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
+              if (handled.status === "resolved") return handled.state;
+              if (handled.status === "invalid-payload") throw new Error("INVALID_BASIC_SPELL_PAYLOAD");
+            }
             if (item.kind === "triggered-ability" && isBasicEtbTriggerPayload(item.payload)) {
               const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
               if (handled.status === "resolved") return handled.state;

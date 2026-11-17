@@ -325,7 +325,7 @@ describe("GameRoom", () => {
     expect(room.replay()).toEqual(room.state);
   });
 
-  it("casts Divination through the default basic resolver and draws two cards", () => {
+  it("casts Divination through the typed stack handler and draws two cards", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "divination-id", oracleId: "divination-oracle",
       name: "Divination", layout: "normal", manaCost: "{2}{U}", manaValue: 3,
@@ -357,8 +357,10 @@ describe("GameRoom", () => {
     initial = addCardInstance(initial, {
       instance_id: "draw-two", card_id: "draw-card-two", owner_id: "p1", zone: "library"
     });
-    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
-      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const room = new GameRoom("room-1", players, initial, (state, item) => {
+      if (item.kind === "spell") throw new Error("BASIC_SPELL_SHOULD_USE_TYPED_HANDLER");
+      return resolveBasicSpellEffect(state, item);
+    }, cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
     const cast = room.apply({
       protocolVersion: 1, gameId: "room-1", commandId: "cast-divination",
       playerId: "p1", expectedRevision: room.state.revision,
@@ -617,8 +619,10 @@ describe("GameRoom", () => {
     const initial = addCardInstance(base, {
       instance_id: "life-gain-instance", card_id: definition.providerId, owner_id: "p1", zone: "hand"
     });
-    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect,
-      cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
+    const room = new GameRoom("room-1", players, initial, (state, item) => {
+      if (item.kind === "spell") throw new Error("BASIC_SPELL_SHOULD_USE_TYPED_HANDLER");
+      return resolveBasicSpellEffect(state, item);
+    }, cardId => cardId === definition.providerId ? definition : undefined, supportsBasicSpell);
     const cast = room.apply({
       protocolVersion: 1, gameId: "room-1", commandId: "cast-life-gain",
       playerId: "p1", expectedRevision: room.state.revision,

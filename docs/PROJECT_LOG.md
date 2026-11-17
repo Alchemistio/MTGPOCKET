@@ -567,3 +567,11 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Typecheck et CI du nouveau SHA requis ; aucune exécution locale revendiquée.
 
 - Validation confirmée : CI run 44091022607 sur le commit e864f19730f4a2c8a5099d63c51add6e0aab2647 ; jobs validate (typecheck + tests) et python-data réussis.
+
+
+## 2026-11-17 — Migration des sorts simples vers le registre typé
+- Les sorts instantanés/rituels pris en charge (pioche de 1/2/3 cartes et gain de vie numérique) sont maintenant dispatchés via basicStackHandlers.
+- Le décodeur compile oracleText vers un payload typé minimal ; les gains de vie doivent être strictement positifs et sûrs.
+- Les tests Divination et gain de vie empêchent l'appel du résolveur legacy pour les sorts, tandis que les triggers ETB gardent leur propre handler typé.
+- La branche des permanents et les résolutions inconnues restent inchangées.
+- Validation CI à effectuer sur le commit d'implémentation.

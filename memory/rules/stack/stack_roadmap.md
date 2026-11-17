@@ -8,6 +8,7 @@
 - [x] Tests nominal, doublon, mauvais sommet et transition.
 - [ ] Migrer entièrement les fonctions de GameState existantes vers ce module sans casser l'API.
 - [x] Migrer les deux ETB basiques supportés (pioche, gain de vie) vers le registre serveur typé.
+- [x] Migrer les sorts instantanés/rituels de pioche simple et gain de vie vers le registre typé.
 - [ ] Migrer une famille supplémentaire après ajout d'un contrat de payload dédié et de tests de rejeu.
 - [x] Frontière de handlers typés : registre par catégorie, décodage runtime, refus explicite et tests sans mutation en cas d'échec.
 ## S1 — Coordinateur de règles

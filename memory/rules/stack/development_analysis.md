@@ -41,3 +41,11 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 
 ### Validation
 - CI run 44091022607 : typecheck, suite Vitest et tests python-data réussis sur le commit d'intégration e864f19730f4a2c8a5099d63c51add6e0aab2647.
+
+
+## 2026-11-17 — Migration des sorts simples
+
+- Deux modèles Oracle exacts déjà acceptés par supportsBasicSpell sont désormais décodés et exécutés via le registre : pioche de un/deux/trois cartes et gain d'un nombre de points de vie.
+- Le contrat payload du handler ne transporte que l'effet compilé et son paramètre ; le décodeur inspecte oracleText runtime et rejette les montants non sûrs ou nuls.
+- GameRoom ne route que les sorts non-permanents dont le texte correspond à ces modèles. Les permanents conservent leur branche de zone ; les effets inconnus restent sur le résolveur injecté.
+- Les tests Divination et gain de vie empêchent explicitement l'appel du résolveur legacy pour les sorts.

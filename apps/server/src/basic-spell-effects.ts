@@ -141,12 +141,16 @@ export function resolveBasicSpellEffect(state: GameState, item: StackItem): Game
   throw new Error("UNSUPPORTED_SPELL_EFFECT");
 }
 
+export type BasicSpellPayload =
+  | { effect: "draw-cards"; count: number }
+  | { effect: "gain-life"; amount: number };
+
 export type BasicEtbTriggerPayload =
   | { effect: "etb-draw-one"; sourceName: string; zoneChangeEventId?: string }
   | { effect: "etb-gain-life"; amount: number; sourceName: string; zoneChangeEventId?: string };
 
 type BasicStackPayloads = {
-  spell: unknown;
+  spell: BasicSpellPayload;
   "activated-ability": unknown;
   "triggered-ability": BasicEtbTriggerPayload;
   copy: unknown;
@@ -154,6 +158,25 @@ type BasicStackPayloads = {
 
 /** Server registry for the two explicitly compiled ETB triggers. */
 export const basicStackHandlers: StackHandlerRegistry<BasicStackPayloads> = {
+  spell: {
+    decode(payload) {
+      if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return { ok: false, reason: "Spell payload must be an object" };
+      const text = (payload as Record<string, unknown>).oracleText;
+      if (typeof text !== "string") return { ok: false, reason: "Spell oracleText is required" };
+      const drawMatch = /^Draw (a|two|three) cards\.$/.exec(text.trim());
+      if (drawMatch) return { ok: true, value: { effect: "draw-cards", count: drawMatch[1] === "a" ? 1 : drawMatch[1] === "two" ? 2 : 3 } };
+      const lifeMatch = /^You gain (\d+) life\.$/.exec(text.trim());
+      if (lifeMatch) {
+        const amount = Number(lifeMatch[1]);
+        if (Number.isSafeInteger(amount) && amount > 0) return { ok: true, value: { effect: "gain-life", amount } };
+      }
+      return { ok: false, reason: "Unsupported or malformed basic spell effect" };
+    },
+    resolve(state, item, payload) {
+      if (payload.effect === "draw-cards") return drawCards(state, item.controller_id, payload.count).state;
+      return changeLife(state, item.controller_id, payload.amount);
+    }
+  },
   "triggered-ability": {
     decode(payload) {
       if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
@@ -186,4 +209,10 @@ export function isBasicEtbTriggerPayload(payload: unknown): boolean {
   if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return false;
   const effect = (payload as Record<string, unknown>).effect;
   return effect === "etb-draw-one" || effect === "etb-gain-life";
+}
+
+export function isBasicSpellPayload(payload: unknown): boolean {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return false;
+  const text = (payload as Record<string, unknown>).oracleText;
+  return typeof text === "string" && (/^Draw (?:a|two|three) cards\.$/.test(text.trim()) || /^You gain \d+ life\.$/.test(text.trim()));
 }

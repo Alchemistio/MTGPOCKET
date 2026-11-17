@@ -33,3 +33,10 @@ Chaque objet possède un id stable, contrôleur, source d'instance éventuelle, 
 - Un ETB reconnu mais mal formé est rejeté ; il n'est pas silencieusement transmis à un résolveur alternatif.
 - Les familles de capacités inconnues continuent d'utiliser le résolveur injecté historique.
 - Les sorts et leur pipeline de déplacement de zone restent inchangés dans cette tranche.
+
+
+## Migration des sorts simples
+
+- Les sorts instantanés/rituels avec les modèles exacts « Draw a/two/three cards. » et « You gain N life. » sont décodés par le registre typé.
+- Le décodeur impose un montant de vie entier strictement positif et sûr ; les effets inconnus restent au résolveur injecté.
+- Les sorts permanents gardent leur branche dédiée de déplacement de zone et de remplacements d'entrée.
