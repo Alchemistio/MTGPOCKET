@@ -2,55 +2,69 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-**Avancement 2026-11-17 :** pipeline typé de remplacement avant commit : proposition immuable, catégories ordonnées, choix explicite en cas de concurrence, réévaluation, prévention sans commit et trace sur l'événement. Les effets Oracle concrets, événements imbriqués et choix APNAP simultanés restent à implémenter.
+**Avancement 2026-11-17 :** pipeline typé de remplacement avant commit ajouté : proposition immuable, catégories 616.1a-e, réévaluation après chaque application, choix explicite en cas de concurrence, prévention sans commit et trace sur l'événement. Les effets Oracle concrets, événements imbriqués et choix APNAP simultanés restent à implémenter.
 
-## ETB-0 — Contrat d'événement et changements de zone
-- [x] Contrat `ZoneChangeEvent` : snapshots, LKI, contrôleur avant/après, cause, groupe et trace de remplacement.
-- [x] Processeur canonique single-move pour l'entrée par résolution de sort.
-- [x] Groupe de simultanéité et événements commis pour déplacements batchés indépendants.
-- [x] Proposition d'événement et pipeline de remplacement avant commit.
-- [x] Catégories 616.1a-e, réévaluation après application et non-répétition d'un effet sur le même événement (614.5).
-- [x] Suspension sur choix explicite lorsqu'il existe plusieurs remplacements concurrents dans la première catégorie applicable.
-- [x] Prévention sans commit et sans événement de changement de zone.
-- [ ] Migrer tous les chemins vers un dispatcher commun (SBA, terrains, effets, commandant, élimination).
-- [ ] Événements imbriqués, choix 614.12 pré-entrée, caractéristiques de l'objet entrant et choix APNAP simultanés (614.12-13, 616.1f-g).
-- [ ] Tests tokens et nouvelle identité d'objet.
+## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
+- [ ] Centraliser chaque changement de zone dans un processeur métier (un wrapper single-move est maintenant utilisé pour l'entrée par résolution de sort ; les autres chemins restent à migrer).
+- [x] Introduire un groupe de simultanéité et des événements commis pour les déplacements batchés indépendants.
+- [x] Modéliser explicitement les événements proposés et leur pipeline de remplacement avant commit.
+- [x] Respecter les catégories 616.1a-e, réévaluer après chaque remplacement et ne pas appliquer deux fois le même effet au même événement (614.5).
+- [x] Suspendre l'évaluation lorsqu'un choix entre plusieurs remplacements concurrents est requis.
+- [x] Une prévention annule le commit et ne produit pas d'événement de changement de zone.
+- [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
+- [ ] Brancher les effets concrets et choix pré-entrée (614.12), événements imbriqués (614.13, 616.1f-g) et caractéristiques d'entrée ; distinguer entrée modifiée d'un trigger (603.6d).
+- [x] Tests : mouvements simultanés, groupe partagé, snapshots pré-événement, no-op et requêtes dupliquées.
+- [x] Test du wrapper single-move : snapshot avant/après, transfert de contrôleur et état source immuable.
+- [ ] Tests : événement remplacé, token et nouvelle identité.
 
-## ETB-1 — Détection générique
-- [ ] Compiler les motifs « When this enters », « Whenever a creature enters », « Whenever another permanent enters » vers `TriggerSpec`.
-- [ ] Scanner les sources pertinentes, entrants compris, et respecter les zones de fonctionnement de 113.6.
-- [ ] Capturer le contrôleur au moment du trigger ; occurrences multiples.
-- [ ] Tests source elle-même, autre permanent, plusieurs entrants et types modifiés.
+## ETB-1 — Détection générique (toutes sources pertinentes)
+- [ ] Compiler « When this enters », « Whenever a creature enters », « Whenever another permanent enters », etc. vers TriggerSpec.
+- [ ] Scanner toutes les sources pertinentes, entrants compris ; appliquer les zones de fonctionnement de 113.6, y compris les exceptions hors battlefield.
+- [ ] Capturer le contrôleur au moment du trigger.
+- [ ] Conditions simples et occurrences multiples.
+- [ ] Tests : source elle-même, autre permanent, plusieurs entrants, types modifiés par effets continus.
 
-## ETB-2 — Timing, priorité et APNAP
-- [ ] Accumuler les candidats jusqu'au checkpoint de priorité (117.5).
-- [ ] SBA avant priorité et collecte des triggers ; répéter jusqu'à stabilisation.
-- [ ] Ordre APNAP et ordre choisi par chaque joueur (603.3b).
-- [ ] Tests à 2/4 joueurs, contrôleurs multiples et SBA induites.
+## ETB-2 — Timing, priorité et APNAP (checkpoint CR 117.5)
+- [ ] Accumuler les candidats jusqu'au prochain checkpoint de priorité.
+- [ ] SBA avant priorité et collecte des triggers qui en résultent ; répéter jusqu'à stabilisation.
+- [ ] Ordre APNAP et ordre choisi par chaque joueur ; deux groupes de 603.3b.
+- [ ] Répéter SBA → triggers jusqu'à stabilisation.
+- [ ] Tests à 2/4 joueurs, plusieurs contrôleurs, plusieurs triggers par joueur et SBA induites.
 
 ## ETB-3 — Conditions, choix, modes et cibles
-- [ ] Intervening-if au trigger et à la résolution.
-- [ ] Modes au placement sur la pile ; cibles légales et choix obligatoires/facultatifs.
-- [ ] Résolution partielle et absence de cible légale.
+- [ ] Intervening-if vérifié au trigger et à la résolution.
+- [ ] Modes choisis au placement sur la pile.
+- [ ] Cibles légales, choix obligatoires/facultatifs et aucune cible légale.
+- [ ] « You may » empilé même si le contrôleur refuse ensuite.
+- [ ] Tests de cibles illégales, choix impossibles et résolution partielle.
 
 ## ETB-4 — Entrées modifiées et caractéristiques
 - [ ] « Enters tapped/with counters/as a copy/as [type] » via effets statiques/remplacements, pas faux trigger.
 - [ ] Appliquer 614.12/616.1 et choix pré-entrée.
-- [ ] Recalculer couches/caractéristiques et capacités pertinentes.
+- [ ] Recalculer couches/caractéristiques ; déterminer capacités présentes au moment pertinent.
+- [ ] Tests d'effets globaux, auto-remplacements et interactions.
 
-## ETB-5 — Références et identité d'objet
-- [ ] LKI, exceptions 400.7 et références après changement de zone.
+## ETB-5 — Références, identité d'objet et familles avancées
+- [ ] Last known information, exceptions de 400.7 et références après changement de zone.
 - [ ] Source quittant le battlefield avant résolution.
 - [ ] Tokens, copies, multi-faces, face-down, meld, blink, réanimation et entrées simultanées.
 - [ ] Capacités retardées/réflexives et capacités liées.
 
 ## ETB-6 — Compilation Oracle et corpus
-- [ ] Compilateur Oracle partagé et IR typée.
-- [ ] Corpus Scryfall par motif, incluant multi-faces/layouts.
+- [ ] Remplacer les motifs exacts actuels par un compilateur Oracle partagé et une IR typée.
+- [ ] Corpus Scryfall par motif grammatical, incluant multi-faces/layouts.
 - [ ] Mesurer parse, semantic et execution coverage séparément.
 - [ ] Tests différentiels et scénarios déterministes/rejouables.
+- [ ] Exception carte-spécifique uniquement avec justification, test et règle CR.
 
-## ETB-7 — Couverture et robustesse
-- [ ] Fixtures Scryfall/Oracle par famille.
-- [ ] Mesurer les régressions ETB et non-ETB.
-- [ ] Versionner les règles supportées et exposer les capacités non prises en charge.
+## ETB-7 — Couverture des cartes et robustesse en continu
+- [ ] Générer des fixtures à partir des cartes Scryfall/Oracle, groupées par motif de trigger et d'effet.
+- [ ] Détecter les formulations inconnues et produire un diagnostic stable (règles candidates, token non reconnu, raison d'échec).
+- [ ] Mesurer les cartes totalement supportées, partiellement supportées et non supportées ; ne jamais afficher une carte « jouable » si une capacité obligatoire est ignorée.
+- [ ] Ajouter des tests différentiels pour les régressions de parseur et des tests de propriété pour les événements simultanés/replacements.
+
+## Critères de sortie
+- Sous-aspects pertinents de 603.6, 603.2–603.5, 603.3a–d, 603.7, 603.10–603.12 et règles adjacentes reliés à des tests.
+- Aucun trigger supporté perdu ou résolu au mauvais moment dans scénarios simultanés/APNAP.
+- Les textes non compilés sont explicitement non supportés, jamais ignorés silencieusement.
+- Rejeu, persistance, confidentialité et scénarios à quatre sièges couverts.

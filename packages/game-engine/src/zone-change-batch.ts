@@ -14,7 +14,8 @@ export function moveCardToZoneWithEvent(state: GameState, request: ZoneChangeReq
   const after = next.cards[request.instanceId];
   if (!after) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
   return { state: next, event: createZoneChangeEvent(before, after, {
-    eventId: context.eventId, cause: context.cause, replacementTrace: context.replacementTrace
+    eventId: context.eventId, cause: context.cause,
+    ...(context.replacementTrace === undefined ? {} : { replacementTrace: context.replacementTrace })
   }) };
 }
 export function moveCardsToZoneSimultaneously(state: GameState, requests: readonly ZoneChangeRequest[], context: ZoneChangeBatchContext): ZoneChangeBatchResult {
