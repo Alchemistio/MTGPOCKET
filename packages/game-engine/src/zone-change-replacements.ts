@@ -9,6 +9,7 @@ export interface ZoneChangeProposal {
   readonly fromZone: Zone;
   readonly toZone: Zone;
   readonly destinationControllerId?: PlayerId;
+  readonly entersTapped?: boolean;
   readonly lastKnownInfo: RuntimeCardState;
 }
 export interface ZoneChangeReplacementEffect {
@@ -109,7 +110,8 @@ export function commitReplacedZoneChange(
   const result = moveCardToZoneWithEvent(state, {
     instanceId: proposal.instanceId, destination: proposal.toZone,
     ...(proposal.destinationControllerId === undefined ? {} : { destinationControllerId: proposal.destinationControllerId }),
-    ...(context.commanderReplacementChoice === undefined ? {} : { commanderReplacementChoice: context.commanderReplacementChoice })
+    ...(context.commanderReplacementChoice === undefined ? {} : { commanderReplacementChoice: context.commanderReplacementChoice }),
+    ...(proposal.entersTapped === undefined ? {} : { entersTapped: proposal.entersTapped })
   }, {
     eventId: context.eventId, cause: context.cause, replacementTrace: evaluation.session.replacementTrace
   });

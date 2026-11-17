@@ -4,7 +4,7 @@ import {
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { basicLandManaOptions, createBasicPermanentEtbTrigger } from "./basic-spell-effects.js";
+import { basicLandManaOptions, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger } from "./basic-spell-effects.js";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
@@ -211,21 +211,24 @@ export class GameRoom {
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
+              const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
+              const definition = cardId ? this.resolveCard?.(cardId) : undefined;
+              const entryReplacements = definition
+                ? createBasicPermanentEntryReplacements(definition, item.controller_id)
+                : [];
               const transition = processZoneChangeWithReplacements(state, {
                 instanceId: item.source_instance_id,
                 destination: "battlefield",
                 destinationControllerId: item.controller_id
-              }, [], {
+              }, entryReplacements, {
                 eventId: "zone-change:" + item.id,
                 cause: "spell-resolution"
               });
-              // No replacement registry is wired into GameRoom yet; the empty registry
-              // still routes this event through the canonical propose/evaluate/commit path.
+              // Only the exact self-enters-tapped Oracle template is compiled here.
+              // Unknown Oracle text remains unsupported rather than silently ignored.
               if (transition.status !== "committed") return state;
               const entered = transition.state;
               const zoneChangeEvent = transition.event;
-              const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
-              const definition = cardId ? this.resolveCard?.(cardId) : undefined;
               if (zoneChangeEvent?.toZone === "battlefield" && definition && this.supportsSpell?.(definition)) {
                 enteredPermanent.current = {
                   instanceId: item.source_instance_id,

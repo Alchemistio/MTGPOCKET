@@ -152,3 +152,11 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - `processZoneChangeWithReplacements` orchestre proposition, évaluation et commit en une seule API ; un choix concurrent renvoie un résultat suspendu sans mutation.
 - La résolution des sorts permanents dans `GameRoom` passe désormais par cette API. Le registre passé est actuellement vide : cela centralise le point d'entrée mais n'active pas encore les remplacements de cartes réels.
 - Tests moteur ajoutés pour commit redirigé et suspension non mutante. CI à confirmer sur ce commit.
+
+
+## Remplacements d'entrée — ajout 2026-11-17
+
+- `createBasicPermanentEntryReplacements` compile uniquement le texte Oracle exact auto-référentiel « {nom} enters the battlefield tapped. » en remplacement self ; les textes inconnus restent refusés.
+- Le pipeline applique `entersTapped` pendant le commit et avant la création du `ZoneChangeEvent`, donc `instanceAfter` reflète l'état engagé.
+- Test moteur : `zone-change-replacements.test.ts`, vérifie permanent engagé, snapshot après entrée et trace de remplacement.
+- Les choix 614.12, compteurs d'entrée, effets continus et événements imbriqués ne sont pas couverts par cette tranche.

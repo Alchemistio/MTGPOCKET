@@ -57,6 +57,22 @@ describe("zone-change replacement pipeline", () => {
     expect(result.event).toBeNull();
     expect(state.cards.entrant?.zone).toBe("hand");
   });
+  it("applies the enters-tapped entry modification before creating the zone event", () => {
+    const state = fixture();
+    const entersTapped = effect("self-tapped", "self", proposal => ({ ...proposal, entersTapped: true }));
+    const evaluated = evaluateZoneChangeReplacements(
+      state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), [entersTapped]
+    );
+    const result = commitReplacedZoneChange(state, evaluated, {
+      eventId: "tapped-entry", cause: "spell-resolution"
+    });
+    expect(result.status).toBe("committed");
+    if (result.status !== "committed") throw new Error("EXPECTED_COMMIT");
+    expect(result.state.cards.entrant).toMatchObject({ zone: "battlefield", is_tapped: true });
+    expect(result.event?.instanceAfter.is_tapped).toBe(true);
+    expect(result.event?.replacementTrace).toEqual(["self-tapped"]);
+  });
+
   it("commits the modified destination and records the replacement trace", () => {
     const state = fixture(), redirect = effect("redirect", "general", proposal => ({ ...proposal, toZone: "exile" }));
     const evaluated = evaluateZoneChangeReplacements(state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), [redirect]);

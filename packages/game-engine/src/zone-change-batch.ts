@@ -1,7 +1,7 @@
 import { moveCardToZone } from "./cards.js";
 import type { GameState, InstanceId, PlayerId, Zone } from "./model.js";
 import { createZoneChangeEvent, type ZoneChangeCause, type ZoneChangeEvent } from "./zone-events.js";
-export interface ZoneChangeRequest { instanceId: InstanceId; destination: Zone; destinationControllerId?: PlayerId; commanderReplacementChoice?: "command" | "destination"; }
+export interface ZoneChangeRequest { instanceId: InstanceId; destination: Zone; destinationControllerId?: PlayerId; commanderReplacementChoice?: "command" | "destination"; entersTapped?: boolean; }
 export interface ZoneChangeBatchContext { eventGroupId: string; cause: ZoneChangeCause; }
 export interface ZoneChangeBatchResult { state: GameState; events: readonly ZoneChangeEvent[]; }
 export interface SingleZoneChangeContext { eventId: string; cause: ZoneChangeCause; replacementTrace?: readonly string[]; }
@@ -10,7 +10,11 @@ export function moveCardToZoneWithEvent(state: GameState, request: ZoneChangeReq
   if (!context.eventId.trim()) throw new Error("ZONE_CHANGE_EVENT_ID_REQUIRED");
   const before = state.cards[request.instanceId];
   if (!before) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
-  const next = moveCardToZone(state, request.instanceId, request.destination, request.destinationControllerId, request.commanderReplacementChoice);
+  let next = moveCardToZone(state, request.instanceId, request.destination, request.destinationControllerId, request.commanderReplacementChoice);
+  if (request.entersTapped && next.cards[request.instanceId]?.zone === "battlefield") {
+    const entered = next.cards[request.instanceId]!;
+    next = { ...next, cards: { ...next.cards, [request.instanceId]: { ...entered, is_tapped: true } } };
+  }
   const after = next.cards[request.instanceId];
   if (!after) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
   return { state: next, event: createZoneChangeEvent(before, after, {

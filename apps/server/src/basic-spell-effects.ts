@@ -1,5 +1,5 @@
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { changeLife, drawCards, type GameState, type StackItem } from "@commander-pocket/game-engine";
+import { changeLife, drawCards, type GameState, type StackItem, type ZoneChangeReplacementEffect } from "@commander-pocket/game-engine";
 
 function hasSimpleManaCost(manaCost: string | null): boolean {
   if (manaCost === null) return false;
@@ -30,7 +30,25 @@ function basicEtbEffect(definition: CardDefinition): BasicEtbEffect | null {
 export function supportsBasicPermanent(definition: CardDefinition): boolean {
   if (definition.layout !== "normal" || !hasSimpleManaCost(definition.manaCost) ||
       !/\b(?:Creature|Artifact|Enchantment)\b/.test(definition.typeLine)) return false;
-  return definition.oracleText.trim().length === 0 || basicEtbEffect(definition) !== null;
+  return definition.oracleText.trim().length === 0 || basicEtbEffect(definition) !== null || hasSelfEntersTappedText(definition);
+}
+
+function hasSelfEntersTappedText(definition: CardDefinition): boolean {
+  return definition.oracleText.trim() === `${definition.name} enters the battlefield tapped.`;
+}
+
+/** Explicit, structured replacement adapter for the self-replacement template. */
+export function createBasicPermanentEntryReplacements(
+  definition: CardDefinition, controllerId: string
+): readonly ZoneChangeReplacementEffect[] {
+  if (!supportsBasicPermanent(definition) || !hasSelfEntersTappedText(definition)) return [];
+  return [{
+    id: `self-enters-tapped:${definition.providerId}`,
+    kind: "self",
+    controllerId,
+    applies: proposal => proposal.toZone === "battlefield",
+    replace: proposal => ({ ...proposal, entersTapped: true })
+  }];
 }
 
 /** Deliberately narrow support list: unknown Oracle text must never resolve as a no-op. */
