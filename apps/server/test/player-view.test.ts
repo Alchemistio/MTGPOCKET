@@ -1,0 +1,145 @@
+import { describe, expect, it } from "vitest";
+import { addCardInstance, applyStateBasedActions, createGame, createPregameGame, moveCardToZone } from "@commander-pocket/game-engine";
+import type { CardDefinition } from "@commander-pocket/card-data";
+import { toPlayerView } from "../src/player-view.js";
+import { supportsBasicSpell } from "../src/basic-spell-effects.js";
+
+const players = [
+  { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
+  { id: "p3", name: "Chloé", seat: 2 }, { id: "p4", name: "David", seat: 3 }
+];
+
+describe("toPlayerView", () => {
+  it("exposes the explicit lifecycle status instead of inferring it from the current step", () => {
+    expect(toPlayerView(createPregameGame("pregame-status", players), "p1").status).toBe("pregame");
+    expect(toPlayerView(createGame("active-status", players), "p1").status).toBe("active");
+  });
+  it("reveals only the viewer's hand and hides all library identities", () => {
+    let game = createGame("privacy", players);
+    game = addCardInstance(game, { instance_id: "alice-hand", card_id: "secret-a", owner_id: "p1", zone: "hand" });
+    game = addCardInstance(game, { instance_id: "bob-hand", card_id: "secret-b", owner_id: "p2", zone: "hand" });
+    game = addCardInstance(game, { instance_id: "bob-library", card_id: "secret-c", owner_id: "p2", zone: "library" });
+    const view = toPlayerView(game, "p1");
+    expect(view.players[0]?.hand).toEqual(["alice-hand"]);
+    expect(view.players[1]?.hand).toEqual([]);
+    expect(view.players[1]?.handCount).toBe(1);
+    expect(view.visibleCards["alice-hand"]?.card_id).toBe("secret-a");
+    expect(view.visibleCards["bob-hand"]).toBeUndefined();
+    expect(view.visibleCards["bob-library"]).toBeUndefined();
+  });
+  it("projects readable hand cards only to their owner and gates casting on server handlers", () => {
+    let game = createGame("hand-card-view", players);
+    game = addCardInstance(game, { instance_id: "private-instant", card_id: "scryfall-instant", owner_id: "p1", zone: "hand" });
+    game = addCardInstance(game, { instance_id: "opponent-instant", card_id: "scryfall-instant", owner_id: "p2", zone: "hand" });
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "scryfall-instant", oracleId: "oracle-instant",
+      name: "Test Instant", layout: "normal", manaCost: "{U}", manaValue: 1,
+      typeLine: "Instant", oracleText: "", colors: ["U"], colorIdentity: ["U"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: { id: "scryfall-instant", name: "Test Instant", layout: "normal", cmc: 1,
+        mana_cost: "{U}", type_line: "Instant", oracle_text: "", colors: ["U"],
+        color_identity: ["U"], legalities: { commander: "legal" }, set: "tst", collector_number: "1" }
+    };
+    const resolveCard = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const ownerView = toPlayerView(game, "p1", resolveCard, true);
+    const opponentView = toPlayerView(game, "p2", resolveCard, true);
+    expect(ownerView.spellCastingAvailable).toBe(true);
+    expect(ownerView.players[0]?.handCards).toMatchObject([{
+      instanceId: "private-instant", name: "Test Instant", manaCost: "{U}", isSupportedSpell: true
+    }]);
+    expect(ownerView.players[1]?.handCards).toEqual([]);
+    expect(opponentView.players[0]?.handCards).toEqual([]);
+    expect(opponentView.players[1]?.handCards[0]?.instanceId).toBe("opponent-instant");
+    expect(toPlayerView(game, "p1").spellCastingAvailable).toBe(false);
+  });
+
+  it("marks vanilla permanents as playable only in their owner's private hand view", () => {
+    let game = createGame("hand-permanent-view", players);
+    game = addCardInstance(game, {
+      instance_id: "private-creature", card_id: "scryfall-creature", owner_id: "p1", zone: "hand"
+    });
+    game = addCardInstance(game, {
+      instance_id: "public-creature", card_id: "scryfall-creature", owner_id: "p2", zone: "battlefield"
+    });
+    game = addCardInstance(game, {
+      instance_id: "private-plains", card_id: "scryfall-plains", owner_id: "p1", zone: "hand"
+    });
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "scryfall-creature", oracleId: "oracle-creature",
+      name: "Vanilla Creature", layout: "normal", manaCost: "{1}{G}", manaValue: 2,
+      typeLine: "Creature — Beast", oracleText: "", colors: ["G"], colorIdentity: ["G"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "scryfall-creature", name: "Vanilla Creature", layout: "normal", mana_cost: "{1}{G}",
+        cmc: 2, type_line: "Creature — Beast", oracle_text: "", colors: ["G"], color_identity: ["G"],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "8"
+      }
+    };
+    const plains: CardDefinition = {
+      provider: "scryfall", providerId: "scryfall-plains", oracleId: "oracle-plains",
+      name: "Plains", layout: "normal", manaCost: "", manaValue: 0,
+      typeLine: "Basic Land — Plains", oracleText: "", colors: [], colorIdentity: [],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "scryfall-plains", name: "Plains", layout: "normal", mana_cost: "", cmc: 0,
+        type_line: "Basic Land — Plains", oracle_text: "", colors: [], color_identity: [],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "11"
+      }
+    };
+    const definitions = new Map([[definition.providerId, definition], [plains.providerId, plains]]);
+    const resolveCard = (cardId: string) => definitions.get(cardId);
+    const ownerView = toPlayerView(game, "p1", resolveCard, true, () => true);
+    const opponentView = toPlayerView(game, "p2", resolveCard, true, () => true);
+    expect(ownerView.players[0]?.handCards[0]).toMatchObject({
+      instanceId: "private-creature", isSupportedSpell: false, isSupportedPermanent: true
+    });
+    expect(ownerView.players[0]?.handCards[1]).toMatchObject({
+      instanceId: "private-plains", isSupportedLand: true
+    });
+    expect(ownerView.players[0]?.landsPlayedThisTurn).toBe(0);
+    expect(ownerView.players[1]?.handCards).toEqual([]);
+    expect(opponentView.players[0]?.handCards).toEqual([]);
+    expect(opponentView.players[1]?.battlefieldCards).toMatchObject([{
+      instanceId: "public-creature", name: "Vanilla Creature", isTapped: false
+    }]);
+  });
+
+  it("marks the exact supported ETB permanent playable without exposing an opponent's hand", () => {
+    let game = createGame("hand-etb-view", players);
+    game = addCardInstance(game, {
+      instance_id: "private-wall", card_id: "wall-of-omens-fixture", owner_id: "p1", zone: "hand"
+    });
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "wall-of-omens-fixture", oracleId: "wall-of-omens-oracle",
+      name: "Wall of Omens", layout: "normal", manaCost: "{1}{W}", manaValue: 2,
+      typeLine: "Creature — Wall", oracleText: "When Wall of Omens enters the battlefield, draw a card.",
+      colors: ["W"], colorIdentity: ["W"], legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "wall-of-omens-fixture", name: "Wall of Omens", layout: "normal", mana_cost: "{1}{W}",
+        cmc: 2, type_line: "Creature — Wall",
+        oracle_text: "When Wall of Omens enters the battlefield, draw a card.",
+        colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "12"
+      }
+    };
+    const resolveCard = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const ownerView = toPlayerView(game, "p1", resolveCard, true, supportsBasicSpell);
+    const opponentView = toPlayerView(game, "p2", resolveCard, true, supportsBasicSpell);
+    expect(ownerView.players[0]?.handCards[0]).toMatchObject({
+      instanceId: "private-wall", isSupportedPermanent: true
+    });
+    expect(opponentView.players[0]?.handCards).toEqual([]);
+  });
+
+  it("shows a pending commander-return choice only to its owner", () => {
+    let game = createGame("commander-choice-view", players);
+    game = addCardInstance(game, { instance_id: "cmd1", card_id: "commander", owner_id: "p1", zone: "command", is_commander: true });
+    game = moveCardToZone(game, "cmd1", "graveyard");
+    game = applyStateBasedActions(game);
+    const ownerView = toPlayerView(game, "p1");
+    const opponentView = toPlayerView(game, "p2");
+    expect(ownerView.pendingCommanderChoices).toEqual([{ instanceId: "cmd1", fromZone: "graveyard" }]);
+    expect(opponentView.pendingCommanderChoices).toEqual([]);
+    expect(opponentView.pendingCommanderChoiceCount).toBe(1);
+  });
+});

@@ -1,0 +1,26 @@
+node_modules/
+.pnpm-store/
+dist/
+build/
+coverage/
+.expo/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# Local databases, downloaded bulk datasets and Python tooling
+*.sqlite
+*.sqlite3
+*.db
+*.json.gz
+*.json.xz
+__pycache__/
+.venv/
+.pytest_cache/
+data/bulk/
+data/snapshots/
+
+# Authoritative game snapshots, private hands, seat-token hashes and RNG seeds
+data/server-rooms/
