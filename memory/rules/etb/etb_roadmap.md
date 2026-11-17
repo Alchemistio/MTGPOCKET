@@ -9,7 +9,7 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [x] Introduire un groupe de simultanéité et des événements commis pour les déplacements batchés indépendants.
 - [x] Modéliser explicitement les événements proposés et leur pipeline de remplacement avant commit.
 - [x] Respecter les catégories 616.1a-e, réévaluer après chaque remplacement et ne pas appliquer deux fois le même effet au même événement (614.5).
-- [x] Suspendre l'évaluation lorsqu'un choix entre plusieurs remplacements concurrents est requis.
+- [x] Suspendre l'évaluation lorsqu'un choix entre plusieurs remplacements concurrents est requis, avec garde de révision pour rejeter les décisions périmées.
 - [x] Une prévention annule le commit et ne produit pas d'événement de changement de zone.
 - [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
 - [ ] Brancher les effets concrets et choix pré-entrée (614.12), événements imbriqués (614.13, 616.1f-g) et caractéristiques d'entrée ; distinguer entrée modifiée d'un trigger (603.6d).

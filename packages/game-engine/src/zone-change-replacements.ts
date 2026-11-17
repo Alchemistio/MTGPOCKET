@@ -19,6 +19,7 @@ export interface ZoneChangeReplacementEffect {
   replace(proposal: ZoneChangeProposal, state: GameState): ZoneChangeProposal | null;
 }
 export interface ZoneChangeReplacementSession {
+  readonly stateRevision: number;
   readonly proposal: ZoneChangeProposal;
   readonly appliedEffectIds: readonly string[];
   readonly replacementTrace: readonly string[];
@@ -40,6 +41,7 @@ export function createZoneChangeReplacementSession(
   const card = state.cards[instanceId];
   if (!card) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
   return {
+    stateRevision: state.revision,
     proposal: {
       instanceId, fromZone: card.zone, toZone,
       ...(destinationControllerId === undefined ? {} : { destinationControllerId }),
@@ -54,6 +56,7 @@ export function evaluateZoneChangeReplacements(
   state: GameState, session: ZoneChangeReplacementSession,
   effects: readonly ZoneChangeReplacementEffect[], selectedEffectId?: string
 ): ZoneChangeReplacementEvaluation {
+  if (state.revision !== session.stateRevision) throw new Error("STALE_ZONE_CHANGE_REPLACEMENT_SESSION");
   const ids = effects.map(effect => effect.id);
   if (ids.some(id => id.trim().length === 0) || new Set(ids).size !== ids.length) {
     throw new Error("INVALID_OR_DUPLICATE_ZONE_CHANGE_REPLACEMENT_ID");
@@ -98,6 +101,7 @@ export function commitReplacedZoneChange(
   state: GameState, evaluation: ZoneChangeReplacementEvaluation, context: CommitReplacedZoneChangeContext
 ): CommitReplacedZoneChangeResult {
   if (evaluation.status === "choice-required") throw new Error("ZONE_CHANGE_REPLACEMENT_CHOICE_REQUIRED");
+  if (state.revision !== evaluation.session.stateRevision) throw new Error("STALE_ZONE_CHANGE_REPLACEMENT_SESSION");
   if (evaluation.status === "prevented") {
     return { status: "prevented", state, event: null, replacementTrace: evaluation.session.replacementTrace };
   }

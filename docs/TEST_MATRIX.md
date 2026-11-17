@@ -143,3 +143,6 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Tests : ordre 616.1a-e, réévaluation, choix concurrent, non-répétition 614.5, prévention sans commit, destination modifiée et trace dans l'événement.
 - Les effets sont fournis par l'appelant : aucun texte Oracle de remplacement n'est compilé. Événements imbriqués, choix 614.12, couches/caractéristiques d'entrée, APNAP simultané et migration des autres chemins restent hors couverture.
 - CI à vérifier sur le SHA de cette tranche ; aucune exécution locale revendiquée.
+
+
+- Complément : les sessions de remplacement suspendues capturent la révision du jeu ; toute reprise/validation après mutation de l'état est rejetée comme stale au lieu de committer une décision prise sur un état ancien.
