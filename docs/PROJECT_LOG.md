@@ -5,4 +5,4 @@
 - L'ensemble est atomique et incrémente la révision une seule fois ; les échecs ne modifient pas l'état.
 - Les capacités de mana existantes (`tap-for-mana`) restent immédiates et sans pile.
 - Le serveur ne route pas encore de capacités activées : absence de schéma structuré pour les capacités de carte, coûts avancés, timing et restrictions.
-- Tests unitaires ajoutés pour succès, échecs, coûts non supportés et non-mutation. CI à vérifier.
+- Tests unitaires ajoutés pour succès, échecs, coûts non supportés et non-mutation. CI verte : run 44096082742 sur `acddf1356b50c90116121cc322ed277d25908019` ; typecheck, Vitest et python-data réussis.

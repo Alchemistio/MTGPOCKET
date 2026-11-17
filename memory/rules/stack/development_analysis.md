@@ -76,4 +76,4 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 
 ### Tests et validation
 - Tests moteur prévus : succès transactionnel, une seule révision, non-mutation de l'état initial, mana insuffisant, source déjà engagée, mauvais contrôleur, coûts mal formés/non supportés et payload incohérent.
-- CI à vérifier sur le SHA d'intégration ; aucune exécution locale revendiquée.
+- CI verte : run 44096082742 sur `acddf1356b50c90116121cc322ed277d25908019` ; typecheck, Vitest et python-data réussis.
