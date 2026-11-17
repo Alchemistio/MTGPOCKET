@@ -8,3 +8,4 @@ export * from "./players.js";
 export * from "./pregame.js";
 export * from "./zone-events.js";
 export * from "./zone-change-batch.js";
+export * from "./zone-change-replacements.js";

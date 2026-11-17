@@ -1,3 +1,9 @@
+## Reprise ETB — 2026-11-17
+
+- Pipeline de remplacement typé avant commit : catégories 616.1a-e, réévaluation, choix explicite, prévention et trace sur l'événement.
+- Tests ajoutés pour ordre, choix, prévention, commit modifié et identité stable.
+- Les effets Oracle concrets, événements imbriqués, pré-entrée et intégration de tous les chemins restent ouverts. CI à vérifier ; aucun test local ou appareil revendiqué.
+
 # REPRISE — Commander Pocket
 
 > Lire ici en premier après interruption.

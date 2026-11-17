@@ -137,3 +137,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 
 
 | Zone-change processor single move | arrivée sur battlefield, événement commis, contrôleur avant/après, état source immuable | `packages/game-engine/test/zone-change-batch.test.ts` | Ajouté, CI à vérifier |
+
+
+## Pipeline de remplacement ETB — ajout 2026-11-17
+- Tests : ordre 616.1a-e, réévaluation, choix concurrent, non-répétition 614.5, prévention sans commit, destination modifiée et trace dans l'événement.
+- Les effets sont fournis par l'appelant : aucun texte Oracle de remplacement n'est compilé. Événements imbriqués, choix 614.12, couches/caractéristiques d'entrée, APNAP simultané et migration des autres chemins restent hors couverture.
+- CI à vérifier sur le SHA de cette tranche ; aucune exécution locale revendiquée.

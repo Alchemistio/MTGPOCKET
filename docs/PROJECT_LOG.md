@@ -1,3 +1,12 @@
+## 2026-11-17 — ETB-0 : pipeline de remplacement pré-commit
+
+- Ajout de `ZoneChangeProposal`, `ZoneChangeReplacementEffect` et d'une session d'évaluation reprenable.
+- Catégories self/control/copy/face-down/general dans l'ordre 616.1a-e, réévaluation après chaque remplacement et non-répétition du même effet sur le même événement (614.5).
+- Les effets concurrents dans la première catégorie applicable suspendent le traitement avec `choice-required`; aucune sélection arbitraire. Une prévention termine le pipeline sans mutation ni événement commis. La trace est attachée à l'événement.
+- Tests moteur : ordre, réévaluation, choix, prévention, commit modifié et identité stable.
+- Limites : pas de compilation Oracle, d'événements imbriqués, de choix 614.12, de couches/caractéristiques d'entrée, d'APNAP simultané ni de migration de tous les chemins.
+- CI à vérifier sur le SHA de cette tranche ; aucune exécution locale revendiquée.
+
 ## 2026-11-16 — CI finale de l'index et du générateur
 
 - Run `43893233739`, SHA `eac0913314130afff0a6f723759713579d0503e5` : jobs `validate` et `python-data` réussis.

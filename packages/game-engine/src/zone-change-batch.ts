@@ -1,111 +1,42 @@
 import { moveCardToZone } from "./cards.js";
 import type { GameState, InstanceId, PlayerId, Zone } from "./model.js";
 import { createZoneChangeEvent, type ZoneChangeCause, type ZoneChangeEvent } from "./zone-events.js";
-
-export interface ZoneChangeRequest {
-  instanceId: InstanceId;
-  destination: Zone;
-  destinationControllerId?: PlayerId;
-  commanderReplacementChoice?: "command" | "destination";
-}
-
-export interface ZoneChangeBatchContext {
-  /** Stable ID for this logical event group (for replay and diagnostics). */
-  eventGroupId: string;
-  cause: ZoneChangeCause;
-}
-
-export interface ZoneChangeBatchResult {
-  state: GameState;
-  events: readonly ZoneChangeEvent[];
-}
-
-export interface SingleZoneChangeContext {
-  eventId: string;
-  cause: ZoneChangeCause;
-}
-
-export interface SingleZoneChangeResult {
-  state: GameState;
-  event: ZoneChangeEvent | null;
-}
-
-/** Canonical single-transition wrapper for callers that need the committed event. */
-export function moveCardToZoneWithEvent(
-  state: GameState,
-  request: ZoneChangeRequest,
-  context: SingleZoneChangeContext
-): SingleZoneChangeResult {
+export interface ZoneChangeRequest { instanceId: InstanceId; destination: Zone; destinationControllerId?: PlayerId; commanderReplacementChoice?: "command" | "destination"; }
+export interface ZoneChangeBatchContext { eventGroupId: string; cause: ZoneChangeCause; }
+export interface ZoneChangeBatchResult { state: GameState; events: readonly ZoneChangeEvent[]; }
+export interface SingleZoneChangeContext { eventId: string; cause: ZoneChangeCause; replacementTrace?: readonly string[]; }
+export interface SingleZoneChangeResult { state: GameState; event: ZoneChangeEvent | null; }
+export function moveCardToZoneWithEvent(state: GameState, request: ZoneChangeRequest, context: SingleZoneChangeContext): SingleZoneChangeResult {
   if (!context.eventId.trim()) throw new Error("ZONE_CHANGE_EVENT_ID_REQUIRED");
   const before = state.cards[request.instanceId];
   if (!before) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
-  const next = moveCardToZone(
-    state,
-    request.instanceId,
-    request.destination,
-    request.destinationControllerId,
-    request.commanderReplacementChoice
-  );
+  const next = moveCardToZone(state, request.instanceId, request.destination, request.destinationControllerId, request.commanderReplacementChoice);
   const after = next.cards[request.instanceId];
   if (!after) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
-  return {
-    state: next,
-    event: createZoneChangeEvent(before, after, {
-      eventId: context.eventId,
-      cause: context.cause
-    })
-  };
+  return { state: next, event: createZoneChangeEvent(before, after, {
+    eventId: context.eventId, cause: context.cause, replacementTrace: context.replacementTrace
+  }) };
 }
-
-/**
- * Commits a group of independent zone moves as one logical simultaneous event.
- *
- * All before-snapshots are captured from the same pre-event state. The reducer
- * then applies the moves without exposing intermediate states to callers, and
- * emits one event per actual transition with a shared simultaneousGroupId.
- *
- * This is an event-batching primitive, not yet a complete replacement-effect
- * engine. Replacement choices must be resolved before calling this function.
- */
-export function moveCardsToZoneSimultaneously(
-  state: GameState,
-  requests: readonly ZoneChangeRequest[],
-  context: ZoneChangeBatchContext
-): ZoneChangeBatchResult {
+export function moveCardsToZoneSimultaneously(state: GameState, requests: readonly ZoneChangeRequest[], context: ZoneChangeBatchContext): ZoneChangeBatchResult {
   if (!context.eventGroupId.trim()) throw new Error("ZONE_CHANGE_GROUP_ID_REQUIRED");
   const ids = requests.map(request => request.instanceId);
   if (new Set(ids).size !== ids.length) throw new Error("DUPLICATE_INSTANCE_IN_ZONE_CHANGE_BATCH");
-
   const beforeById = new Map<InstanceId, GameState["cards"][string]>();
   for (const request of requests) {
     const before = state.cards[request.instanceId];
     if (!before) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
     beforeById.set(request.instanceId, before);
   }
-
   let next = state;
-  for (const request of requests) {
-    next = moveCardToZone(
-      next,
-      request.instanceId,
-      request.destination,
-      request.destinationControllerId,
-      request.commanderReplacementChoice
-    );
-  }
-
+  for (const request of requests) next = moveCardToZone(next, request.instanceId, request.destination, request.destinationControllerId, request.commanderReplacementChoice);
   const events: ZoneChangeEvent[] = [];
   for (const request of requests) {
-    const before = beforeById.get(request.instanceId);
-    const after = next.cards[request.instanceId];
+    const before = beforeById.get(request.instanceId), after = next.cards[request.instanceId];
     if (!before || !after) throw new Error("ZONE_CHANGE_INSTANCE_NOT_FOUND");
     const event = createZoneChangeEvent(before, after, {
-      eventId: context.eventGroupId + ":" + request.instanceId,
-      simultaneousGroupId: context.eventGroupId,
-      cause: context.cause
+      eventId: context.eventGroupId + ":" + request.instanceId, simultaneousGroupId: context.eventGroupId, cause: context.cause
     });
     if (event) events.push(event);
   }
-
   return { state: next, events };
 }
