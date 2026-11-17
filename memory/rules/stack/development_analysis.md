@@ -54,3 +54,6 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 - La première CI de migration des sorts a révélé que le dispatch typé retournait trop tôt et sautait le déplacement du sort résolu de la zone stack vers le cimetière.
 - Correction : le coordinateur conserve explicitement cette transition après le retour du handler. Le handler reste limité à l'effet de carte ; il ne prend pas en charge le cycle de vie.
 - Le test d'intégration avait détecté la régression sur Divination et le sort de gain de vie. Ce cas devient un invariant à préserver pour toute nouvelle famille de handlers.
+
+### Validation finale de la tranche sorts
+- CI run 44091756265 : typecheck, tests Vitest et python-data réussis sur f4347766bf957bcc89a4d78ffa95ff6dc0e93408. La régression de déplacement en zone a été corrigée et couverte par les tests Divination / gain de vie.

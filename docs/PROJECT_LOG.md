@@ -574,6 +574,8 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Le décodeur compile oracleText vers un payload typé minimal ; les gains de vie doivent être strictement positifs et sûrs.
 - Les tests Divination et gain de vie empêchent l'appel du résolveur legacy pour les sorts, tandis que les triggers ETB gardent leur propre handler typé.
 - La branche des permanents et les résolutions inconnues restent inchangées.
-- Validation CI à effectuer sur le commit d'implémentation.
+- CI verte : run 44091756265 sur le commit f4347766bf957bcc89a4d78ffa95ff6dc0e93408 ; typecheck, Vitest et python-data réussis.
 
 - Analyse CI : le premier passage sur la migration des sorts a détecté une régression de zone (sort conservé en zone stack après effet). Le coordinateur a été corrigé pour effectuer le déplacement vers le cimetière après l'exécution du handler ; nouvelle CI requise.
+
+- La CI de correction confirme que les sorts simples sont résolus par handler typé et déplacés au cimetière par le coordinateur ; aucun échec restant sur cette tranche.
