@@ -1,3 +1,11 @@
+## 2026-11-17 — Ordonnanceur dynamique de dépendances CR 613.8
+
+- Vérification du texte des Comprehensive Rules : 613.7 = timestamps ; 613.8 = dépendance. Correction des références dans la roadmap/architecture.
+- Ajout de `dependency-order.ts` : ordonnanceur générique pour un groupe de couche/sous-couche, prédicat sémantique injecté, compatibilité CDA, choix timestamp parmi les effets prêts, réévaluation après chaque application, SCC cyclique et fallback timestamp.
+- Tests pour dépendance prioritaire sur timestamp, dépendance qui apparaît après application, cycle avec effet en aval, filtre CDA, erreurs et non-mutation.
+- Limites : les prédicats Oracle ne sont pas générés automatiquement, les timestamps 613.7a–n ne sont pas encore construits, et la tranche couche 4 n'est pas encore raccordée à l'ordonnanceur.
+- Validation CI du SHA à venir ; aucun test local ni appareil revendiqué.
+
 ## 2026-11-17 — ETB-0 : pipeline de remplacement pré-commit
 
 - Ajout de `ZoneChangeProposal`, `ZoneChangeReplacementEffect` et d'une session d'évaluation reprenable.

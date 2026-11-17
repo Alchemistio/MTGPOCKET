@@ -190,3 +190,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - `stack-engine.test.ts` : ajout, sommet, verrou de résolution, retrait, rejet d'un doublon et d'un mauvais sommet.
 - `stack.test.ts` continue de couvrir le cycle intégré GameState : passes des quatre sièges, résolution injectée, SBA après résolution et transfert de priorité après élimination.
 - Ces tests valident les squelettes et les contrats, pas la conformité complète CR 613 ni les règles complètes de priorité/APNAP.
+
+
+
+## Ordonnanceur de dépendances des effets continus — ajout 2026-11-17
+- `dependency-order.test.ts` : dépendance prioritaire sur timestamp, dépendance qui apparaît après application (réévaluation 613.8c), cycle terminal appliqué par timestamp (613.8b), effet en aval du cycle, compatibilité CDA (613.8a), validation des groupes/IDs/timestamps et non-mutation.
+- Le prédicat sémantique est injecté ; ces tests valident l'ordonnanceur, pas l'analyse du texte Oracle ni la détection automatique de dépendance.
