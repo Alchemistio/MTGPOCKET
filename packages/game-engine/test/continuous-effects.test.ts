@@ -78,7 +78,8 @@ describe("entering permanent layer-4 type changes", () => {
       effect("empty-selector", 1, { kind: "add", cardTypes: ["Artifact"] }, { cardTypesAny: [] })
     ])).toThrow("INVALID_LAYER4_EFFECT_SELECTOR");
   });
-\n  it("rejects duplicate ids, invalid timestamps, unknown sources and empty operations", () => {
+
+  it("rejects duplicate ids, invalid timestamps, unknown sources and empty operations", () => {
     const input = makeContext();
     const valid = effect("same", 1, { kind: "add", cardTypes: ["Artifact"] });
     expect(() => evaluateEnteringPermanentLayer4(input, [valid, valid])).toThrow("INVALID_OR_DUPLICATE_LAYER4_EFFECT_ID");
