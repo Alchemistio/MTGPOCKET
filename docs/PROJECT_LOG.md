@@ -565,3 +565,5 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Les tests d'intégration ETB interdisent l'appel du résolveur legacy pour ces capacités, tout en conservant le fallback pour les familles non migrées.
 - Les sorts, le pipeline de zone, le retrait de pile et les fenêtres de priorité restent inchangés.
 - Typecheck et CI du nouveau SHA requis ; aucune exécution locale revendiquée.
+
+- Validation confirmée : CI run 44091022607 sur le commit e864f19730f4a2c8a5099d63c51add6e0aab2647 ; jobs validate (typecheck + tests) et python-data réussis.

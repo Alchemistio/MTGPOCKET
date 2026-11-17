@@ -38,3 +38,6 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 - Le déplacement de la carte permanente, le retrait du trigger et la priorité restent orchestrés par GameRoom / resolveStackItem.
 - Le registre n'effectue pas le retrait et ne change pas les fenêtres de priorité.
 - Les capacités activées, les triggers non ETB, les copies et les sorts ne sont pas migrés.
+
+### Validation
+- CI run 44091022607 : typecheck, suite Vitest et tests python-data réussis sur le commit d'intégration e864f19730f4a2c8a5099d63c51add6e0aab2647.
