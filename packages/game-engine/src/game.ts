@@ -1,6 +1,7 @@
 import { EngineError, type GameState, type PlayerId, type PlayerState } from "./model.js";
 import { nextTurnStep } from "./turns.js";
 import { applyStateBasedActions } from "./players.js";
+import { appendStackObject, markTopStackObjectResolving, removeResolvedStackObject } from "./stack-engine.js";
 
 export interface PlayerSetup { id: PlayerId; name: string; seat: number; }
 
@@ -49,7 +50,7 @@ export function passPriority(state: GameState, playerId: PlayerId): PassPriority
     const top = state.stack[state.stack.length - 1];
     if (!top) throw new Error("Objet de pile introuvable.");
     return {
-      state: { ...state, revision: state.revision + 1, priorityPlayerId: null, consecutivePasses: [], awaitingResolutionId: top.id, priorityWindowClosed: false },
+      state: markTopStackObjectResolving(state, top.id),
       outcome: "resolution-required", stackItemId: top.id
     };
   }
@@ -57,33 +58,15 @@ export function passPriority(state: GameState, playerId: PlayerId): PassPriority
 }
 
 export function completeStackResolution(state: GameState, stackItemId: string): GameState {
-  if (state.awaitingResolutionId === null) throw new EngineError("NO_PENDING_RESOLUTION", "Aucune résolution n'est en attente.");
-  if (state.awaitingResolutionId !== stackItemId) throw new EngineError("STACK_ITEM_MISMATCH", "L'objet à résoudre ne correspond pas au sommet attendu.");
-  const top = state.stack[state.stack.length - 1];
-  if (!top || top.id !== stackItemId) throw new EngineError("STACK_ITEM_MISMATCH", "Le sommet de pile a changé.");
-  return {
-    ...state, revision: state.revision + 1, stack: state.stack.slice(0, -1),
-    awaitingResolutionId: null, priorityPlayerId: state.activePlayerId ?? state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat).find(p => p.seat > state.activePlayerSeat)?.id ?? state.players.filter(p => !p.isEliminated).sort((a, b) => a.seat - b.seat)[0]?.id ?? null, consecutivePasses: [], priorityWindowClosed: false
-  };
+  const completed = removeResolvedStackObject(state, stackItemId);
+  const living = completed.players.filter(player => !player.isEliminated).sort((a, b) => a.seat - b.seat);
+  const nextPriority = completed.activePlayerId ?? living.find(player => player.seat > completed.activePlayerSeat)?.id ?? living[0]?.id ?? null;
+  return { ...completed, priorityPlayerId: nextPriority };
 }
 
 
 export function pushStackItem(state: GameState, item: import("./model.js").StackItem): GameState {
-  if (state.status !== "active") throw new EngineError("NOT_ACTIVE_GAME", "La partie n'est pas active.");
-  if (state.awaitingResolutionId !== null) throw new EngineError("RESOLUTION_REQUIRED", "La pile est en cours de résolution.");
-  if (state.priorityPlayerId !== item.controller_id) throw new EngineError("NOT_PRIORITY_PLAYER", "Le contrôleur de l'objet doit avoir la priorité pour l'ajouter à la pile.");
-  if (state.stack.some(existing => existing.id === item.id)) throw new EngineError("STACK_ITEM_MISMATCH", "Identifiant d'objet de pile déjà utilisé.");
-  if (item.kind === "spell" && item.source_instance_id !== null) {
-    const source = state.cards[item.source_instance_id];
-    if (!source || source.zone !== "stack") throw new EngineError("STACK_ITEM_MISMATCH", "La carte du sort doit déjà être dans la zone de pile.");
-  }
-  const controller = state.players.find(p => p.id === item.controller_id);
-  if (!controller || controller.isEliminated) throw new EngineError("PLAYER_ELIMINATED", "Le contrôleur n'est pas un joueur actif.");
-  const next = {
-    ...state, revision: state.revision + 1,
-    stack: [...state.stack, item], consecutivePasses: [], priorityWindowClosed: false
-  };
-  return applyStateBasedActions(next);
+  return applyStateBasedActions(appendStackObject(state, item));
 }
 
 /** Resolves the top stack item through an injected card/effect handler, then grants priority. */

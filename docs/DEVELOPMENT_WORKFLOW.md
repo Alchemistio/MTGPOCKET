@@ -105,3 +105,15 @@ Rapporter brièvement :
 - prochain pas concret.
 
 Toujours dire ce qui n'a pas été testé. Ne jamais prétendre qu'une action, un téléchargement, un test appareil ou une intégration réelle a réussi sans preuve.
+
+
+## 6. Analyse continue et mémoire de développement
+
+Avant, pendant et après chaque tâche, appliquer [la boucle d'analyse mémoire](../memory/rules/development_workflow.md). Pour tout moteur ou module de règles complexe :
+- lire son dossier `memory/rules/<module>/` avant de coder ;
+- consigner au fil du travail les contrats existants, consommateurs, alternatives, hypothèses, risques et limites ;
+- après la tranche, mettre à jour `development_analysis.md`, architecture, roadmap et index du module ;
+- noter les erreurs rencontrées et la mesure concrète qui évitera leur répétition ;
+- vérifier que les nouveaux contrats sont réutilisés plutôt que dupliqués par les prochains systèmes.
+
+L'analyse mémoire est une aide à la décision, pas une source normative. Toute affirmation de règles doit être reliée à l'édition des Comprehensive Rules du dépôt et à ses numéros de règles. Les résultats CI et les tests réellement exécutés doivent être datés et rattachés à leur SHA.

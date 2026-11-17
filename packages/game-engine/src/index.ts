@@ -11,3 +11,5 @@ export * from "./zone-change-batch.js";
 export * from "./zone-change-replacements.js";
 export * from "./entering-characteristics.js";
 export * from "./continuous-effects.js";
+export * from "./layer-engine.js";
+export * from "./stack-engine.js";

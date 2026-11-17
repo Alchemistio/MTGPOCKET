@@ -17,3 +17,9 @@ Cette mémoire complète `docs/ROADMAP.md` et conserve recherches, décisions d'
 
 ## Convention
 Pour chaque module complexe : créer `memory/rules/<module>/`, une fiche de recherche, une architecture, une roadmap et un index local. Chaque affirmation normative cite les numéros CR et la version source. Séparer texte CR, recherche/interprétation, décision d'architecture, comportement implémenté et tests.
+
+
+## Moteurs de référence
+- [Moteur de couches](rules/layers/layers_index.md) — architecture, roadmap, limites et analyse de développement.
+- [Moteur de pile](rules/stack/stack_index.md) — cycle de vie générique, roadmap, limites et analyse de développement.
+- [Workflow d'analyse continue](rules/development_workflow.md) — méthode avant/pendant/après chaque tâche.

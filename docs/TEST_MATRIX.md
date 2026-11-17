@@ -182,3 +182,11 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 - Le calcul est limité au permanent entrant ; les autres permanents ne sont pas recalculés. La dépendance et l'ordre CR 613.7 ne sont pas inférés. Aucun texte Oracle n'est compilé.
 
 - Cas complémentaires : ordre fourni conservé en cas d'égalité de timestamp, déduplication des types ajoutés et rejet des sélecteurs vides.
+
+
+## Moteurs de référence — ajout 2026-11-17
+
+- `layer-engine.test.ts` : ordre des couches, plugin enregistré, effet de couche sans plugin explicitement retourné comme non supporté, validation ID/source/timestamp/plugin dupliqué, non-mutation.
+- `stack-engine.test.ts` : ajout, sommet, verrou de résolution, retrait, rejet d'un doublon et d'un mauvais sommet.
+- `stack.test.ts` continue de couvrir le cycle intégré GameState : passes des quatre sièges, résolution injectée, SBA après résolution et transfert de priorité après élimination.
+- Ces tests valident les squelettes et les contrats, pas la conformité complète CR 613 ni les règles complètes de priorité/APNAP.

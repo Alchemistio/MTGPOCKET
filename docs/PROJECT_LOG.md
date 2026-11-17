@@ -517,3 +517,11 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Le chemin de résolution serveur des sorts permanents utilise ce processeur au lieu de construire lui-même le snapshot avant/après ; l'identifiant de déclenchement reste déterministe à partir de l'ID de l'objet de pile.
 - Test moteur : arrivée sur le champ de bataille, contrôleur transféré et état d'origine non muté.
 - Les autres chemins (SBA, terrains, effets et mouvements hors résolution de sorts) ne sont pas encore raccordés à un dispatcher unique.
+
+
+## 2026-11-17 — Squelettes des moteurs de référence
+- Ajout d'un orchestrateur générique des couches 1–7, basé sur plugins typés, sans prétendre implémenter les sémantiques des couches non encore branchées. Les effets non évalués sont retournés explicitement.
+- Ajout du module de cycle de vie de pile et raccordement des transitions GameState d'ajout, de passage unanime à la résolution et de retrait. Les handlers d'effets restent injectés.
+- Ajout des tests isolés des deux moteurs et de dossiers mémoire dédiés : architecture, roadmap, index et analyse de développement.
+- Le workflow exige désormais une analyse continue des contrats/consommateurs/risques et sa consignation dans memory. La roadmap décrit les étapes suivantes et les limites.
+- Non couvert à ce stade : détection CR 613.7, couches 1–3/5–7, recalcul global, APNAP, cibles/coûts/choix et coordinateur complet de pile.

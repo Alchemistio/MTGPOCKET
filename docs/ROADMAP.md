@@ -121,3 +121,33 @@ Détails : [docs/RULE_ENGINE_STRATEGY.md](RULE_ENGINE_STRATEGY.md), [memory/memo
 
 ## Definition of Done
 Typecheck et tests pertinents verts ; cas négatifs et régressions ; erreurs et règles non supportées explicites ; documentation/index/journal à jour ; tests natifs et UX validés sur appareils pour toute fonctionnalité mobile.
+
+
+## Chantiers transversaux parallèles — moteurs de référence
+
+Ces chantiers avancent en parallèle de M1–M6 et fournissent les contrats communs aux futurs systèmes. Les cases décrivent les tranches effectivement livrées, pas la couverture complète des Comprehensive Rules.
+
+### Moteur de couches (CR 613)
+- [x] Orchestrateur générique des couches 1–7 avec plugins typés, validation des sources/IDs/timestamps et sortie explicite des effets non pris en charge.
+- [ ] Adapter la tranche couche 4 existante à ce contrat commun.
+- [ ] Construire l'ordre de dépendance CR 613.7 et ses preuves ; ne pas assimiler cet ordre à un tri timestamp.
+- [ ] Implémenter les couches/sous-couches 1a/1b, 2, 3, 4, 5, 6, 7a/7b/7c.
+- [ ] Évaluer/recalculer tous les objets concernés, avec stabilisation et prévention des boucles.
+- [ ] Brancher aux caractéristiques d'entrée 614.12, SBA, événements et projections.
+- [ ] Corpus de régression et mesure du coût CPU/mémoire sur appareils.
+
+### Moteur de pile (CR 405, 601, 602, 603, 117 et règles associées)
+- [x] Module commun de cycle de vie : validation, ajout, lecture du sommet, verrou de résolution et retrait.
+- [x] Réutilisation des primitives par les transitions GameState d'ajout, passes unanimes et fin de résolution.
+- [ ] Migrer l'ensemble du coordinateur priorité/résolution hors de `game.ts` sans casser l'API publique.
+- [ ] Contrats typés pour annonces, coûts, modes, cibles et choix en attente.
+- [ ] APNAP, déclenchements simultanés et ordre de mise en pile.
+- [ ] Résolution partielle, cibles illégales, copies, contres et événements enfants.
+- [ ] Journal/rejeu et reprise déterministe des décisions suspendues.
+
+### Gouvernance commune
+- [ ] ADR sur les contrats publics et versionnement des payloads de pile/effets.
+- [ ] Tests de propriétés sur déterminisme, immutabilité, erreurs et rejeu.
+- [ ] Vérifier chaque nouveau consommateur (serveur, triggers, remplacements, combat, UI) contre les moteurs de référence ; interdire les chemins métier parallèles non documentés.
+
+Mémoire détaillée : [moteur de couches](../memory/rules/layers/layers_index.md), [moteur de pile](../memory/rules/stack/stack_index.md), [workflow d'analyse](../memory/rules/development_workflow.md).
