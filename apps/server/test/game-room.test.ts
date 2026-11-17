@@ -3,7 +3,7 @@ import { GameRoom } from "../src/game-room.js";
 import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
 import type { GameState } from "@commander-pocket/game-engine";
-import { basicLandManaOptions, resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
+import { basicLandManaOptions, createBasicPermanentEntryReplacements, resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -15,6 +15,30 @@ function command(playerId: string, revision: number, commandId: string) {
 }
 
 describe("GameRoom", () => {
+  it("compiles only exact self-entry +1/+1 counter text into a replacement", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "counter-entry", oracleId: "counter-entry-oracle",
+      name: "Counter Adept", layout: "normal", manaCost: "{2}{G}", manaValue: 3,
+      typeLine: "Creature — Elf", oracleText: "Counter Adept enters the battlefield with 3 +1/+1 counters on it.",
+      colors: ["G"], colorIdentity: ["G"], legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "counter-entry", oracle_id: "counter-entry-oracle", name: "Counter Adept",
+        layout: "normal", mana_cost: "{2}{G}", cmc: 3, type_line: "Creature — Elf",
+        oracle_text: "Counter Adept enters the battlefield with 3 +1/+1 counters on it.",
+        colors: ["G"], color_identity: ["G"], legalities: { commander: "legal" },
+        set: "tst", collector_number: "20"
+      }
+    };
+    expect(supportsBasicSpell(definition)).toBe(true);
+    const replacements = createBasicPermanentEntryReplacements(definition, "p1");
+    expect(replacements).toHaveLength(1);
+    expect(replacements[0]?.id).toBe("self-enters-with-p1p1:counter-entry");
+    expect(replacements[0]?.kind).toBe("self");
+    expect(createBasicPermanentEntryReplacements({
+      ...definition, oracleText: "Counter Adept enters the battlefield with X +1/+1 counters on it."
+    }, "p1")).toEqual([]);
+  });
+
   it("starts at upkeep and advances only after all four seats pass", () => {
     const room = new GameRoom("room-1", players);
     expect(room.state.step).toBe("upkeep");
