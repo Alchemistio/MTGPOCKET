@@ -1,10 +1,10 @@
 import {
-  advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, executeStackItemHandler, moveCardToZone, processZoneChangeWithReplacements, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  activateStackAbility, advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, executeStackItemHandler, moveCardToZone, processZoneChangeWithReplacements, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
   type GameState, type PlayerSetup, type StackItem, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { basicLandManaOptions, basicStackHandlers, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger, isBasicEtbTriggerPayload, isBasicSpellPayload } from "./basic-spell-effects.js";
+import { basicLandManaOptions, basicStackHandlers, compileBasicActivatedAbility, createBasicPermanentEntryReplacements, createBasicPermanentEtbTrigger, isBasicActivatedAbilityPayload, isBasicEtbTriggerPayload, isBasicSpellPayload } from "./basic-spell-effects.js";
 
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
@@ -13,7 +13,7 @@ export type CardSpellSupport = (definition: CardDefinition) => boolean;
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" | "mana-added" | "land-played" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" | "mana-added" | "land-played" | "ability-activated" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -192,6 +192,7 @@ export class GameRoom {
     if (command.type === "play-land") return this.playLand(command, cacheKey);
     if (command.type === "discard-cards") return this.discardPendingCards(command, cacheKey);
     if (command.type === "tap-for-mana") return this.tapForMana(command, cacheKey);
+    if (command.type === "activate-ability") return this.activateAbility(command, cacheKey);
     if (command.type !== "pass-priority") return this.reject(cacheKey, "UNSUPPORTED_COMMAND");
 
     try {
@@ -206,7 +207,10 @@ export class GameRoom {
         }
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
-        if (this.resolveStackEffect) {
+        const resolvingTop = nextState.stack[nextState.stack.length - 1];
+        const hasBuiltInActivatedResolver = resolvingTop?.id === result.stackItemId &&
+          resolvingTop.kind === "activated-ability" && isBasicActivatedAbilityPayload(resolvingTop.payload);
+        if (this.resolveStackEffect || hasBuiltInActivatedResolver) {
           const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition; zoneChangeEvent: ZoneChangeEvent } | null } = { current: null };
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             if (item.kind === "spell" && isBasicSpellPayload(item.payload)) {
@@ -224,6 +228,11 @@ export class GameRoom {
               const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
               if (handled.status === "resolved") return handled.state;
               if (handled.status === "invalid-payload") throw new Error("INVALID_BASIC_ETB_TRIGGER_PAYLOAD");
+            }
+            if (item.kind === "activated-ability" && isBasicActivatedAbilityPayload(item.payload)) {
+              const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
+              if (handled.status === "resolved") return handled.state;
+              if (handled.status === "invalid-payload") throw new Error("INVALID_BASIC_ACTIVATED_ABILITY_PAYLOAD");
             }
             const payload = isRecord(item.payload) ? item.payload : {};
             if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
@@ -331,6 +340,63 @@ export class GameRoom {
       this.currentState = nextState;
       const accepted: AcceptedRoomCommandResult = {
         accepted: true, revision: nextState.revision, outcome: "land-played"
+      };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
+  }
+
+  private activateAbility(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    if (!this.resolveCard) return this.reject(cacheKey, "CARD_CATALOG_NOT_CONFIGURED");
+    if (this.currentState.status !== "active" || !this.currentState.deckSetupComplete) {
+      return this.reject(cacheKey, "GAME_NOT_STARTED");
+    }
+    if (this.currentState.priorityPlayerId !== command.playerId) return this.reject(cacheKey, "NOT_PRIORITY_PLAYER");
+    if (!isRecord(command.payload) || typeof command.payload.instanceId !== "string" ||
+        !Number.isSafeInteger(command.payload.abilityIndex) || (command.payload.abilityIndex as number) < 0) {
+      return this.reject(cacheKey, "INVALID_ACTIVATED_ABILITY_PAYLOAD");
+    }
+
+    const instanceId = command.payload.instanceId;
+    const card = this.currentState.cards[instanceId];
+    if (!card || card.zone !== "battlefield" || card.controller_id !== command.playerId) {
+      return this.reject(cacheKey, "ABILITY_SOURCE_NOT_CONTROLLED");
+    }
+    const definition = this.resolveCard(card.card_id);
+    if (!definition || definition.providerId !== card.card_id) return this.reject(cacheKey, "CARD_NOT_FOUND");
+    if (definition.layout !== "normal" || !/\b(?:Artifact|Enchantment|Land|Creature)\b/.test(definition.typeLine)) {
+      return this.reject(cacheKey, "ACTIVATED_ABILITY_SOURCE_NOT_SUPPORTED");
+    }
+
+    const compiled = compileBasicActivatedAbility(definition, command.payload.abilityIndex as number);
+    if (!compiled) return this.reject(cacheKey, "UNSUPPORTED_ACTIVATED_ABILITY");
+    // CR 602.5a needs control-since-turn and haste tracking. Until those state
+    // facts exist, do not allow this first compiler slice to tap creatures.
+    if (compiled.tapSource && /\bCreature\b/.test(definition.typeLine)) {
+      return this.reject(cacheKey, "CREATURE_TAP_ABILITY_UNSUPPORTED");
+    }
+
+    try {
+      const nextState = activateStackAbility(this.currentState, {
+        controllerId: command.playerId,
+        sourceInstanceId: instanceId,
+        manaCost: compiled.manaCost,
+        tapSource: compiled.tapSource,
+        stackItem: {
+          id: "activated:" + command.playerId + ":" + command.commandId,
+          controller_id: command.playerId,
+          source_instance_id: instanceId,
+          kind: "activated-ability",
+          payload: compiled.payload
+        }
+      });
+      this.currentState = nextState;
+      const accepted: AcceptedRoomCommandResult = {
+        accepted: true, revision: nextState.revision, outcome: "ability-activated"
       };
       this.commandResults.set(cacheKey, accepted);
       this.recordEvent(command, accepted);

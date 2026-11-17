@@ -149,9 +149,54 @@ export type BasicEtbTriggerPayload =
   | { effect: "etb-draw-one"; sourceName: string; zoneChangeEventId?: string }
   | { effect: "etb-gain-life"; amount: number; sourceName: string; zoneChangeEventId?: string };
 
+export type BasicActivatedAbilityPayload =
+  | { effect: "activated-draw-one" }
+  | { effect: "activated-gain-life"; amount: number };
+
+export interface CompiledBasicActivatedAbility {
+  manaCost: string;
+  tapSource: boolean;
+  payload: BasicActivatedAbilityPayload;
+}
+
+/**
+ * Compiles only a single exact, targetless activated-ability line.
+ * abilityIndex is the zero-based line index in Scryfall oracle_text.
+ * Costs are limited to numeric/colorless/colored mana symbols and {T}.
+ */
+export function compileBasicActivatedAbility(
+  definition: CardDefinition,
+  abilityIndex: number
+): CompiledBasicActivatedAbility | null {
+  if (!Number.isSafeInteger(abilityIndex) || abilityIndex < 0 || definition.layout !== "normal") return null;
+  const line = definition.oracleText.split(/\r?\n/)[abilityIndex]?.trim();
+  if (!line) return null;
+  const match = /^(.+): (Draw a card\.|You gain ([1-9]\d*) life\.)$/.exec(line);
+  if (!match) return null;
+
+  const costParts = match[1]!.split(/,\s*/);
+  if (costParts.length === 0 || costParts.some(part =>
+    !/^\{(?:\d+|[WUBRGC]|T)\}$/.test(part)
+  )) return null;
+
+  const tapParts = costParts.filter(part => part === "{T}");
+  if (tapParts.length > 1) return null;
+  const manaParts = costParts.filter(part => part !== "{T}");
+  const manaCost = manaParts.join("");
+  // Reuse the engine's strict mana-cost parser; no arbitrary text or symbols pass.
+  if (manaParts.some(part => !/^\{(?:\d+|[WUBRGC])\}$/.test(part))) return null;
+
+  if (match[2] === "Draw a card.") {
+    return { manaCost, tapSource: tapParts.length === 1, payload: { effect: "activated-draw-one" } };
+  }
+  const amount = Number(match[3]);
+  if (!Number.isSafeInteger(amount) || amount <= 0) return null;
+  return { manaCost, tapSource: tapParts.length === 1, payload: { effect: "activated-gain-life", amount } };
+}
+
 type BasicStackPayloads = {
   spell: BasicSpellPayload;
-  "activated-ability": unknown;
+  "activated-ability": BasicActivatedAbilityPayload;
   "triggered-ability": BasicEtbTriggerPayload;
   copy: unknown;
 };
@@ -174,6 +219,26 @@ export const basicStackHandlers: StackHandlerRegistry<BasicStackPayloads> = {
     },
     resolve(state, item, payload) {
       if (payload.effect === "draw-cards") return drawCards(state, item.controller_id, payload.count).state;
+      return changeLife(state, item.controller_id, payload.amount);
+    }
+  },
+  "activated-ability": {
+    decode(payload) {
+      if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+        return { ok: false, reason: "Activated ability payload must be an object" };
+      }
+      const value = payload as Record<string, unknown>;
+      if (value.effect === "activated-draw-one") {
+        return { ok: true, value: { effect: "activated-draw-one" } };
+      }
+      if (value.effect === "activated-gain-life" && typeof value.amount === "number" &&
+          Number.isSafeInteger(value.amount) && value.amount > 0) {
+        return { ok: true, value: { effect: "activated-gain-life", amount: value.amount } };
+      }
+      return { ok: false, reason: "Unsupported or malformed basic activated ability" };
+    },
+    resolve(state, item, payload) {
+      if (payload.effect === "activated-draw-one") return drawCards(state, item.controller_id, 1).state;
       return changeLife(state, item.controller_id, payload.amount);
     }
   },
@@ -215,4 +280,10 @@ export function isBasicSpellPayload(payload: unknown): boolean {
   if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return false;
   const text = (payload as Record<string, unknown>).oracleText;
   return typeof text === "string" && (/^Draw (?:a|two|three) cards\.$/.test(text.trim()) || /^You gain \d+ life\.$/.test(text.trim()));
+}
+
+export function isBasicActivatedAbilityPayload(payload: unknown): boolean {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return false;
+  const effect = (payload as Record<string, unknown>).effect;
+  return effect === "activated-draw-one" || effect === "activated-gain-life";
 }

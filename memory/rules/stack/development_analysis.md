@@ -77,3 +77,28 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 ### Tests et validation
 - Tests moteur prévus : succès transactionnel, une seule révision, non-mutation de l'état initial, mana insuffisant, source déjà engagée, mauvais contrôleur, coûts mal formés/non supportés et payload incohérent.
 - CI verte : run 44096082742 sur `acddf1356b50c90116121cc322ed277d25908019` ; typecheck, Vitest et python-data réussis.
+
+
+## 2026-11-17 — Première capacité activée serveur/protocole
+
+### Analyse des règles et de l'architecture
+- Le PDF Comprehensive Rules fourni décrit l'activation en CR 602.2 : annoncer l'activation crée d'abord un objet non-carte au sommet de la pile, puis les étapes de coûts applicables de CR 601.2b–i sont exécutées. Les annonces et paiements ne sont pas révisables.
+- CR 602.5a interdit le coût {T}/{Q} d'une capacité de créature si elle n'a pas été contrôlée depuis le début du tour le plus récent, sauf célérité. Le RuntimeCardState actuel ne conserve ni date d'entrée/contrôle ni célérité calculée : il serait incorrect de supposer cette condition satisfaite.
+- CR 605.1a/605.3b distingue les capacités de mana : elles n'utilisent pas la pile et se résolvent immédiatement. Le chemin `tap-for-mana` existant doit rester distinct.
+- Le protocole réseau est autoritaire côté serveur et possède déjà révision attendue, idempotence et validation de siège. Le client ne doit donc jamais fournir le coût ni l'effet d'une capacité.
+
+### Décision et implémentation
+- Nouvelle commande `activate-ability` avec seulement `instanceId` et `abilityIndex` (index de ligne Oracle, base zéro).
+- Le serveur résout la définition par son propre catalogue Scryfall et compile uniquement les lignes exactes sans cible `[coût]: Draw a card.` et `[coût]: You gain N life.`.
+- Coûts acceptés : symboles génériques numériques et WUBRGC, séparés par virgules, plus un unique `{T}`. Le moteur existant réalise paiement + engagement + empilement en une transaction atomique.
+- Le registre typé prend maintenant en charge les deux payloads activés. Le handler n'effectue que l'effet ; le coordinateur conserve le retrait de pile, les SBA et la priorité.
+- Les sources acceptées dans cette tranche sont Artifact, Enchantment, Land et Creature. Les capacités de créatures avec coût {T} sont explicitement refusées tant que l'état ne peut pas vérifier CR 602.5a ; les capacités de créatures sans {T} restent possibles. Les capacités de mana ne sont pas compilées dans ce chemin.
+
+### Limites
+- Aucun choix de mode, cible, coût de sacrifice/défausse/PV, coût hybride/phyrexian/X, restriction d'activation ou texte conditionnel.
+- Aucun parsing Oracle générique : l'index cible une ligne exacte du champ oracle_text Scryfall.
+- Les capacités de planeswalker/loyauté et de créature à coût {T} attendent les états de contrôle depuis le début du tour, célérité et règles de loyauté.
+
+### Tests
+- Intégration artifact : commande client minimale, serveur compile le gain de vie, coût générique payé, source engagée, objet typé sur pile, résolution par le handler et rejeu du journal.
+- Refus d'un effet inconnu et d'une capacité de créature avec coût {T}, sans mutation ni paiement.

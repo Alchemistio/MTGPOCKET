@@ -48,3 +48,12 @@ Chaque objet possède un id stable, contrôleur, source d'instance éventuelle, 
 - Les capacités de mana restent sur leur voie immédiate sans pile (ex. `tap-for-mana`) et ne doivent pas être routées dans cette transaction.
 - Ce contrat ne compile pas Oracle et ne décide pas de la légalité/timing propres à la capacité ; le coordinateur doit fournir une activation déjà annoncée et validée.
 - Sacrifice, défausse, paiement de points de vie, coûts alternatifs/additionnels, restrictions d'activation et mal d'invocation restent non pris en charge.
+
+
+## Première intégration de capacités activées
+
+- Le protocole client envoie uniquement `instanceId` et `abilityIndex`; le serveur reconstitue le coût et l'effet depuis CardDefinition Scryfall.
+- Le compilateur est volontairement exact : une seule ligne Oracle, aucun ciblage, effet pioche une carte ou gain de vie numérique, coût mana générique/coloré + {T} unique.
+- Les capacités activées acceptées sont ajoutées par `activateStackAbility` en paiement atomique ; le handler typé exécute l'effet sans gérer le cycle de vie.
+- Les capacités de mana continuent à utiliser le chemin immédiat `tap-for-mana`, selon CR 605.3b.
+- Les sources Artifact/Enchantment/Land/Creature sont admises. Une capacité de créature avec {T} est refusée, car le moteur ne suit pas encore le contrôle depuis le début du tour ni la célérité nécessaire à CR 602.5a ; les capacités de créature sans {T} ne sont pas soumises à cette restriction.

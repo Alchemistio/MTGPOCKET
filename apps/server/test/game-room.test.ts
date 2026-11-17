@@ -653,6 +653,103 @@ describe("GameRoom", () => {
     expect(unsupportedRoom.state.cards["unsupported-instance"]?.zone).toBe("hand");
   });
 
+  it("activates a server-compiled artifact ability, resolves it through the typed handler, and replays", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "life-artifact", oracleId: "life-artifact-oracle",
+      name: "Life Engine", layout: "normal", manaCost: "{2}", manaValue: 2,
+      typeLine: "Artifact", oracleText: "{1}, {T}: You gain 1 life.",
+      colors: [], colorIdentity: [], legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "life-artifact", oracle_id: "life-artifact-oracle", name: "Life Engine",
+        layout: "normal", mana_cost: "{2}", cmc: 2, type_line: "Artifact",
+        oracle_text: "{1}, {T}: You gain 1 life.", colors: [], color_identity: [],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "81"
+      }
+    };
+    const base = advanceAutomaticStep(createGame("room-1", players));
+    const funded: GameState = {
+      ...base, deckSetupComplete: true,
+      players: base.players.map(player => player.id === "p1"
+        ? { ...player, manaPool: { C: 1, W: 1 } }
+        : player)
+    };
+    const initial = addCardInstance(funded, {
+      instance_id: "life-engine", card_id: definition.providerId, owner_id: "p1", zone: "battlefield"
+    });
+    const room = new GameRoom("room-1", players, initial, undefined,
+      cardId => cardId === definition.providerId ? definition : undefined);
+    const activated = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "activate-life-engine",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "activate-ability", payload: { instanceId: "life-engine", abilityIndex: 0, effect: "client-cannot-override" }
+    });
+    expect(activated).toMatchObject({ accepted: true, outcome: "ability-activated" });
+    expect(room.state.cards["life-engine"]?.is_tapped).toBe(true);
+    expect(room.state.players[0]?.manaPool).toEqual({ C: 0, W: 1 });
+    expect(room.state.stack[0]).toMatchObject({
+      kind: "activated-ability", source_instance_id: "life-engine",
+      payload: { effect: "activated-gain-life", amount: 1 }
+    });
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "ability-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.players[0]?.life).toBe(41);
+    expect(room.state.cards["life-engine"]?.zone).toBe("battlefield");
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.replay()).toEqual(room.state);
+  });
+
+  it("rejects unsupported, mistargeted-by-index, and creature tap abilities without paying costs", () => {
+    const artifact: CardDefinition = {
+      provider: "scryfall", providerId: "unsupported-artifact", oracleId: null,
+      name: "Unknown Engine", layout: "normal", manaCost: "{2}", manaValue: 2,
+      typeLine: "Artifact", oracleText: "{T}: Scry 1.",
+      colors: [], colorIdentity: [], legalities: {}, faces: [],
+      raw: {
+        id: "unsupported-artifact", name: "Unknown Engine", layout: "normal", cmc: 2,
+        type_line: "Artifact", colors: [], color_identity: [], legalities: {},
+        set: "tst", collector_number: "82"
+      }
+    };
+    const creature: CardDefinition = {
+      ...artifact, providerId: "creature-engine", name: "Creature Engine",
+      typeLine: "Creature — Human", oracleText: "{T}: You gain 1 life.",
+      raw: { ...artifact.raw, id: "creature-engine", name: "Creature Engine", type_line: "Creature — Human", oracle_text: "{T}: You gain 1 life." }
+    };
+    const base = advanceAutomaticStep(createGame("room-1", players));
+    const funded: GameState = {
+      ...base, deckSetupComplete: true,
+      players: base.players.map(player => player.id === "p1"
+        ? { ...player, manaPool: { C: 1 } }
+        : player)
+    };
+    let state = addCardInstance(funded, {
+      instance_id: "unknown", card_id: artifact.providerId, owner_id: "p1", zone: "battlefield"
+    });
+    state = addCardInstance(state, {
+      instance_id: "creature", card_id: creature.providerId, owner_id: "p1", zone: "battlefield"
+    });
+    const room = new GameRoom("room-1", players, state, () => state,
+      cardId => cardId === artifact.providerId ? artifact : cardId === creature.providerId ? creature : undefined);
+    const unknown = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "unknown-ability",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "activate-ability", payload: { instanceId: "unknown", abilityIndex: 0 }
+    });
+    expect(unknown).toMatchObject({ accepted: false, code: "UNSUPPORTED_ACTIVATED_ABILITY" });
+    const creatureTap = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "creature-tap-ability",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "activate-ability", payload: { instanceId: "creature", abilityIndex: 0 }
+    });
+    expect(creatureTap).toMatchObject({ accepted: false, code: "CREATURE_TAP_ABILITY_UNSUPPORTED" });
+    expect(room.state.players[0]?.manaPool).toEqual({ C: 1 });
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.state.cards.creature?.is_tapped).toBe(false);
+  });
+
   it("resolves the top stack item after all seats pass and replays the resolved state", () => {
     const initial = pushStackItem(advanceAutomaticStep(createGame("room-1", players)), {
       id: "trigger-life", controller_id: "p1", source_instance_id: null,

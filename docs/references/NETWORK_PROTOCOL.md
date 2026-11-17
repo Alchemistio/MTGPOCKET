@@ -37,3 +37,10 @@ Ce prototype n'est pas encore prêt pour un réseau non fiable : transport local
 
 ## Évolution
 Toute rupture de message doit incrémenter `protocolVersion` et être documentée. Ajouter des validateurs de payload exhaustifs, limites de taille, authentification, tests anti-rejeu, snapshots et rejeu avant de déclarer le LAN prêt pour la bêta.
+
+\n## Première commande d'activation
+- `activate-ability` reçoit uniquement `{ instanceId, abilityIndex }` ; le serveur retrouve la définition Scryfall et compile la ligne Oracle correspondante.
+- Le client ne fournit ni coût, ni payload d'effet, ni source de vérité sur la capacité.
+- La première tranche accepte seulement les lignes exactes sans cible `[coût]: Draw a card.` et `[coût]: You gain N life.`, avec coût en symboles numériques/WUBRGC et `{T}`.
+- Les capacités inconnues, les coûts hybrides/phyrexians/variables et les capacités de créature avec coût `{T}` sont rejetés explicitement.
+- Les capacités de mana gardent la commande immédiate dédiée et ne passent pas par `activate-ability`.
