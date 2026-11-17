@@ -1,3 +1,10 @@
+## 2026-11-17 — Ajustement d'un scénario de dépendance couche 4
+
+- Le premier run de la tranche a validé le typecheck et l'ordonnanceur générique ; un test couche 4 avait une attente incorrecte.
+- L'analyse de la trace a montré une seconde dépendance dynamique : après l'application de l'effet qui retire Bear, le sélecteur Bear d'un effet restant ne correspond plus. L'effet ne doit donc pas être compté comme appliqué.
+- Assertion corrigée pour refléter l'ordre de dépendance et la réévaluation 613.8c. Le test de retrait de Creature empêchant un autre effet de s'appliquer reste distinct.
+- Nouveau run CI requis sur le SHA corrigé.
+
 ## 2026-11-17 — Adaptateur couche 4 et dépendances structurées
 
 - Raccordement de `evaluateEnteringPermanentLayer4` à l'ordonnanceur CR 613.8.

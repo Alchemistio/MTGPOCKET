@@ -37,9 +37,9 @@ describe("entering permanent layer-4 type changes", () => {
       effect("add-artifact", 10, { kind: "add", cardTypes: ["Artifact"] }, { subtypesAny: ["Bear"] }),
       effect("remove-creature", 20, { kind: "remove", cardTypes: ["Creature"] }, { subtypesAny: ["Bear"] })
     ]);
-    expect(result.characteristics.cardTypes).toEqual(["Artifact"]);
+    expect(result.characteristics.cardTypes).toEqual(["Creature", "Artifact"]);
     expect(result.characteristics.subtypes).toEqual([]);
-    expect(result.appliedEffectIds).toEqual(["add-artifact", "remove-bear", "remove-creature"]);
+    expect(result.appliedEffectIds).toEqual(["add-artifact", "remove-bear"]);
   });
 
   it("applies a type-removing dependency first when it disables another effect's selector", () => {
