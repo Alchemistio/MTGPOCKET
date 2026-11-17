@@ -11,3 +11,16 @@ Créer un moteur de pile de référence utilisable par les sorts, capacités act
 
 ## Amélioration de méthode
 Pour les prochains changements, inventorier les fonctions existantes, les consommateurs et les règles applicables avant de déplacer du code. Garder compatibilité publique et ajouter des tests de cycle de vie isolés.
+
+## 2026-11-17 — Registre et frontière de handlers typés
+
+### Analyse
+- Le contrat StackItem expose un payload unknown, tandis que le serveur injecte aujourd'hui un callback global. Ajouter un interpréteur universel ou un parseur Oracle ici mélangerait cycle de vie et sémantique des cartes.
+- La tranche ajoute un registre générique par catégorie, dont les types de payload sont fournis par le système appelant. Chaque entrée valide le payload avant d'appeler son handler.
+- L'exécution exige que l'objet soit exactement celui verrouillé au sommet. Elle ne retire pas l'objet : le coordinateur conserve la main sur SBA, triggers et priorité.
+- Les états handler-unavailable et invalid-payload sont explicites et sans mutation ; ils ne doivent pas être convertis en succès silencieux.
+
+### Limites et prochaine étape
+- Le serveur n'est pas encore migré vers ce registre ; ses callbacks existants restent compatibles.
+- Aucun payload métier ni parseur Oracle n'est ajouté dans le moteur partagé.
+- Étape suivante : migrer une seule famille de stack item du serveur vers le registre, avec tests de rejeu et d'échec, puis généraliser après validation.

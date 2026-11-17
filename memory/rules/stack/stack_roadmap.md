@@ -7,6 +7,7 @@
 - [x] Handler de résolution injecté, séparé du cycle de vie.
 - [x] Tests nominal, doublon, mauvais sommet et transition.
 - [ ] Migrer entièrement les fonctions de GameState existantes vers ce module sans casser l'API.
+- [x] Frontière de handlers typés : registre par catégorie, décodage runtime, refus explicite et tests sans mutation en cas d'échec.
 ## S1 — Coordinateur de règles
 - [ ] Priorité multijoueur et passes APNAP robustes.
 - [ ] Fenêtres de priorité et déclenchements simultanés.

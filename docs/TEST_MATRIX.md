@@ -201,3 +201,9 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 ## Adaptateur couche 4 vers l'ordonnanceur CR 613.8 — ajout 2026-11-17
 - `continuous-effects.test.ts` : dépendance qui impose l'application de l'effet ajoutant un type avant un effet plus ancien qui cible ce type ; effet retirant un type appliqué d'abord lorsqu'il désactive le sélecteur d'un autre effet ; égalité timestamp stable, filtres de contrôleur, source propre, validation et non-mutation.
 - Le prédicat est exact pour le modèle structuré de changements de types de cette tranche (sélecteurs + opérations add/remove). Il ne couvre pas les autres familles d'effets continus ni le texte Oracle libre.
+
+
+## Handlers de pile typés — ajout 2026-11-17
+- stack-handlers.test.ts : dispatch par catégorie, décodage runtime, effet immutable, handler absent, payload invalide et refus d'un objet qui n'est pas le sommet verrouillé.
+- Les tests vérifient qu'un échec de lookup/décodage conserve l'objet et son verrou de résolution ; le registre n'effectue pas le retrait.
+- Cette tranche ne migre pas encore le callback du serveur et ne valide aucune famille Oracle métier.

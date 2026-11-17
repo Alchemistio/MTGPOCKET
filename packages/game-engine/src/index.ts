@@ -14,3 +14,4 @@ export * from "./continuous-effects.js";
 export * from "./layer-engine.js";
 export * from "./dependency-order.js";
 export * from "./stack-engine.js";
+export * from "./stack-handlers.js";

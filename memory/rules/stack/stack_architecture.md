@@ -17,3 +17,11 @@ Chaque objet possède un id stable, contrôleur, source d'instance éventuelle, 
 - Un identifiant ne peut pas être réutilisé dans une même pile.
 - Seul le contrôleur ayant la priorité ajoute un objet via ce contrat initial.
 - Les fonctions de cycle de vie sont déterministes et pures.
+
+## Frontière de handlers typés
+
+- Le registre associe chaque catégorie de StackItem à un décodeur de payload et à un handler typé.
+- Le décodage est une validation runtime explicite : un payload invalide n'est jamais transmis au handler.
+- L'absence de handler et le payload invalide sont des résultats distincts, sans retrait ni déverrouillage de l'objet.
+- Le handler retourne un nouvel état immuable ; il ne retire pas l'objet de pile et ne distribue pas la priorité.
+- Le coordinateur reste responsable du retrait, des SBA, des triggers et de la priorité après l'effet.

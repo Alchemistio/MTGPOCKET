@@ -549,3 +549,11 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Ajout des tests isolés des deux moteurs et de dossiers mémoire dédiés : architecture, roadmap, index et analyse de développement.
 - Le workflow exige désormais une analyse continue des contrats/consommateurs/risques et sa consignation dans memory. La roadmap décrit les étapes suivantes et les limites.
 - Non couvert à ce stade : détection CR 613.7, couches 1–3/5–7, recalcul global, APNAP, cibles/coûts/choix et coordinateur complet de pile.
+
+
+## 2026-11-17 — Frontière de handlers typés du moteur de pile
+- Ajout de stack-handlers.ts : registre générique par catégorie, décodeur de payload runtime et handler typé fourni par l'appelant.
+- Le dispatch vérifie l'identité du sommet verrouillé. Handler absent et payload invalide sont des résultats distincts et sans mutation ; le succès retourne l'état d'effet sans retirer l'objet.
+- Tests ajoutés pour le chemin nominal, l'absence de handler, le payload invalide, la non-mutation et l'identité de l'objet en résolution.
+- Le callback serveur existant n'est pas encore migré ; priorité, SBA, triggers et retrait restent au coordinateur.
+- Typecheck et CI du nouveau SHA requis ; aucune exécution locale revendiquée.
