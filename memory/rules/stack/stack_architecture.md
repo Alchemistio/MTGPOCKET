@@ -26,7 +26,6 @@ Chaque objet possède un id stable, contrôleur, source d'instance éventuelle, 
 - Le handler retourne un nouvel état immuable ; il ne retire pas l'objet de pile et ne distribue pas la priorité.
 - Le coordinateur reste responsable du retrait, des SBA, des triggers et de la priorité après l'effet.
 
-
 ## Première intégration serveur
 
 - Le serveur utilise le registre typé pour les deux payloads ETB compilés : pioche d'une carte et gain de vie.
@@ -34,9 +33,18 @@ Chaque objet possède un id stable, contrôleur, source d'instance éventuelle, 
 - Les familles de capacités inconnues continuent d'utiliser le résolveur injecté historique.
 - Les sorts et leur pipeline de déplacement de zone restent inchangés dans cette tranche.
 
-
 ## Migration des sorts simples
 
 - Les sorts instantanés/rituels avec les modèles exacts « Draw a/two/three cards. » et « You gain N life. » sont décodés par le registre typé.
 - Le décodeur impose un montant de vie entier strictement positif et sûr ; les effets inconnus restent au résolveur injecté.
 - Les sorts permanents gardent leur branche dédiée de déplacement de zone et de remplacements d'entrée.
+
+## Transaction d'activation — première tranche
+
+- `activateStackAbility` est un contrat moteur atomique pour une capacité activée qui utilise la pile.
+- Contrôles : catégorie `activated-ability`, cohérence source/contrôleur, source sur le champ de bataille et contrôlée par l'activateur, priorité et invariants génériques de pile.
+- Coûts pris en charge : mana générique numérique, mana coloré/hybride simple non pris en charge, symbole colorless `C`, et engagement optionnel de la source.
+- Le paiement, l'engagement et l'ajout en pile produisent une seule incrémentation de révision ; les échecs ne mutent pas l'état.
+- Les capacités de mana restent sur leur voie immédiate sans pile (ex. `tap-for-mana`) et ne doivent pas être routées dans cette transaction.
+- Ce contrat ne compile pas Oracle et ne décide pas de la légalité/timing propres à la capacité ; le coordinateur doit fournir une activation déjà annoncée et validée.
+- Sacrifice, défausse, paiement de points de vie, coûts alternatifs/additionnels, restrictions d'activation et mal d'invocation restent non pris en charge.
