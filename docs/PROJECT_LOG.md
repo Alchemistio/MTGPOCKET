@@ -14,4 +14,4 @@
 - Le serveur compile depuis CardDefinition Scryfall deux effets sans cible : pioche d'une carte et gain de vie numérique. Coûts supportés : mana générique/coloré simple et engagement optionnel.
 - L'objet rejoint la pile et se résout via le registre typé ; le coordinateur conserve le cycle de vie. La commande acceptée est journalisée et rejouable.
 - Les capacités de créature avec {T} sont refusées faute de suivi de contrôle depuis le début du tour/célérité (CR 602.5a). Les capacités de mana restent sur leur chemin immédiat (CR 605.3b).
-- CI à vérifier sur le commit de cette tranche.
+- CI verte : run 44098476723 sur `38c1340e440de82267bec715286539b17d5b99a6` ; typecheck, Vitest et python-data réussis.

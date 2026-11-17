@@ -102,3 +102,5 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 ### Tests
 - Intégration artifact : commande client minimale, serveur compile le gain de vie, coût générique payé, source engagée, objet typé sur pile, résolution par le handler et rejeu du journal.
 - Refus d'un effet inconnu et d'une capacité de créature avec coût {T}, sans mutation ni paiement.
+
+- CI verte : run 44098476723 sur `38c1340e440de82267bec715286539b17d5b99a6` ; typecheck, Vitest et python-data réussis.

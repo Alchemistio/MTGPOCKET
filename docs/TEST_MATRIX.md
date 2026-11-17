@@ -12,3 +12,5 @@
 - Lignes prises en charge : `[coût]: Draw a card.` et `[coût]: You gain N life.`; coût composé uniquement de symboles mana génériques numériques/WUBRGC et au plus un `{T}`.
 - Test d'intégration : paiement générique, engagement, empilement, handler typé, résolution sans résolveur legacy et rejeu ; refus d'effet inconnu et de source créature avec coût `{T}`.
 - Capacités de mana restent immédiates via `tap-for-mana`. Aucune capacité à cible, coût sacrifice/défausse/PV, restrictions, coût hybride/phyrexian/X ou capacités de loyauté n'est couverte.
+
+- CI verte : run 44098476723 sur `38c1340e440de82267bec715286539b17d5b99a6` ; typecheck, Vitest et python-data réussis.
