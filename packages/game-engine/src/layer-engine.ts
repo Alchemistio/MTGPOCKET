@@ -37,8 +37,8 @@ export interface LayerEvaluationResult<Characteristics> {
 
 /**
  * Generic layer orchestrator. It does not infer CR 613.7 dependencies:
- * callers must supply effects in a dependency-resolved order within each layer.
- * Stable timestamp order is the fallback only where no explicit dependency order exists.
+ * callers must supply effects already ordered according to CR 613.7 and timestamp rules.
+ * This module preserves that supplied order and never guesses dependency precedence.
  */
 export function evaluateContinuousLayers<Characteristics, Context, Payload = unknown>(
   input: LayerEvaluationInput<Characteristics, Context>,
@@ -74,8 +74,8 @@ export function evaluateContinuousLayers<Characteristics, Context, Payload = unk
       unsupportedEffectIds.push(...layerEffects.map(effect => effect.id));
       continue;
     }
-    // Stable sort: ties retain the caller's already-resolved order.
-    const ordered = [...layerEffects].sort((a, b) => a.timestamp - b.timestamp);
+    // Caller supplies the final CR order (dependency precedence, then timestamps).
+    const ordered = [...layerEffects];
     const result = plugin.evaluate(input, characteristics, ordered);
     const allowed = new Set(ordered.map(effect => effect.id));
     const returned = result.appliedEffectIds;

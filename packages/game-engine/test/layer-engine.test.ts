@@ -35,6 +35,19 @@ describe("generic continuous layer engine", () => {
     expect(() => evaluateContinuousLayers(input, [{ ...valid, timestamp: -1 }], [plugin])).toThrow("INVALID_CONTINUOUS_EFFECT_TIMESTAMP");
     expect(() => evaluateContinuousLayers(input, [], [plugin, plugin])).toThrow("DUPLICATE_LAYER_EVALUATOR");
   });
+  it("preserves caller-resolved dependency order even when timestamps disagree", () => {
+    const result = evaluateContinuousLayers(input, [
+      { id: "dependency-first", layer: 4, sourceInstanceId: "source", timestamp: 20, payload: { add: "Artifact" } },
+      { id: "timestamp-first", layer: 4, sourceInstanceId: "source", timestamp: 10, payload: { add: "Enchantment" } }
+    ], [{
+      layer: 4,
+      evaluate(_input, current, effects) {
+        return { characteristics: { types: [...current.types, ...effects.map(effect => effect.payload.add)] }, appliedEffectIds: effects.map(effect => effect.id) };
+      }
+    }]);
+    expect(result.characteristics.types).toEqual(["Creature", "Artifact", "Enchantment"]);
+    expect(result.appliedEffectIds).toEqual(["dependency-first", "timestamp-first"]);
+  });
   it("does not mutate the input characteristics", () => {
     const result = evaluateContinuousLayers(input, [
       { id: "x", layer: 4, sourceInstanceId: "source", timestamp: 0, payload: { add: "Artifact" } }
