@@ -65,6 +65,29 @@ describe("zone-change replacement pipeline", () => {
     expect(result.state.cards.entrant?.zone).toBe("exile");
     expect(result.event).toMatchObject({ fromZone: "hand", toZone: "exile", replacementTrace: ["redirect"] });
   });
+  it("rejects stale choice sessions and stale commits after any state mutation", () => {
+    const state = fixture();
+    const competing = [
+      effect("copy-a", "copy", proposal => ({ ...proposal, toZone: "battlefield" })),
+      effect("copy-b", "copy", proposal => ({ ...proposal, toZone: "graveyard" }))
+    ];
+    const pending = evaluateZoneChangeReplacements(
+      state, createZoneChangeReplacementSession(state, "entrant", "hand"), competing
+    );
+    if (pending.status !== "choice-required") throw new Error("EXPECTED_CHOICE");
+    const changed = addCardInstance(state, {
+      instance_id: "unrelated", card_id: "other-card", owner_id: "p2", zone: "hand"
+    });
+    expect(() => evaluateZoneChangeReplacements(changed, pending.session, competing, "copy-a"))
+      .toThrow("STALE_ZONE_CHANGE_REPLACEMENT_SESSION");
+
+    const ready = evaluateZoneChangeReplacements(
+      state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), []
+    );
+    expect(() => commitReplacedZoneChange(changed, ready, {
+      eventId: "stale-commit", cause: "effect"
+    })).toThrow("STALE_ZONE_CHANGE_REPLACEMENT_SESSION");
+  });
   it("rejects a replacement that changes event identity or origin", () => {
     const state = fixture(), invalid = effect("invalid", "general", proposal => ({ ...proposal, instanceId: "other" }));
     expect(() => evaluateZoneChangeReplacements(state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), [invalid])).toThrow("ZONE_CHANGE_REPLACEMENT_CHANGED_EVENT_IDENTITY");
