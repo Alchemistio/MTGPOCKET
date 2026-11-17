@@ -6,7 +6,8 @@
 - [x] Sortie explicite des effets sans plugin.
 - [x] Validation des IDs, sources, timestamps et plugins dupliqués.
 - [x] Tests de non-mutation et d'erreurs.
-- [ ] Adaptateur de la tranche couche 4 existante vers le plugin commun.
+- [x] Adaptateur de la tranche couche 4 existante vers l'ordonnanceur commun.
+- [x] Prédicat de dépendance structuré pour les sélecteurs/opérations de changement de types (couche 4, couverture étroite).
 
 ## L1 — Ordonnancement normatif (CR 613.7–613.8)
 - [x] Contrat d'effets appartenant à une même couche/sous-couche.

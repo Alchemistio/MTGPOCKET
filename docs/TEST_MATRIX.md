@@ -196,3 +196,8 @@ Le run **43807266906** est vert sur `e00d679`, avant les nouveaux checkpoints pr
 ## Ordonnanceur de dépendances des effets continus — ajout 2026-11-17
 - `dependency-order.test.ts` : dépendance prioritaire sur timestamp, dépendance qui apparaît après application (réévaluation 613.8c), cycle terminal appliqué par timestamp (613.8b), effet en aval du cycle, compatibilité CDA (613.8a), validation des groupes/IDs/timestamps et non-mutation.
 - Le prédicat sémantique est injecté ; ces tests valident l'ordonnanceur, pas l'analyse du texte Oracle ni la détection automatique de dépendance.
+
+
+## Adaptateur couche 4 vers l'ordonnanceur CR 613.8 — ajout 2026-11-17
+- `continuous-effects.test.ts` : dépendance qui impose l'application de l'effet ajoutant un type avant un effet plus ancien qui cible ce type ; effet retirant un type appliqué d'abord lorsqu'il désactive le sélecteur d'un autre effet ; égalité timestamp stable, filtres de contrôleur, source propre, validation et non-mutation.
+- Le prédicat est exact pour le modèle structuré de changements de types de cette tranche (sélecteurs + opérations add/remove). Il ne couvre pas les autres familles d'effets continus ni le texte Oracle libre.

@@ -13,7 +13,8 @@
 - `dependency-order.ts` reçoit un prédicat sémantique `dependsOn(effect, other, state)` fourni par le compilateur/résolveur. Il ne prétend pas déduire la sémantique Oracle à partir des sélecteurs génériques.
 - L'ordonnanceur recalcule le graphe après chaque application (613.8c), choisit parmi les effets sans dépendance en attente par timestamp, et traite un SCC cyclique terminal par timestamp (613.8b). Les effets en aval d'un cycle restent en attente.
 - Les effets transmis à cet ordonnanceur doivent appartenir à une seule couche/sous-couche. Le moteur principal traverse toujours les couches 1–7.
-- La détermination du prédicat de dépendance reste à implémenter pour chaque famille d'effets structurés ; ne pas fournir un prédicat approximatif.
+- La tranche couche 4 actuelle détermine la dépendance pour ses propres sélecteurs/opérations structurés : elle détecte le changement d'applicabilité et le changement des valeurs effectivement ajoutées/retirées.
+- Les autres familles d'effets doivent fournir leur propre prédicat sémantique ; ne pas extrapoler ce détecteur type-changing à Oracle arbitraire.
 
 ## Frontières
 Le moteur ne parse pas Oracle, ne lit pas Scryfall, ne modifie pas GameState et ne décide pas de la sélection de cible. Les compilateurs/registries fournissent les effets structurés et le prédicat de dépendance. Le calcul d'un entrant (614.12) et le recalcul global des permanents devront réutiliser le même contrat sans confondre les deux contextes.

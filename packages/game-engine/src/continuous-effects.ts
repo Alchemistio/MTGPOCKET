@@ -1,5 +1,6 @@
 import type { InstanceId, PlayerId } from "./model.js";
 import type { EnteringPermanentCharacteristicsContext, PermanentCharacteristics } from "./entering-characteristics.js";
+import { applyContinuousEffectsInDependencyOrder } from "./dependency-order.js";
 
 export interface TypeChangingEffectSelector {
   readonly controllerId?: PlayerId;
@@ -11,12 +12,13 @@ export type TypeChangingOperation =
   | { readonly kind: "add"; readonly supertypes?: readonly string[]; readonly cardTypes?: readonly string[]; readonly subtypes?: readonly string[] }
   | { readonly kind: "remove"; readonly supertypes?: readonly string[]; readonly cardTypes?: readonly string[]; readonly subtypes?: readonly string[] };
 
-/** A compiled layer-4 effect. Dependencies must be resolved by the caller first. */
+/** A compiled layer-4 effect. CDA status is supplied by the rules compiler. */
 export interface Layer4TypeChangingEffect {
   readonly id: string;
   readonly layer: 4;
   readonly sourceInstanceId: InstanceId;
   readonly timestamp: number;
+  readonly characteristicDefiningAbility?: boolean;
   readonly selector: TypeChangingEffectSelector;
   readonly operation: TypeChangingOperation;
 }
@@ -25,9 +27,14 @@ export interface Layer4EvaluationResult {
   readonly instanceId: InstanceId;
   readonly characteristics: PermanentCharacteristics;
   readonly appliedEffectIds: readonly string[];
+  readonly dependencyLoopEffectIds: readonly string[];
 }
 
-/** Applies supplied type-changing effects to the proposed entrant in timestamp order. */
+/**
+ * Applies structured type-changing effects to the proposed entrant.
+ * Selector and operation semantics are sufficiently explicit here to evaluate the
+ * CR 613.8a dependency test for this narrow effect family.
+ */
 export function evaluateEnteringPermanentLayer4(
   context: EnteringPermanentCharacteristicsContext,
   effects: readonly Layer4TypeChangingEffect[]
@@ -49,16 +56,78 @@ export function evaluateEnteringPermanentLayer4(
     validateOperation(effect.operation);
     validateSelector(effect.selector);
   }
-  // Array#sort is stable: equal timestamps retain the caller's pre-resolved order.
-  const ordered = [...effects].sort((a, b) => a.timestamp - b.timestamp);
-  let characteristics = cloneCharacteristics(context.entrant.characteristics);
+
+  const dependencyEffects = effects.map(effect => ({
+    ...effect,
+    layerKey: "layer-4",
+    characteristicDefiningAbility: effect.characteristicDefiningAbility ?? false
+  }));
   const appliedEffectIds: string[] = [];
-  for (const effect of ordered) {
-    if (!matchesSelector(effect.selector, context.entrant.controllerId, characteristics)) continue;
-    characteristics = applyOperation(characteristics, effect.operation);
-    appliedEffectIds.push(effect.id);
-  }
-  return { layer: 4, instanceId: context.entrant.instanceId, characteristics, appliedEffectIds };
+  const ordered = applyContinuousEffectsInDependencyOrder(
+    cloneCharacteristics(context.entrant.characteristics),
+    dependencyEffects,
+    {
+      dependsOn: (candidate, other, current) =>
+        layer4TypeChangingEffectDependsOn(candidate, other, context.entrant.controllerId, current),
+      apply: (effect, current) => {
+        if (!matchesSelector(effect.selector, context.entrant.controllerId, current)) return current;
+        appliedEffectIds.push(effect.id);
+        return applyOperation(current, effect.operation);
+      }
+    }
+  );
+  return {
+    layer: 4,
+    instanceId: context.entrant.instanceId,
+    characteristics: ordered.state,
+    appliedEffectIds,
+    dependencyLoopEffectIds: ordered.dependencyLoopEffectIds
+  };
+}
+
+function layer4TypeChangingEffectDependsOn(
+  candidate: Layer4TypeChangingEffect,
+  other: Layer4TypeChangingEffect,
+  controllerId: PlayerId,
+  current: PermanentCharacteristics
+): boolean {
+  const candidateAppliesBefore = matchesSelector(candidate.selector, controllerId, current);
+  const afterOther = matchesSelector(other.selector, controllerId, current)
+    ? applyOperation(current, other.operation)
+    : current;
+  const candidateAppliesAfter = matchesSelector(candidate.selector, controllerId, afterOther);
+  if (candidateAppliesBefore !== candidateAppliesAfter) return true;
+  if (!candidateAppliesBefore) return false;
+
+  // If the other effect changes the set of characteristics this operation would
+  // actually add/remove, it changes what this effect does to the entrant.
+  return !sameOperationDelta(
+    operationDelta(current, candidate.operation),
+    operationDelta(afterOther, candidate.operation)
+  );
+}
+
+function operationDelta(
+  current: PermanentCharacteristics,
+  operation: TypeChangingOperation
+): { supertypes: string[]; cardTypes: string[]; subtypes: string[] } {
+  const changed = (values: readonly string[], requested: readonly string[] | undefined): string[] =>
+    (requested ?? []).filter(value => operation.kind === "add" ? !values.includes(value) : values.includes(value));
+  return {
+    supertypes: changed(current.supertypes, operation.supertypes),
+    cardTypes: changed(current.cardTypes, operation.cardTypes),
+    subtypes: changed(current.subtypes, operation.subtypes)
+  };
+}
+function sameOperationDelta(
+  left: ReturnType<typeof operationDelta>,
+  right: ReturnType<typeof operationDelta>
+): boolean {
+  const same = (a: readonly string[], b: readonly string[]) =>
+    a.length === b.length && a.every(value => b.includes(value));
+  return same(left.supertypes, right.supertypes) &&
+    same(left.cardTypes, right.cardTypes) &&
+    same(left.subtypes, right.subtypes);
 }
 
 function validateSelector(selector: TypeChangingEffectSelector): void {

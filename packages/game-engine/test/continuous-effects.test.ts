@@ -31,15 +31,24 @@ function effect(
 }
 
 describe("entering permanent layer-4 type changes", () => {
-  it("applies timestamp order and rechecks selectors against updated characteristics", () => {
+  it("applies a dependency before an earlier-timestamp effect and reevaluates selectors", () => {
     const result = evaluateEnteringPermanentLayer4(makeContext(), [
-      effect("remove-creature", 20, { kind: "remove", cardTypes: ["Creature"] }, { subtypesAny: ["Bear"] }),
-      effect("add-artifact", 10, { kind: "add", cardTypes: ["Artifact"] }, { cardTypesAny: ["Creature"] }),
-      effect("remove-bear", 30, { kind: "remove", subtypes: ["Bear"] }, { cardTypesAny: ["Artifact"] })
+      effect("remove-bear", 1, { kind: "remove", subtypes: ["Bear"] }, { cardTypesAny: ["Artifact"] }),
+      effect("add-artifact", 10, { kind: "add", cardTypes: ["Artifact"] }, { subtypesAny: ["Bear"] }),
+      effect("remove-creature", 20, { kind: "remove", cardTypes: ["Creature"] }, { subtypesAny: ["Bear"] })
     ]);
     expect(result.characteristics.cardTypes).toEqual(["Artifact"]);
     expect(result.characteristics.subtypes).toEqual([]);
-    expect(result.appliedEffectIds).toEqual(["add-artifact", "remove-creature", "remove-bear"]);
+    expect(result.appliedEffectIds).toEqual(["add-artifact", "remove-bear", "remove-creature"]);
+  });
+
+  it("applies a type-removing dependency first when it disables another effect's selector", () => {
+    const result = evaluateEnteringPermanentLayer4(makeContext(), [
+      effect("add-artifact-if-creature", 1, { kind: "add", cardTypes: ["Artifact"] }, { cardTypesAny: ["Creature"] }),
+      effect("remove-creature", 20, { kind: "remove", cardTypes: ["Creature"] }, { subtypesAny: ["Bear"] })
+    ]);
+    expect(result.characteristics.cardTypes).toEqual([]);
+    expect(result.appliedEffectIds).toEqual(["remove-creature"]);
   });
   it("does not mutate context or existing battlefield characteristics", () => {
     const input = makeContext();

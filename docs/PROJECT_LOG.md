@@ -1,3 +1,12 @@
+## 2026-11-17 — Adaptateur couche 4 et dépendances structurées
+
+- Raccordement de `evaluateEnteringPermanentLayer4` à l'ordonnanceur CR 613.8.
+- Détection des dépendances dans le sous-ensemble type-changing : changement d'applicabilité d'un sélecteur ou changement du delta effectif d'une opération add/remove.
+- Les effets CDA/non-CDA suivent le contrat du moteur ; les effets sans sélecteur applicable sont ordonnancés mais ne sont pas comptés comme appliqués.
+- Tests : dépendance qui inverse l'ordre timestamp, effet qui désactive le sélecteur d'un autre, ordre stable, contrôleur, source propre, validation et non-mutation.
+- Limites : pas de détecteur de dépendance Oracle général, pas de prédicats pour couches 1–3/5–7, pas de timestamps 613.7 automatisés ni de recalcul global.
+- CI du SHA de cette tranche à vérifier ; aucun test local ni appareil revendiqué.
+
 ## 2026-11-17 — Ordonnanceur dynamique de dépendances CR 613.8
 
 - Vérification du texte des Comprehensive Rules : 613.7 = timestamps ; 613.8 = dépendance. Correction des références dans la roadmap/architecture.

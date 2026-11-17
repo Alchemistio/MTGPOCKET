@@ -18,7 +18,8 @@ Créer un moteur de couches générique servant de référence commune aux syst�
 ## Limites et risques
 - Les prédicats sémantiques de dépendance ne sont pas encore produits par les compilateurs de cartes/effets ; un prédicat incorrect invaliderait l'ordre. Le helper est donc une primitive de référence, pas une détection complète Oracle.
 - Les timestamps 613.7a–n ne sont pas encore générés automatiquement.
-- La tranche couche 4 n'est pas encore raccordée à cet ordonnanceur, et le recalcul global de tous les permanents reste à faire.
+- La tranche couche 4 est maintenant raccordée : son prédicat compare l'applicabilité du sélecteur et le delta effectif de l'opération avant/après l'autre effet. Les effets sans sélection applicable sont consommés sans être marqués appliqués.
+- Le plugin couche 4 reste limité aux changements structurés de types/sous-types/super-types ; pas de compilation Oracle, de recalcul global ou d'intégration de toutes les couches.
 - Le traitement d'un SCC entier par timestamp doit être conservé comme politique explicite et couvert par des cas de règles supplémentaires avant usage sur toutes les familles.
 
 ## Amélioration de méthode

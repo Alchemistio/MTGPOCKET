@@ -10,4 +10,4 @@ Entrées runtime :
 - `packages/game-engine/src/layer-engine.ts` : pipeline plugin 1–7.
 - `packages/game-engine/src/dependency-order.ts` : application ordonnée avec réévaluation des dépendances 613.8.
 
-Le prédicat sémantique de dépendance est fourni par l'appelant ; les prédicats de cartes/effets et la génération des timestamps restent à construire. Le calcul des caractéristiques reste limité à la tranche couche 4 décrite dans `continuous-effects.ts`. Ce n'est pas encore une implémentation complète de CR 613.
+La tranche couche 4 utilise un prédicat sémantique interne limité à ses sélecteurs/opérations. Les autres familles de cartes/effets doivent encore fournir leurs prédicats ; la génération des timestamps reste à construire. Le calcul des caractéristiques reste limité à la tranche couche 4 décrite dans `continuous-effects.ts`. Ce n'est pas encore une implémentation complète de CR 613.
