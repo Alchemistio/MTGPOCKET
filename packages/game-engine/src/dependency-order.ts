@@ -38,7 +38,7 @@ export function applyContinuousEffectsInDependencyOrder<
   if (ids.some(id => !id.trim()) || new Set(ids).size !== ids.length) {
     throw new Error("INVALID_OR_DUPLICATE_CONTINUOUS_EFFECT_ID");
   }
-  const layerKey = effects[0].layerKey;
+  const layerKey = effects[0]!.layerKey;
   if (!layerKey.trim() || effects.some(effect => effect.layerKey !== layerKey)) {
     throw new Error("MIXED_LAYER_OR_SUBLAYER_DEPENDENCY_GROUP");
   }
@@ -70,7 +70,7 @@ export function applyContinuousEffectsInDependencyOrder<
 
     const ready = remaining.filter(effect => dependencies.get(effect.id)!.size === 0).sort(byTimestamp);
     if (ready.length > 0) {
-      const next = ready[0];
+      const next = ready[0]!;
       state = options.apply(next, state);
       appliedEffectIds.push(next.id);
       remaining = remaining.filter(effect => effect.id !== next.id);
@@ -81,8 +81,8 @@ export function applyContinuousEffectsInDependencyOrder<
     // of a loop are not part of the loop and must continue waiting.
     const cycleGroups = findSinkDependencyCycles(remaining, dependencies);
     if (cycleGroups.length === 0) throw new Error("DEPENDENCY_ORDERING_STALLED");
-    cycleGroups.sort((a, b) => byTimestamp(a[0], b[0]));
-    const loop = cycleGroups[0].sort(byTimestamp);
+    cycleGroups.sort((a, b) => byTimestamp(a[0]!, b[0]!));
+    const loop = cycleGroups[0]!.sort(byTimestamp);
     const loopIds = new Set(loop.map(effect => effect.id));
     for (const effect of loop) {
       state = options.apply(effect, state);

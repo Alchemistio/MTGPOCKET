@@ -40,7 +40,7 @@ describe("continuous effect dependency ordering (CR 613.8)", () => {
         (candidate.id === "loop-late" && other.id === "loop-early") ||
         (candidate.id === "loop-early" && other.id === "loop-late") ||
         (candidate.id === "waits-for-loop" && other.id === "loop-late"),
-      apply: (state, next) => [...state, next.id]
+      apply: (next, state) => [...state, next.id]
     });
     expect(result.appliedEffectIds).toEqual(["loop-early", "loop-late", "waits-for-loop"]);
     expect(result.dependencyLoopEffectIds).toEqual(["loop-early", "loop-late"]);
