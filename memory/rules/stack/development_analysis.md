@@ -49,3 +49,8 @@ Pour les prochains changements, inventorier les fonctions existantes, les consom
 - Le contrat payload du handler ne transporte que l'effet compilé et son paramètre ; le décodeur inspecte oracleText runtime et rejette les montants non sûrs ou nuls.
 - GameRoom ne route que les sorts non-permanents dont le texte correspond à ces modèles. Les permanents conservent leur branche de zone ; les effets inconnus restent sur le résolveur injecté.
 - Les tests Divination et gain de vie empêchent explicitement l'appel du résolveur legacy pour les sorts.
+
+### Retour CI et invariant conservé
+- La première CI de migration des sorts a révélé que le dispatch typé retournait trop tôt et sautait le déplacement du sort résolu de la zone stack vers le cimetière.
+- Correction : le coordinateur conserve explicitement cette transition après le retour du handler. Le handler reste limité à l'effet de carte ; il ne prend pas en charge le cycle de vie.
+- Le test d'intégration avait détecté la régression sur Divination et le sort de gain de vie. Ce cas devient un invariant à préserver pour toute nouvelle famille de handlers.

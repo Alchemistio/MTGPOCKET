@@ -211,7 +211,13 @@ export class GameRoom {
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             if (item.kind === "spell" && isBasicSpellPayload(item.payload)) {
               const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
-              if (handled.status === "resolved") return handled.state;
+              if (handled.status === "resolved") {
+                const resolved = handled.state;
+                if (item.source_instance_id && resolved.cards[item.source_instance_id]?.zone === "stack") {
+                  return moveCardToZone(resolved, item.source_instance_id, "graveyard");
+                }
+                return resolved;
+              }
               if (handled.status === "invalid-payload") throw new Error("INVALID_BASIC_SPELL_PAYLOAD");
             }
             if (item.kind === "triggered-ability" && isBasicEtbTriggerPayload(item.payload)) {

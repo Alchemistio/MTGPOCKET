@@ -575,3 +575,5 @@ Journal append-only : ajouter une nouvelle entrée en tête, ne pas réécrire l
 - Les tests Divination et gain de vie empêchent l'appel du résolveur legacy pour les sorts, tandis que les triggers ETB gardent leur propre handler typé.
 - La branche des permanents et les résolutions inconnues restent inchangées.
 - Validation CI à effectuer sur le commit d'implémentation.
+
+- Analyse CI : le premier passage sur la migration des sorts a détecté une régression de zone (sort conservé en zone stack après effet). Le coordinateur a été corrigé pour effectuer le déplacement vers le cimetière après l'exécution du handler ; nouvelle CI requise.
