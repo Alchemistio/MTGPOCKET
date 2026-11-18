@@ -92,9 +92,9 @@ describe("GameRoom", () => {
       effect: (candidate.stackItem.payload as { effect: string }).effect,
       eventId: candidate.eventId
     }))).toEqual([
+      { source: "recruit-instance", controller: "p1", effect: "etb-draw-one", eventId: "entry-event-1" },
       { source: "watcher-instance", controller: "p2", effect: "etb-draw-one", eventId: "entry-event-1" },
-      { source: "shrine-instance", controller: "p3", effect: "etb-gain-life", eventId: "entry-event-1" },
-      { source: "recruit-instance", controller: "p1", effect: "etb-draw-one", eventId: "entry-event-1" }
+      { source: "shrine-instance", controller: "p3", effect: "etb-gain-life", eventId: "entry-event-1" }
     ]);
     expect(new Set(candidates.map(candidate => candidate.stackItem.id)).size).toBe(3);
   });
