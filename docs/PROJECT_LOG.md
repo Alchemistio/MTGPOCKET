@@ -1,0 +1,79 @@
+
+
+## 2026-11-17 — Contrat atomique d'activation des capacités
+- Ajout de `activateStackAbility` au moteur partagé pour les capacités activées qui utilisent la pile : validation de la source et du contrôleur, paiement du mana générique/coloré simple, engagement optionnel et insertion de l'objet de pile.
+- L'ensemble est atomique et incrémente la révision une seule fois ; les échecs ne modifient pas l'état.
+- Les capacités de mana existantes (`tap-for-mana`) restent immédiates et sans pile.
+- Le serveur ne route pas encore de capacités activées : absence de schéma structuré pour les capacités de carte, coûts avancés, timing et restrictions.
+- Tests unitaires ajoutés pour succès, échecs, coûts non supportés et non-mutation. CI verte : run 44096082742 sur `acddf1356b50c90116121cc322ed277d25908019` ; typecheck, Vitest et python-data réussis.
+
+
+## 2026-11-17 — Première capacité activée via protocole
+
+- Ajout de `activate-ability` : le client transmet l'instance et l'index de ligne Oracle, jamais le coût ni l'effet.
+- Le serveur compile depuis CardDefinition Scryfall deux effets sans cible : pioche d'une carte et gain de vie numérique. Coûts supportés : mana générique/coloré simple et engagement optionnel.
+- L'objet rejoint la pile et se résout via le registre typé ; le coordinateur conserve le cycle de vie. La commande acceptée est journalisée et rejouable.
+- Les capacités de créature avec {T} sont refusées faute de suivi de contrôle depuis le début du tour/célérité (CR 602.5a). Les capacités de mana restent sur leur chemin immédiat (CR 605.3b).
+- CI verte : run 44098476723 sur `38c1340e440de82267bec715286539b17d5b99a6` ; typecheck, Vitest et python-data réussis.
+
+
+## 2026-11-18 — ETB : reprise des sessions de remplacement dans le moteur
+- Ajout de `resumeZoneChangeWithReplacements` pour poursuivre une proposition après un choix de remplacement sans perdre les remplacements déjà appliqués.
+- Le point d'entrée initial `processZoneChangeWithReplacements` délègue à la même primitive de reprise ; une nouvelle décision peut être demandée après chaque réévaluation.
+- Test moteur ajouté pour deux choix successifs, non-mutation avant commit, trace déterministe et modification d'entrée incluse dans le snapshot final.
+- Le protocole serveur et la persistance des choix ne sont pas inclus dans cette tranche ; GameRoom ne doit pas encore exposer ce mécanisme comme une fonctionnalité utilisable en partie.
+
+
+## 2026-11-18 — ETB : suspension serveur des choix de remplacement
+
+- Ajout de `GameState.pendingZoneChangeChoice`, structure sérialisable qui conserve la session de remplacement, le stack item suspendu, le joueur décideur et les candidats.
+- `GameRoom` suspend désormais la résolution d'un sort permanent si plusieurs remplacements concurrents exigent un choix ; la carte reste en zone stack et la pile ne se termine pas prématurément.
+- Nouvelle commande `resolve-zone-change-replacement` : contrôle du joueur autorisé, du pending ID et de l'effet candidat ; plusieurs décisions successives reprennent la même session avec garde de révision.
+- `GameView` expose les candidats uniquement au contrôleur du permanent entrant. Les fonctions de remplacement sont reconstruites par `EntryReplacementResolver` et ne sont jamais sérialisées.
+- Le checkpoint et le journal de commandes assurent le rejeu/restauration d'une décision en attente lorsque le même résolveur serveur est fourni.
+- Test d'intégration couvre deux choix, refus d'un autre siège, carte/stack conservés pendant la suspension, commit final, confidentialité, rejeu et restauration.
+- Limites : un événement/permanent et un décideur ; pas encore de choix APNAP simultanés, de 616.1g, ni de registre complet des effets de remplacement globaux.
+- CI verte pour la suspension serveur : run 44252301628 sur `881592facfb69504ac1f6290a672fe78d28a95b9`. Après le correctif CR 608.3e, run 44252738631 sur `68fb73ca63fa0a2588facb408d46f458bfcef738` passe aussi : typecheck, Vitest et python-data.
+
+- Complément CR 608.3e : une entrée prévenue ne laisse pas le sort permanent bloqué en zone stack ; un changement de zone distinct l'envoie au cimetière de son propriétaire. Les remplacements du mouvement secondaire restent à traiter dans la tranche des événements imbriqués.
+
+
+## 2026-11-18 — ETB-1 : scanner initial de candidats
+
+- Ajout de `scanBasicZoneChangeTriggers`, qui parcourt tous les permanents du champ de bataille, entrant compris, pour chaque événement d'entrée commis.
+- Compilation allowlist de motifs ETB exacts : self `When {name} enters`, `Whenever [another] creature/permanent enters`, avec pioche d'une carte ou gain de N points de vie.
+- Chaque candidat conserve l'instance source, le contrôleur capturé au moment du trigger, l'événement et l'index de ligne ; identifiants déterministes pour rejeu.
+- Test couvrant trois sources et trois contrôleurs (p2, p3, p1) et la détection des triggers globaux + self.
+- Le scanner retourne des candidats uniquement : le placement sur la pile est différé au chantier APNAP/priority checkpoint. Le chemin de résolution live n'est pas encore migré ; pas de types/capacités calculés par couches, événements multi-entrants ou sources hors battlefield.
+
+
+## 2026-11-18 — ETB-2 : contrat de batch et ordre APNAP
+
+- Ajout d'un batch sérialisable de triggers détectés, regroupés par contrôleur dans l'ordre APNAP calculé à partir du joueur actif et des sièges.
+- Les groupes à un seul trigger sont ordonnés automatiquement ; les autres contrôleurs répondent séquentiellement et chacun doit fournir une permutation exacte de ses propres IDs.
+- L'ordre retourné est explicitement l'ordre d'insertion bottom-to-top : le dernier objet ajouté est le sommet et résout en premier.
+- Les StackItems candidats sont conservés comme snapshots ; le batch ne re-vérifie pas la présence de leur source sur le champ de bataille après le déclenchement.
+- Cette tranche est un contrat moteur pur : aucune mutation GameState, commande GameRoom, projection privée, insertion dans la pile ou intégration au checkpoint de priorité. Les SBA et les triggers qui en résultent restent à orchestrer.
+
+
+## 2026-11-18 — ETB-2 : décisions APNAP persistées côté serveur
+- Ajout de `GameState.pendingTriggerBatch` avec migration des checkpoints plus anciens vers `null`.
+- Nouvelle commande `order-etb-triggers` : seul le prochain contrôleur APNAP peut fournir l'ordre exact de ses triggers ; le serveur conserve les StackItems candidats et n'accepte que les IDs.
+- Projection privée : seul le contrôleur autorisé reçoit les IDs du groupe à ordonner ; les autres sièges ne voient qu'un compteur de groupes restants.
+- Chaque choix incrémente la révision et est enregistré dans le journal ; tests de rejet, rejeu et restauration.
+- `pass-priority` est bloqué tant qu'un batch est présent, y compris une fois tous les groupes ordonnés : la tranche suivante doit appliquer les SBA/trigger loop, puis insérer les objets ordonnés sur la pile et vider le batch.
+- Le scanner candidat-only et le chemin live historique restent inchangés ; cette intégration n'active donc pas encore les triggers ETB génériques en partie.
+
+
+## 2026-11-18 — ETB-2 : primitive de finalisation mécanique
+- Ajout de `finalizePendingTriggerBatch` dans le moteur : vérification de l'identité du batch, de l'ordre complet, de l'état de résolution et des collisions d'identifiants avant toute mutation.
+- Insertion atomique des snapshots en ordre APNAP bottom-to-top, consommation du batch et incrément de révision unique. La source du trigger n'a pas à être encore présente sur le battlefield.
+- Tests positifs/négatifs pour ordre LIFO, batch incomplet/périmé, collision et absence de mutation partielle.
+- La primitive ne fait ni SBA ni attribution de priorité et n'est pas appelée depuis GameRoom. Elle ne rend donc pas les triggers ETB génériques actifs en partie ; le checkpoint de stabilisation reste à concevoir.
+
+
+## 2026-11-18 — ETB-3B : primitive de stabilisation SBA
+- Ajout de `runStateBasedActionCheckpoint`, orchestrateur pur qui répète des passes SBA atomiques rapportées par un adaptateur jusqu'à stabilisation.
+- Les snapshots de triggers générés pendant les passes sont accumulés dans deux classes séparées, sans empilement ni attribution de priorité ; cela conserve la distinction des deux vagues APNAP de CR 603.3b.
+- Validation stricte des transitions/révisions, IDs de triggers uniques, et garde de sécurité configurable.
+- Limite explicite : `applyStateBasedActions` ne retourne pas encore de trace d'événements ni de triggers SBA ; GameRoom n'appelle donc pas cette primitive. Aucun changement n'active les ETB génériques en partie.
