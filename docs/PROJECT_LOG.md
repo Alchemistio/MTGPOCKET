@@ -63,3 +63,10 @@
 - Chaque choix incrémente la révision et est enregistré dans le journal ; tests de rejet, rejeu et restauration.
 - `pass-priority` est bloqué tant qu'un batch est présent, y compris une fois tous les groupes ordonnés : la tranche suivante doit appliquer les SBA/trigger loop, puis insérer les objets ordonnés sur la pile et vider le batch.
 - Le scanner candidat-only et le chemin live historique restent inchangés ; cette intégration n'active donc pas encore les triggers ETB génériques en partie.
+
+
+## 2026-11-18 — ETB-2 : primitive de finalisation mécanique
+- Ajout de `finalizePendingTriggerBatch` dans le moteur : vérification de l'identité du batch, de l'ordre complet, de l'état de résolution et des collisions d'identifiants avant toute mutation.
+- Insertion atomique des snapshots en ordre APNAP bottom-to-top, consommation du batch et incrément de révision unique. La source du trigger n'a pas à être encore présente sur le battlefield.
+- Tests positifs/négatifs pour ordre LIFO, batch incomplet/périmé, collision et absence de mutation partielle.
+- La primitive ne fait ni SBA ni attribution de priorité et n'est pas appelée depuis GameRoom. Elle ne rend donc pas les triggers ETB génériques actifs en partie ; le checkpoint de stabilisation reste à concevoir.

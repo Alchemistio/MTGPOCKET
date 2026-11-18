@@ -53,3 +53,9 @@ Toute rupture de message doit incrémenter `protocolVersion` et être documenté
 - `GameView.pendingTriggerOrder` révèle le batch et les IDs candidats uniquement au contrôleur dont c'est le tour d'ordonner ; `pendingTriggerOrderCount` ne révèle que le nombre de groupes restant.
 - Le batch est inclus dans le snapshot et ses décisions dans le journal de commandes ; restauration/rejeu reproduit le même ordre.
 - Limite : les candidats ne sont pas encore générés depuis le chemin live, ne sont pas insérés dans la pile et le batch reste bloquant même lorsque tous les groupes sont ordonnés. Le checkpoint de priorité/SBA et la finalisation sur la pile seront ajoutés séparément.
+
+
+## Finalisation interne d'un batch ETB (moteur uniquement)
+- Le moteur expose `finalizePendingTriggerBatch(state, batchId)` pour ajouter les snapshots déjà ordonnés sur la pile et vider le batch en une mutation.
+- Cette opération n'est pas une commande client et n'est pas appelée automatiquement par GameRoom. Aucun client ne peut demander une insertion anticipée.
+- Le serveur doit d'abord orchestrer le checkpoint de règles (SBA, triggers induits et stabilisation) avant d'appeler cette primitive ; aucun trigger ETB générique n'est encore activé par cette tranche.

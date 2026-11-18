@@ -138,3 +138,11 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Le journal de commandes et le snapshot restaurent le batch et les choix.
 - Le batch empêche le passage de priorité. Même complètement ordonné, il n'est pas encore consommé : le prochain chantier doit orchestrer SBA → triggers induits → stabilisation, puis insérer le batch sur la pile et vider le champ.
 - Non intégré au scanner live : aucun nouveau trigger générique n'est encore ajouté à ce batch pendant une partie.
+
+
+## ETB-2 — primitive de finalisation du batch (2026-11-18)
+- `finalizePendingTriggerBatch(state, batchId)` consomme atomiquement un batch dont tous les groupes APNAP sont ordonnés.
+- Les snapshots sont ajoutés bottom-to-top après la pile existante ; le dernier candidat devient le sommet et résout en premier. La source n'est pas revalidée sur le battlefield.
+- Le batch est vidé dans la même mutation, la révision augmente une fois et les passes de priorité sont réinitialisées.
+- Refus d'un batch absent/périmé, d'un groupe non ordonné, d'un état en résolution ou d'un identifiant de pile collisionnant ; aucun ajout partiel en cas d'échec.
+- Cette primitive ne lance pas les SBA, n'accorde pas la priorité et ne constitue pas un checkpoint de règles. Elle n'est pas appelée par GameRoom : l'orchestration SBA → triggers induits → stabilisation reste le prérequis à l'intégration live.

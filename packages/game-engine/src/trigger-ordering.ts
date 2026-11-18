@@ -122,3 +122,38 @@ export function getPendingTriggerStackItemsBottomToTop(
   }
   return ordered;
 }
+
+
+/**
+ * Atomically consumes a fully ordered trigger batch and appends its snapshots
+ * to the stack in APNAP insertion order (bottom to top). This is deliberately
+ * a mechanical primitive: it does not run state-based actions, grant priority,
+ * or decide when the rules checkpoint permits triggers to be stacked.
+ */
+export function finalizePendingTriggerBatch(state: GameState, batchId: string): GameState {
+  const batch = state.pendingTriggerBatch;
+  if (!batch || batch.id !== batchId) {
+    throw new EngineError("INVALID_TRIGGER_BATCH", "Le batch de triggers demandé est absent ou périmé.");
+  }
+  if (state.status !== "active" || state.awaitingResolutionId !== null) {
+    throw new EngineError("INVALID_TRIGGER_BATCH", "La partie ou la pile ne permet pas de finaliser ce batch.");
+  }
+  const orderedItems = getPendingTriggerStackItemsBottomToTop(batch);
+  if (orderedItems === null) {
+    throw new EngineError("INVALID_TRIGGER_BATCH", "Tous les groupes APNAP doivent être ordonnés avant l'insertion.");
+  }
+  const existingIds = new Set(state.stack.map(item => item.id));
+  if (orderedItems.some(item => existingIds.has(item.id)) ||
+      new Set(orderedItems.map(item => item.id)).size !== orderedItems.length) {
+    throw new EngineError("INVALID_TRIGGER_BATCH", "Le batch contient un identifiant déjà utilisé sur la pile.");
+  }
+
+  return {
+    ...state,
+    revision: state.revision + 1,
+    stack: [...state.stack, ...orderedItems],
+    pendingTriggerBatch: null,
+    consecutivePasses: [],
+    priorityWindowClosed: false
+  };
+}

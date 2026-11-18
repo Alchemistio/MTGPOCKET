@@ -57,3 +57,10 @@
 - Tests GameRoom : mauvais contrôleur, mauvais batch, permutation dupliquée/étrangère, séquence APNAP, groupe singleton auto-ordonné, vue privée, snapshot/checkpoint, rejeu et restauration.
 - Le batch bloque `pass-priority` afin qu'une décision d'ordre ne puisse pas être contournée.
 - Limite : aucun branchement du scanner ETB, aucun placement effectif sur la pile ; même après le dernier ordre, le batch reste présent et bloque la progression jusqu'à la prochaine tranche de finalisation/checkpoint.
+
+
+## ETB-2 — finalisation mécanique du batch (2026-11-18)
+- `finalizePendingTriggerBatch` : batch exact, tous groupes ordonnés, état actif sans résolution concurrente, absence de collision d'IDs.
+- Test de l'ordre APNAP bottom-to-top, du sommet LIFO, du snapshot lorsque la source a quitté le battlefield, de la révision unique et de la consommation atomique.
+- Tests négatifs : groupe incomplet, ID de batch périmé et collision avec un objet de pile existant ; aucune insertion partielle.
+- Non couvert : checkpoint CR, SBA, triggers générés par SBA, décision du moment d'appel, intégration GameRoom et transport client.

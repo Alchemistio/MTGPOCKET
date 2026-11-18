@@ -3,7 +3,8 @@ import {
   createPendingTriggerBatch,
   getNextTriggerOrderControllerId,
   getPendingTriggerStackItemsBottomToTop,
-  recordPendingTriggerOrder
+  recordPendingTriggerOrder,
+  finalizePendingTriggerBatch
 } from "../src/trigger-ordering.js";
 import { advanceAutomaticStep, createGame, EngineError, type StackItem } from "../src/index.js";
 
@@ -61,6 +62,53 @@ describe("pending trigger batch ordering", () => {
     ]);
     // The last APNAP group's last inserted object is the top and resolves first.
     expect(getPendingTriggerStackItemsBottomToTop(afterP4)?.at(-1)?.id).toBe("p1-a");
+  });
+
+  it("finalizes an ordered batch atomically in APNAP bottom-to-top order", () => {
+    let state = advanceAutomaticStep(createGame("trigger-finalize", players));
+    state = { ...state, activePlayerId: "p2", activePlayerSeat: 1 };
+    const candidates = [
+      trigger("p2-a", "p2"), trigger("p2-b", "p2"),
+      trigger("p3-a", "p3"), trigger("p1-a", "p1")
+    ];
+    const batch = createPendingTriggerBatch(state, "batch-finalize", candidates)!;
+    const orderedP2 = recordPendingTriggerOrder(batch, "p2", ["p2-b", "p2-a"]);
+    const withBatch = { ...state, pendingTriggerBatch: orderedP2 };
+    const finalized = finalizePendingTriggerBatch(withBatch, "batch-finalize");
+
+    expect(finalized.stack.map(item => item.id)).toEqual(["p2-b", "p2-a", "p3-a", "p1-a"]);
+    expect(finalized.stack.at(-1)?.id).toBe("p1-a");
+    expect(finalized.pendingTriggerBatch).toBeNull();
+    expect(finalized.revision).toBe(withBatch.revision + 1);
+    expect(finalized.priorityPlayerId).toBe(withBatch.priorityPlayerId);
+    expect(withBatch.stack).toEqual([]);
+    expect(withBatch.pendingTriggerBatch).toBe(orderedP2);
+    // StackItem snapshots remain usable even when their source is no longer present.
+    expect(finalized.stack[0]?.source_instance_id).toBe("source-p2-b");
+  });
+
+  it("rejects incomplete, stale and colliding batches without partial insertion", () => {
+    let state = advanceAutomaticStep(createGame("trigger-finalize-invalid", players));
+    state = { ...state, activePlayerId: "p1", activePlayerSeat: 0 };
+    const candidates = [trigger("p1-a", "p1"), trigger("p1-b", "p1")];
+    const incomplete = createPendingTriggerBatch(state, "batch-incomplete", candidates)!;
+    const pendingState = { ...state, pendingTriggerBatch: incomplete };
+    expect(() => finalizePendingTriggerBatch(pendingState, "batch-incomplete"))
+      .toThrowError(expect.objectContaining({ code: "INVALID_TRIGGER_BATCH" }));
+    expect(pendingState.stack).toEqual([]);
+    expect(pendingState.pendingTriggerBatch).toBe(incomplete);
+
+    const complete = recordPendingTriggerOrder(incomplete, "p1", ["p1-b", "p1-a"]);
+    const completeState = { ...state, pendingTriggerBatch: complete };
+    expect(() => finalizePendingTriggerBatch(completeState, "stale-id")).toThrow(EngineError);
+    const collisionState = {
+      ...completeState,
+      stack: [trigger("p1-b", "p1")]
+    };
+    expect(() => finalizePendingTriggerBatch(collisionState, "batch-incomplete"))
+      .toThrowError(expect.objectContaining({ code: "INVALID_TRIGGER_BATCH" }));
+    expect(collisionState.stack).toHaveLength(1);
+    expect(collisionState.pendingTriggerBatch).toBe(complete);
   });
 
   it("rejects duplicate candidates, unknown controllers and eliminated controllers", () => {
