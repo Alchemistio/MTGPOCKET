@@ -48,12 +48,25 @@ export interface PlayerState {
   hasKeptHand: boolean;
 }
 
+import type { ZoneChangeReplacementSession } from "./zone-change-replacements.js";
+
 export interface StackItem {
   id: string;
   controller_id: PlayerId;
   source_instance_id: InstanceId | null;
   kind: "spell" | "activated-ability" | "triggered-ability" | "copy";
   payload: unknown;
+}
+
+export interface PendingZoneChangeChoice {
+  id: string;
+  chooserPlayerId: PlayerId;
+  stackItemId: string;
+  sourceInstanceId: InstanceId;
+  cardId: string;
+  eventId: string;
+  session: ZoneChangeReplacementSession;
+  candidateEffectIds: readonly string[];
 }
 
 export interface GameState {
@@ -68,6 +81,7 @@ export interface GameState {
   pendingDiscardPlayerId: PlayerId | null;
   pendingDiscardCount: number;
   pendingCommanderChoices: Array<{ instanceId: InstanceId; ownerId: PlayerId; fromZone: "graveyard" | "exile" }>;
+  pendingZoneChangeChoice: PendingZoneChangeChoice | null;
   turnNumber: number;
   phase: Phase;
   step: Step;

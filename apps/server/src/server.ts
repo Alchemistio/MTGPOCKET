@@ -5,19 +5,19 @@ import type { CommanderDeckList } from "@commander-pocket/card-data";
 import type { PregameCoordinatorFactory } from "./pregame-session-registry.js";
 import { PregameSessionRegistry } from "./pregame-session-registry.js";
 import { loadServerPregameConfigFromEnvironment } from "./server-catalog.js";
-import type { CardDefinitionResolver, CardSpellSupport, RoomCommand, StackEffectResolver } from "./game-room.js";
+import type { CardDefinitionResolver, CardSpellSupport, EntryReplacementResolver, RoomCommand, StackEffectResolver } from "./game-room.js";
 import { resolveBasicSpellEffect, supportsBasicSpell } from "./basic-spell-effects.js";
 import { RoomRegistry } from "./room-registry.js";
 import { JsonFileRoomPersistence, type RoomPersistence } from "./room-persistence.js";
 import { toPlayerView } from "./player-view.js";
 
 interface ClientSession { socket: WebSocket; gameId: string; playerId: string; token: string; }
-export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; resolveCard?: CardDefinitionResolver; supportsSpell?: CardSpellSupport; persistence?: RoomPersistence; }
+export interface CommanderPocketServerOptions { port?: number; pregameFactory?: PregameCoordinatorFactory; resolveStackEffect?: StackEffectResolver; resolveCard?: CardDefinitionResolver; supportsSpell?: CardSpellSupport; persistence?: RoomPersistence; resolveEntryReplacements?: EntryReplacementResolver; }
 export interface CommanderPocketServerRuntime {
   httpServer: Server; websocketServer: WebSocketServer; rooms: RoomRegistry; close(): Promise<void>;
 }
 export function createCommanderPocketServer(options: CommanderPocketServerOptions = {}): CommanderPocketServerRuntime {
-  const rooms = new RoomRegistry(options.resolveStackEffect, options.resolveCard, options.supportsSpell, options.persistence);
+  const rooms = new RoomRegistry(options.resolveStackEffect, options.resolveCard, options.supportsSpell, options.persistence, options.resolveEntryReplacements);
   const pregame = options.pregameFactory ? new PregameSessionRegistry(rooms, options.pregameFactory, options.resolveCard, Boolean(options.resolveStackEffect), options.supportsSpell) : null;
   const clients = new Set<ClientSession>();
   const httpServer = createServer((request, response) => {

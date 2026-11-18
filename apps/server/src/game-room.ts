@@ -1,6 +1,6 @@
 import {
-  activateStackAbility, advanceAfterAllPass, advanceAutomaticStep, createGame, discardCards, EngineError, executeStackItemHandler, moveCardToZone, processZoneChangeWithReplacements, passPriority, pushStackItem, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
-  type GameState, type PlayerSetup, type StackItem, type ZoneChangeEvent
+  activateStackAbility, advanceAfterAllPass, advanceAutomaticStep, applyStateBasedActions, completeStackResolution, createGame, createZoneChangeReplacementSession, discardCards, EngineError, executeStackItemHandler, moveCardToZone, passPriority, processZoneChangeWithReplacements, pushStackItem, resumeZoneChangeWithReplacements, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  type GameState, type PendingZoneChangeChoice, type PlayerSetup, type StackItem, type ZoneChangeReplacementEffect, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
 import type { CardDefinition } from "@commander-pocket/card-data";
@@ -9,11 +9,12 @@ import { basicLandManaOptions, basicStackHandlers, compileBasicActivatedAbility,
 export type StackEffectResolver = (state: GameState, item: StackItem) => GameState;
 export type CardDefinitionResolver = (cardId: string) => CardDefinition | undefined;
 export type CardSpellSupport = (definition: CardDefinition) => boolean;
+export type EntryReplacementResolver = (state: GameState, item: StackItem, definition: CardDefinition) => readonly ZoneChangeReplacementEffect[];
 
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-resolved" | "spell-cast" | "mana-added" | "land-played" | "ability-activated" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-required" | "decision-resolved" | "spell-cast" | "mana-added" | "land-played" | "ability-activated" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -41,7 +42,7 @@ export class GameRoom {
   private readonly commandResults = new Map<string, RoomCommandResult>();
   private readonly events: PersistedRoomEvent[] = [];
 
-  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver, private readonly supportsSpell?: CardSpellSupport) {
+  constructor(readonly id: string, players: readonly PlayerSetup[], initialState?: GameState, private readonly resolveStackEffect?: StackEffectResolver, private readonly resolveCard?: CardDefinitionResolver, private readonly supportsSpell?: CardSpellSupport, private readonly resolveEntryReplacements?: EntryReplacementResolver) {
     this.currentState = initialState ?? advanceAutomaticStep(createGame(id, players));
     this.replayBaseState = cloneGameState(this.currentState);
   }
@@ -78,7 +79,8 @@ export class GameRoom {
     checkpoint: GameRoomCheckpoint,
     resolveStackEffect?: StackEffectResolver,
     resolveCard?: CardDefinitionResolver,
-    supportsSpell?: CardSpellSupport
+    supportsSpell?: CardSpellSupport,
+    resolveEntryReplacements?: EntryReplacementResolver
   ): GameRoom {
     if (!isRecord(checkpoint) || checkpoint.schemaVersion !== 1 ||
         checkpoint.engineVersion !== GAME_ENGINE_VERSION ||
@@ -89,11 +91,12 @@ export class GameRoom {
     }
     const snapshot = cloneGameState(checkpoint.snapshot);
     // Backward-compatible migration for persisted rooms created before land-play tracking.
+    snapshot.pendingZoneChangeChoice ??= null;
     snapshot.players = snapshot.players.map(player => ({
       ...player, landsPlayedThisTurn: player.landsPlayedThisTurn ?? 0
     }));
     const players = snapshot.players.map(({ id, name, seat }) => ({ id, name, seat }));
-    const room = new GameRoom(checkpoint.gameId, players, snapshot, resolveStackEffect, resolveCard, supportsSpell);
+    const room = new GameRoom(checkpoint.gameId, players, snapshot, resolveStackEffect, resolveCard, supportsSpell, resolveEntryReplacements);
     for (const rawEvent of checkpoint.events as readonly unknown[]) {
       if (!isRecord(rawEvent) || !isRecord(rawEvent.payload) ||
           !isRecord(rawEvent.payload.command) || !isRecord(rawEvent.payload.result)) {
@@ -120,7 +123,7 @@ export class GameRoom {
   /** Rebuilds the current state by replaying accepted commands from the authoritative start snapshot. */
   replay(): GameState {
     const base = cloneGameState(this.replayBaseState);
-    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
+    const replayRoom = new GameRoom(this.id, base.players.map(({ id, name, seat }) => ({ id, name, seat })), base, this.resolveStackEffect, this.resolveCard, this.supportsSpell, this.resolveEntryReplacements);
     for (const event of this.events) {
       if (event.protocolVersion !== 1 || event.gameId !== this.id || event.type !== "command-applied" ||
           event.payload.engineVersion !== GAME_ENGINE_VERSION ||
@@ -188,6 +191,7 @@ export class GameRoom {
         return this.reject(cacheKey, code);
       }
     }
+    if (command.type === "resolve-zone-change-replacement") return this.resolveZoneChangeReplacement(command, cacheKey);
     if (command.type === "cast-spell") return this.castSpell(command, cacheKey);
     if (command.type === "play-land") return this.playLand(command, cacheKey);
     if (command.type === "discard-cards") return this.discardPendingCards(command, cacheKey);
@@ -208,10 +212,16 @@ export class GameRoom {
         outcome = "step-advanced";
       } else if (result.outcome === "resolution-required") {
         const resolvingTop = nextState.stack[nextState.stack.length - 1];
+        const payload = resolvingTop && isRecord(resolvingTop.payload) ? resolvingTop.payload : {};
+        const isPermanentSpell = resolvingTop?.kind === "spell" && payload.permanent === true &&
+          resolvingTop.source_instance_id !== null;
         const hasBuiltInActivatedResolver = resolvingTop?.id === result.stackItemId &&
           resolvingTop.kind === "activated-ability" && isBasicActivatedAbilityPayload(resolvingTop.payload);
-        if (this.resolveStackEffect || hasBuiltInActivatedResolver) {
-          const enteredPermanent: { current: { instanceId: string; controllerId: string; definition: CardDefinition; zoneChangeEvent: ZoneChangeEvent } | null } = { current: null };
+        if (isPermanentSpell && resolvingTop) {
+          const resolution = this.resolvePermanentSpellEntry(nextState, resolvingTop);
+          nextState = resolution.state;
+          outcome = resolution.outcome;
+        } else if (this.resolveStackEffect || hasBuiltInActivatedResolver) {
           nextState = resolveStackItem(nextState, result.stackItemId, (state, item) => {
             if (item.kind === "spell" && isBasicSpellPayload(item.payload)) {
               const handled = executeStackItemHandler(state, item.id, basicStackHandlers);
@@ -234,36 +244,6 @@ export class GameRoom {
               if (handled.status === "resolved") return handled.state;
               if (handled.status === "invalid-payload") throw new Error("INVALID_BASIC_ACTIVATED_ABILITY_PAYLOAD");
             }
-            const payload = isRecord(item.payload) ? item.payload : {};
-            if (item.kind === "spell" && payload.permanent === true && item.source_instance_id) {
-              const cardId = typeof payload.cardId === "string" ? payload.cardId : null;
-              const definition = cardId ? this.resolveCard?.(cardId) : undefined;
-              const entryReplacements = definition
-                ? createBasicPermanentEntryReplacements(definition, item.controller_id)
-                : [];
-              const transition = processZoneChangeWithReplacements(state, {
-                instanceId: item.source_instance_id,
-                destination: "battlefield",
-                destinationControllerId: item.controller_id
-              }, entryReplacements, {
-                eventId: "zone-change:" + item.id,
-                cause: "spell-resolution"
-              });
-              // Only the exact self-enters-tapped Oracle template is compiled here.
-              // Unknown Oracle text remains unsupported rather than silently ignored.
-              if (transition.status !== "committed") return state;
-              const entered = transition.state;
-              const zoneChangeEvent = transition.event;
-              if (zoneChangeEvent?.toZone === "battlefield" && definition && this.supportsSpell?.(definition)) {
-                enteredPermanent.current = {
-                  instanceId: item.source_instance_id,
-                  controllerId: item.controller_id,
-                  definition,
-                  zoneChangeEvent
-                };
-              }
-              return entered;
-            }
             const resolved = this.resolveStackEffect!(state, item);
             if (item.kind === "spell" && item.source_instance_id &&
                 resolved.cards[item.source_instance_id]?.zone === "stack") {
@@ -271,18 +251,6 @@ export class GameRoom {
             }
             return resolved;
           });
-          // The resolving spell is removed first; its ETB trigger is then put on the stack
-          // before the server exposes the priority window to clients.
-          if (enteredPermanent.current) {
-            const trigger = createBasicPermanentEtbTrigger(
-              enteredPermanent.current.instanceId,
-              enteredPermanent.current.controllerId,
-              enteredPermanent.current.definition,
-              nextState.revision,
-              enteredPermanent.current.zoneChangeEvent.eventId
-            );
-            if (trigger) nextState = pushStackItem(nextState, trigger);
-          }
           outcome = "stack-resolved";
         } else {
           outcome = "resolution-required";
@@ -292,6 +260,123 @@ export class GameRoom {
       }
       this.currentState = nextState;
       const accepted: AcceptedRoomCommandResult = { accepted: true, revision: nextState.revision, outcome };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
+  }
+
+  private entryReplacementEffects(state: GameState, item: StackItem, definition: CardDefinition): readonly ZoneChangeReplacementEffect[] {
+    return [
+      ...createBasicPermanentEntryReplacements(definition, item.controller_id),
+      ...(this.resolveEntryReplacements?.(state, item, definition) ?? [])
+    ];
+  }
+
+  private resolvePermanentSpellEntry(
+    state: GameState,
+    item: StackItem
+  ): { state: GameState; outcome: "stack-resolved" | "decision-required" } {
+    if (!item.source_instance_id || !isRecord(item.payload) || typeof item.payload.cardId !== "string") {
+      throw new Error("INVALID_PERMANENT_SPELL_SOURCE");
+    }
+    const definition = this.resolveCard?.(item.payload.cardId);
+    if (!definition || definition.providerId !== item.payload.cardId) throw new Error("CARD_NOT_FOUND");
+    const eventId = "zone-change:" + item.id;
+    const transition = processZoneChangeWithReplacements(state, {
+      instanceId: item.source_instance_id,
+      destination: "battlefield",
+      destinationControllerId: item.controller_id
+    }, this.entryReplacementEffects(state, item, definition), {
+      eventId, cause: "spell-resolution"
+    });
+    if (transition.status === "choice-required") {
+      const pending: PendingZoneChangeChoice = {
+        id: "zone-change-choice:" + item.id + ":" + state.revision,
+        chooserPlayerId: item.controller_id,
+        stackItemId: item.id,
+        sourceInstanceId: item.source_instance_id,
+        cardId: definition.providerId,
+        eventId,
+        session: transition.session,
+        candidateEffectIds: transition.candidates.map(candidate => candidate.id)
+      };
+      return { state: { ...state, pendingZoneChangeChoice: pending }, outcome: "decision-required" };
+    }
+    let nextState = transition.status === "committed" ? transition.state : state;
+    nextState = applyStateBasedActions(completeStackResolution({
+      ...nextState, pendingZoneChangeChoice: null
+    }, item.id));
+    if (transition.status === "committed" && transition.event?.toZone === "battlefield" &&
+        this.supportsSpell?.(definition)) {
+      const trigger = createBasicPermanentEtbTrigger(
+        item.source_instance_id, item.controller_id, definition, nextState.revision, transition.event.eventId
+      );
+      if (trigger) nextState = pushStackItem(nextState, trigger);
+    }
+    return { state: nextState, outcome: "stack-resolved" };
+  }
+
+  private resolveZoneChangeReplacement(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    const pending = this.currentState.pendingZoneChangeChoice;
+    if (!pending || pending.chooserPlayerId !== command.playerId) {
+      return this.reject(cacheKey, "NOT_PENDING_ZONE_CHANGE_CHOOSER");
+    }
+    if (!isRecord(command.payload) || command.payload.pendingId !== pending.id ||
+        typeof command.payload.effectId !== "string") {
+      return this.reject(cacheKey, "INVALID_ZONE_CHANGE_REPLACEMENT_CHOICE");
+    }
+    const effectId = command.payload.effectId;
+    if (!pending.candidateEffectIds.includes(effectId)) {
+      return this.reject(cacheKey, "INVALID_ZONE_CHANGE_REPLACEMENT_CHOICE");
+    }
+    const top = this.currentState.stack[this.currentState.stack.length - 1];
+    if (!top || top.id !== pending.stackItemId || this.currentState.awaitingResolutionId !== pending.stackItemId) {
+      return this.reject(cacheKey, "PENDING_RESOLUTION_MISMATCH");
+    }
+    const definition = this.resolveCard?.(pending.cardId);
+    if (!definition || definition.providerId !== pending.cardId) return this.reject(cacheKey, "CARD_NOT_FOUND");
+    try {
+      const transition = resumeZoneChangeWithReplacements(
+        this.currentState,
+        pending.session,
+        this.entryReplacementEffects(this.currentState, top, definition),
+        { eventId: pending.eventId, cause: "spell-resolution" },
+        effectId
+      );
+      if (transition.status === "choice-required") {
+        const revision = this.currentState.revision + 1;
+        const nextPending: PendingZoneChangeChoice = {
+          ...pending,
+          session: { ...transition.session, stateRevision: revision },
+          candidateEffectIds: transition.candidates.map(candidate => candidate.id)
+        };
+        this.currentState = { ...this.currentState, revision, pendingZoneChangeChoice: nextPending };
+        const accepted: AcceptedRoomCommandResult = {
+          accepted: true, revision, outcome: "decision-required"
+        };
+        this.commandResults.set(cacheKey, accepted);
+        this.recordEvent(command, accepted);
+        return accepted;
+      }
+      let nextState = transition.status === "committed" ? transition.state : this.currentState;
+      nextState = applyStateBasedActions(completeStackResolution({
+        ...nextState, pendingZoneChangeChoice: null
+      }, pending.stackItemId));
+      if (transition.status === "committed" && transition.event?.toZone === "battlefield" &&
+          this.supportsSpell?.(definition)) {
+        const trigger = createBasicPermanentEtbTrigger(
+          pending.sourceInstanceId, top.controller_id, definition, nextState.revision, transition.event.eventId
+        );
+        if (trigger) nextState = pushStackItem(nextState, trigger);
+      }
+      this.currentState = nextState;
+      const accepted: AcceptedRoomCommandResult = {
+        accepted: true, revision: nextState.revision, outcome: "decision-resolved"
+      };
       this.commandResults.set(cacheKey, accepted);
       this.recordEvent(command, accepted);
       return accepted;

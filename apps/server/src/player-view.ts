@@ -68,6 +68,8 @@ export interface GameView {
   pendingDiscardCount: number;
   pendingCommanderChoiceCount: number;
   pendingCommanderChoices: readonly { instanceId: string; fromZone: "graveyard" | "exile" }[];
+  pendingZoneChangeChoiceCount: number;
+  pendingZoneChangeChoice: { id: string; stackItemId: string; candidateEffectIds: readonly string[] } | null;
   players: readonly PlayerGameView[];
   visibleCards: Readonly<Record<string, RuntimeCardState>>;
 }
@@ -157,6 +159,12 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
     pendingDiscardCount: state.pendingDiscardCount,
     pendingCommanderChoiceCount: state.pendingCommanderChoices.length,
     pendingCommanderChoices: state.pendingCommanderChoices.filter(choice => choice.ownerId === viewerId).map(({ instanceId, fromZone }) => ({ instanceId, fromZone })),
+    pendingZoneChangeChoiceCount: state.pendingZoneChangeChoice ? 1 : 0,
+    pendingZoneChangeChoice: state.pendingZoneChangeChoice?.chooserPlayerId === viewerId ? {
+      id: state.pendingZoneChangeChoice.id,
+      stackItemId: state.pendingZoneChangeChoice.stackItemId,
+      candidateEffectIds: [...state.pendingZoneChangeChoice.candidateEffectIds]
+    } : null,
     players, visibleCards
   };
 }

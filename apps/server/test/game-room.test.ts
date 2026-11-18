@@ -4,6 +4,7 @@ import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLi
 import type { CardDefinition } from "@commander-pocket/card-data";
 import type { GameState } from "@commander-pocket/game-engine";
 import { basicLandManaOptions, createBasicPermanentEntryReplacements, resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
+import { toPlayerView } from "../src/player-view.js";
 
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
@@ -559,6 +560,117 @@ describe("GameRoom", () => {
       cardId => cardId === definition.providerId ? definition : undefined,
       supportsBasicSpell
     );
+    expect(restored.state).toEqual(room.state);
+  });
+
+  it("suspends a permanent spell for sequential replacement choices and restores the pending decision", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "choice-creature", oracleId: "choice-creature-oracle",
+      name: "Choice Creature", layout: "normal", manaCost: "{W}", manaValue: 1,
+      typeLine: "Creature — Soldier", oracleText: "", colors: ["W"], colorIdentity: ["W"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "choice-creature", name: "Choice Creature", layout: "normal", mana_cost: "{W}", cmc: 1,
+        type_line: "Creature — Soldier", oracle_text: "", colors: ["W"], color_identity: ["W"],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "70"
+      }
+    };
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = {
+      ...initialGame, deckSetupComplete: true, phase: "precombat-main", step: "main-1",
+      players: initialGame.players.map(player => player.id === "p1" ? { ...player, manaPool: { W: 1 } } : player)
+    };
+    const initial = addCardInstance(base, {
+      instance_id: "choice-creature-instance", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const resolveEntryReplacements = (_state: GameState, _item: import("@commander-pocket/game-engine").StackItem) => [
+      {
+        id: "copy-choice-a", kind: "copy" as const, controllerId: "p1",
+        applies: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          proposal.toZone === "battlefield" && proposal.entersTapped !== true,
+        replace: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          ({ ...proposal, entersTapped: true })
+      },
+      {
+        id: "copy-choice-b", kind: "copy" as const, controllerId: "p1",
+        applies: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          proposal.toZone === "battlefield" && proposal.entersTapped !== true,
+        replace: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          ({ ...proposal, entersWithP1P1Counters: 9 })
+      },
+      {
+        id: "general-choice-a", kind: "general" as const, controllerId: "p1",
+        applies: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          proposal.toZone === "battlefield" && proposal.entersWithP1P1Counters === undefined,
+        replace: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          ({ ...proposal, entersTapped: true })
+      },
+      {
+        id: "general-choice-b", kind: "general" as const, controllerId: "p1",
+        applies: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          proposal.toZone === "battlefield" && proposal.entersWithP1P1Counters === undefined,
+        replace: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+          ({ ...proposal, entersWithP1P1Counters: 2 })
+      }
+    ];
+    const cardResolver = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect, cardResolver,
+      supportsBasicSpell, resolveEntryReplacements);
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-choice-creature",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "choice-creature-instance" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "choice-spell-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "decision-required" });
+    expect(room.state.awaitingResolutionId).toBe("spell:p1:cast-choice-creature");
+    expect(room.state.stack).toHaveLength(1);
+    expect(room.state.cards["choice-creature-instance"]?.zone).toBe("stack");
+    const pending = room.state.pendingZoneChangeChoice;
+    expect(pending?.candidateEffectIds).toEqual(["copy-choice-a", "copy-choice-b"]);
+    expect(toPlayerView(room.state, "p1").pendingZoneChangeChoice?.candidateEffectIds).toEqual(["copy-choice-a", "copy-choice-b"]);
+    expect(toPlayerView(room.state, "p2").pendingZoneChangeChoice).toBeNull();
+
+    const wrongPlayer = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "wrong-choice-player",
+      playerId: "p2", expectedRevision: room.state.revision,
+      type: "resolve-zone-change-replacement",
+      payload: { pendingId: pending?.id, effectId: "copy-choice-a" }
+    });
+    expect(wrongPlayer).toMatchObject({ accepted: false, code: "NOT_PENDING_ZONE_CHANGE_CHOOSER" });
+
+    const firstChoice = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "first-entry-choice",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "resolve-zone-change-replacement",
+      payload: { pendingId: pending?.id, effectId: "copy-choice-a" }
+    });
+    expect(firstChoice).toMatchObject({ accepted: true, outcome: "decision-required" });
+    expect(room.state.cards["choice-creature-instance"]?.zone).toBe("stack");
+    expect(room.state.stack).toHaveLength(1);
+    expect(room.state.pendingZoneChangeChoice?.candidateEffectIds).toEqual(["general-choice-a", "general-choice-b"]);
+
+    const secondPending = room.state.pendingZoneChangeChoice;
+    const secondChoice = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "second-entry-choice",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "resolve-zone-change-replacement",
+      payload: { pendingId: secondPending?.id, effectId: "general-choice-b" }
+    });
+    expect(secondChoice).toMatchObject({ accepted: true, outcome: "decision-resolved" });
+    expect(room.state.pendingZoneChangeChoice).toBeNull();
+    expect(room.state.awaitingResolutionId).toBeNull();
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.state.cards["choice-creature-instance"]).toMatchObject({
+      zone: "battlefield", is_tapped: true, counters: { p1p1: 2 }
+    });
+    expect(room.replay()).toEqual(room.state);
+    const restored = GameRoom.restore(room.checkpoint, resolveBasicSpellEffect, cardResolver,
+      supportsBasicSpell, resolveEntryReplacements);
     expect(restored.state).toEqual(room.state);
   });
 

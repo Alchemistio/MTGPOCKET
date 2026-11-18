@@ -1,6 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { PlayerSetup } from "@commander-pocket/game-engine";
-import { GameRoom, type CardDefinitionResolver, type CardSpellSupport, type StackEffectResolver, type RoomCommand, type RoomCommandResult } from "./game-room.js";
+import { GameRoom, type CardDefinitionResolver, type CardSpellSupport, type StackEffectResolver, type EntryReplacementResolver, type RoomCommand, type RoomCommandResult } from "./game-room.js";
 import type { PregameCoordinatorCheckpoint, PregameSeedRecord } from "./pregame-coordinator.js";
 import { hashSeatToken, type PersistedRoomRecord, type RoomPersistence } from "./room-persistence.js";
 
@@ -24,10 +24,11 @@ export class RoomRegistry {
     private readonly resolveStackEffect?: StackEffectResolver,
     private readonly resolveCard?: CardDefinitionResolver,
     private readonly supportsSpell?: CardSpellSupport,
-    private readonly persistence?: RoomPersistence
+    private readonly persistence?: RoomPersistence,
+    private readonly resolveEntryReplacements?: EntryReplacementResolver
   ) {
     for (const record of persistence?.loadAll() ?? []) {
-      const room = GameRoom.restore(record.checkpoint, resolveStackEffect, resolveCard, supportsSpell);
+      const room = GameRoom.restore(record.checkpoint, resolveStackEffect, resolveCard, supportsSpell, resolveEntryReplacements);
       this.entries.set(record.gameId, {
         room,
         tokenHashes: new Map(Object.entries(record.seatTokenHashes)),
@@ -41,7 +42,7 @@ export class RoomRegistry {
   create(gameId: string, players: readonly PlayerSetup[]): { room: GameRoom; credentials: SeatCredential[] } {
     validateRoomSetup(gameId, players);
     if (this.entries.has(gameId)) throw new Error("ROOM_ALREADY_EXISTS");
-    const room = new GameRoom(gameId, players, undefined, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
+    const room = new GameRoom(gameId, players, undefined, this.resolveStackEffect, this.resolveCard, this.supportsSpell, this.resolveEntryReplacements);
     const credentials = players.map(player => ({ playerId: player.id, token: randomUUID() }));
     const entry: RoomEntry = {
       room,
@@ -97,7 +98,7 @@ export class RoomRegistry {
       this.persist(entry);
       return result;
     } catch {
-      entry.room = GameRoom.restore(previousCheckpoint, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
+      entry.room = GameRoom.restore(previousCheckpoint, this.resolveStackEffect, this.resolveCard, this.supportsSpell, this.resolveEntryReplacements);
       return { accepted: false, revision: entry.room.state.revision, code: "PERSISTENCE_FAILED" };
     }
   }
@@ -115,7 +116,7 @@ export class RoomRegistry {
       delete entry.pregameCheckpoint;
       this.persist(entry);
     } catch (error) {
-      entry.room = GameRoom.restore(previousCheckpoint, this.resolveStackEffect, this.resolveCard, this.supportsSpell);
+      entry.room = GameRoom.restore(previousCheckpoint, this.resolveStackEffect, this.resolveCard, this.supportsSpell, this.resolveEntryReplacements);
       entry.seedLog = previousSeeds;
       if (previousPregameCheckpoint) entry.pregameCheckpoint = previousPregameCheckpoint;
       throw error;
