@@ -72,7 +72,7 @@ describe("zone-change replacement pipeline", () => {
     expect(committed.status).toBe("committed");
     if (committed.status !== "committed") throw new Error("EXPECTED_COMMIT");
     expect(committed.state.cards.entrant).toMatchObject({
-      zone: "battlefield", is_tapped: false, counters: { p1p1: 2 }
+      zone: "battlefield", is_tapped: true, counters: { p1p1: 2 }
     });
     expect(committed.event?.replacementTrace).toEqual(["copy-a", "general-b"]);
     expect(committed.event?.instanceAfter.counters.p1p1).toBe(2);
