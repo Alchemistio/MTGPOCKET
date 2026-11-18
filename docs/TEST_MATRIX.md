@@ -40,3 +40,11 @@
 - Les candidats conservent source, contrôleur au moment du trigger, ID d'événement et index de ligne ; les IDs de StackItem sont déterministes.
 - Test `scans every battlefield permanent for matching entry triggers and captures source controllers` : trigger global contrôlé par p2, trigger permanent contrôlé par p3, trigger self de l'entrant p1.
 - Scanner de découverte seulement : pas encore de placement sur pile, APNAP, choix d'ordre, batch multi-entrants ni recalcul couche 603.6b ; le chemin live self-ETB historique reste actif en attendant l'intégration au checkpoint.
+
+
+## ETB-2 — batch APNAP et ordre par contrôleur (2026-11-18)
+- `packages/game-engine/src/trigger-ordering.ts` : batch sérialisable, groupes dans l'ordre APNAP calculé depuis le joueur actif, auto-ordre des groupes à un seul trigger et capture des StackItems candidats.
+- Chaque contrôleur ordonne uniquement son groupe, dans l'ordre APNAP ; la validation exige une permutation exacte sans doublon ni omission.
+- L'API expose l'ordre d'insertion sur la pile (bottom-to-top) une fois tous les groupes ordonnés ; le dernier élément est le sommet et résout en premier.
+- Tests : APNAP à quatre sièges avec joueur actif non-p1, plusieurs triggers par contrôleur, contrôleur hors tour, permutation invalide, contrôleur inconnu/éliminé, batch vide et conservation du snapshot candidat.
+- Limite : contrat pur et sérialisable uniquement. Pas encore de champ dans GameState, de commande réseau, de placement effectif sur la pile, de checkpoint de priorité ni de boucle SBA/trigger.

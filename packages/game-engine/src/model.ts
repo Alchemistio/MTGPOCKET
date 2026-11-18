@@ -58,6 +58,24 @@ export interface StackItem {
   payload: unknown;
 }
 
+/** Serializable candidate group for one controller's APNAP trigger-order choice. */
+export interface PendingTriggerOrderGroup {
+  controllerId: PlayerId;
+  /** Candidate objects are retained as snapshots even if their sources later leave the battlefield. */
+  candidateStackItems: readonly StackItem[];
+  /** Order in which this controller puts its objects onto the stack (bottom to top). */
+  orderedStackItemIds: readonly string[] | null;
+}
+
+/** Serializable, server-owned trigger batch awaiting per-controller ordering decisions. */
+export interface PendingTriggerBatch {
+  id: string;
+  activePlayerId: PlayerId;
+  createdAtRevision: number;
+  /** Groups are in APNAP order; only groups with at least one candidate are present. */
+  groups: readonly PendingTriggerOrderGroup[];
+}
+
 export interface PendingZoneChangeChoice {
   id: string;
   chooserPlayerId: PlayerId;
@@ -99,7 +117,8 @@ export type EngineErrorCode =
   | "STACK_ITEM_MISMATCH" | "DUPLICATE_CARD_INSTANCE" | "INVALID_ZONE_MOVE" | "INVALID_DAMAGE"
   | "NOT_COMMANDER" | "INVALID_COMMANDER_CAST" | "COMMANDER_CHOICE_REQUIRED" | "INVALID_COMMANDER_CHOICE"
   | "INVALID_MANA_COLOR" | "NOT_CONTROLLER" | "PERMANENT_TAPPED"
-  | "INVALID_ACTIVATED_ABILITY" | "UNSUPPORTED_MANA_COST" | "UNSUPPORTED_MANA_SYMBOL" | "INSUFFICIENT_MANA";
+  | "INVALID_ACTIVATED_ABILITY" | "UNSUPPORTED_MANA_COST" | "UNSUPPORTED_MANA_SYMBOL" | "INSUFFICIENT_MANA"
+  | "INVALID_TRIGGER_BATCH" | "INVALID_TRIGGER_ORDER";
 
 export class EngineError extends Error {
   constructor(public readonly code: EngineErrorCode, message: string) {

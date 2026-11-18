@@ -31,9 +31,9 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 ## ETB-2 — Timing, priorité et APNAP (checkpoint CR 117.5)
 - [ ] Accumuler les candidats jusqu'au prochain checkpoint de priorité.
 - [ ] SBA avant priorité et collecte des triggers qui en résultent ; répéter jusqu'à stabilisation.
-- [ ] Ordre APNAP et ordre choisi par chaque joueur ; deux groupes de 603.3b.
+- [x] Contrat pur de regroupement APNAP et de validation de l’ordre choisi par chaque contrôleur ; l’intégration à la pile et au checkpoint reste à faire.
 - [ ] Répéter SBA → triggers jusqu'à stabilisation.
-- [ ] Tests à 2/4 joueurs, plusieurs contrôleurs, plusieurs triggers par joueur et SBA induites.
+- [ ] Tests d’intégration à 2/4 joueurs, placement/résolution de pile et SBA induites.
 
 ## ETB-3 — Conditions, choix, modes et cibles
 - [ ] Intervening-if vérifié au trigger et à la résolution.
@@ -121,3 +121,11 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Le scope `another` exclut l'instance source lorsqu'elle est l'entrant ; les triggers non-self sont aussi détectés depuis des permanents déjà présents.
 - Chaque candidat capture `controllerAtTrigger`, `sourceInstanceId`, `eventId` et l'index de ligne Oracle ; son ID de StackItem est déterministe.
 - Cette tranche ne place pas encore le batch sur la pile : elle retourne des candidats. APNAP/ordre choisi, intégration au checkpoint de priorité, événements simultanés multi-entrants, types/abilities modifiés par couches et sources hors battlefield restent à faire. Le chemin live historique du self-ETB n'est pas encore remplacé par ce scanner.
+
+
+## ETB-2 — contrat de batch APNAP (2026-11-18)
+
+- `PendingTriggerBatch` conserve les StackItems candidats, l'identité du joueur actif et les groupes de contrôleurs en ordre APNAP.
+- Les groupes à un candidat sont auto-ordonnés ; pour les autres, le prochain contrôleur APNAP fournit une permutation exacte de ses IDs.
+- La sortie `getPendingTriggerStackItemsBottomToTop` définit sans ambiguïté l'ordre d'insertion : le dernier item est au sommet de la pile.
+- Le contrat est sérialisable et testé à quatre sièges. Il n'est pas encore stocké dans `GameState`, exposé via le protocole, ni branché au checkpoint de priorité/SBA ; le scanner candidat-only et le chemin live historique restent inchangés.

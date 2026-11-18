@@ -45,3 +45,12 @@
 - Chaque candidat conserve l'instance source, le contrôleur capturé au moment du trigger, l'événement et l'index de ligne ; identifiants déterministes pour rejeu.
 - Test couvrant trois sources et trois contrôleurs (p2, p3, p1) et la détection des triggers globaux + self.
 - Le scanner retourne des candidats uniquement : le placement sur la pile est différé au chantier APNAP/priority checkpoint. Le chemin de résolution live n'est pas encore migré ; pas de types/capacités calculés par couches, événements multi-entrants ou sources hors battlefield.
+
+
+## 2026-11-18 — ETB-2 : contrat de batch et ordre APNAP
+
+- Ajout d'un batch sérialisable de triggers détectés, regroupés par contrôleur dans l'ordre APNAP calculé à partir du joueur actif et des sièges.
+- Les groupes à un seul trigger sont ordonnés automatiquement ; les autres contrôleurs répondent séquentiellement et chacun doit fournir une permutation exacte de ses propres IDs.
+- L'ordre retourné est explicitement l'ordre d'insertion bottom-to-top : le dernier objet ajouté est le sommet et résout en premier.
+- Les StackItems candidats sont conservés comme snapshots ; le batch ne re-vérifie pas la présence de leur source sur le champ de bataille après le déclenchement.
+- Cette tranche est un contrat moteur pur : aucune mutation GameState, commande GameRoom, projection privée, insertion dans la pile ou intégration au checkpoint de priorité. Les SBA et les triggers qui en résultent restent à orchestrer.
