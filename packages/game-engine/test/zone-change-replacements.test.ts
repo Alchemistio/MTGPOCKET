@@ -74,7 +74,7 @@ describe("zone-change replacement pipeline", () => {
     expect(committed.state.cards.entrant).toMatchObject({
       zone: "battlefield", is_tapped: true, counters: { p1p1: 2 }
     });
-    expect(committed.event?.replacementTrace).toEqual(["copy-a", "general-b"]);
+    expect(committed.event?.replacementTrace).toEqual(["copy-a", "general-b", "general-a"]);
     expect(committed.event?.instanceAfter.counters.p1p1).toBe(2);
   });
 
