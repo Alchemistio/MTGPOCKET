@@ -2,7 +2,7 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-**Avancement 2026-11-18 :** le pipeline typé est utilisé par la résolution des sorts permanents. Un adaptateur explicite compile deux modèles Oracle auto-référentiels exacts : « {nom} enters the battlefield tapped. » et « {nom} enters the battlefield with N +1/+1 counters on it. » ; les modifications sont appliquées avant la création de l’événement. Le moteur expose maintenant une API de reprise d'une même session de remplacement après plusieurs points de choix successifs ; le protocole serveur et la persistance de ces décisions restent à implémenter. Les autres effets Oracle, choix 614.12, événements imbriqués et choix APNAP simultanés restent à implémenter.
+**Avancement 2026-11-18 :** le pipeline typé est utilisé par la résolution des sorts permanents. Un adaptateur explicite compile deux modèles Oracle auto-référentiels exacts : « {nom} enters the battlefield tapped. » et « {nom} enters the battlefield with N +1/+1 counters on it. » ; les modifications sont appliquées avant la création de l’événement. Le moteur et `GameRoom` savent maintenant suspendre une résolution de permanent, conserver une session sérialisable, exposer les candidats uniquement au contrôleur du permanent entrant et reprendre après un ou plusieurs choix. Le checkpoint/journal de commandes permet le rejeu et la restauration, à condition de réinjecter le même résolveur serveur d'effets. Cette tranche reste limitée à un événement/permanent et à un seul joueur décideur ; les effets globaux concrets, choix APNAP simultanés, événements imbriqués et choix 614.12 complets restent à implémenter.
 
 ## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
 - [ ] Centraliser chaque changement de zone dans un processeur métier (la résolution des sorts permanents utilise maintenant le pipeline proposition → remplacements → commit ; le registre d'effets et les autres chemins restent à migrer).
@@ -13,7 +13,7 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [x] Une prévention annule le commit et ne produit pas d'événement de changement de zone.
 - [x] Conserver identité avant/après, owner/controller, cause, trace des remplacements et informations connues dans ZoneChangeEvent.
 - [x] Brancher au serveur un registre dérivé de la définition Scryfall pour les modèles self « enters tapped » et « enters with N +1/+1 counters » (allowlist exacte, sans parseur Oracle général).
-- [ ] Gérer les choix de remplacement en attente dans le protocole serveur (la reprise de session est désormais disponible dans le moteur, mais aucun état de décision n'est encore persisté/exposé par GameRoom).
+- [x] Gérer un choix de remplacement en attente dans le protocole serveur pour la résolution d'un permanent : session et candidats sérialisés dans GameState, commande `resolve-zone-change-replacement`, contrôle du joueur décideur, exposition privée dans GameView, suspension de la pile et rejeu/restauration via journal (un seul permanent/décideur ; résolveur d'effets réinjecté par le serveur).
 - [ ] Brancher les effets concrets et choix pré-entrée (614.12), événements imbriqués (614.13, 616.1f-g) et caractéristiques d'entrée ; distinguer entrée modifiée d'un trigger (603.6d).
 - [x] Tests : mouvements simultanés, groupe partagé, snapshots pré-événement, no-op et requêtes dupliquées.
 - [x] Test du wrapper single-move : snapshot avant/après, transfert de contrôleur et état source immuable.
@@ -98,3 +98,13 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Un choix successif peut être demandé après l'application du choix précédent ; chaque réponse doit reprendre la session retournée la plus récente.
 - Le test vérifie deux checkpoints de choix, la non-mutation avant commit, l'ordre de trace et l'application des marqueurs avant le snapshot d'entrée.
 - Hors périmètre : transport/persistance GameRoom, authentification du joueur qui choisit, expiration/reprise après redémarrage, choix APNAP simultanés et effets imbriqués 616.1g.
+
+
+## Suspension serveur d'une résolution permanente — choix de remplacement (2026-11-18)
+
+- `GameState.pendingZoneChangeChoice` conserve un identifiant déterministe, le joueur décideur, le stack item, la carte source, l'événement proposé, la session de remplacement et les seuls IDs de candidats.
+- `GameRoom` traite les permanents avant le chemin de résolution synchrone : si le moteur demande un choix, le sort reste au sommet de la pile, `awaitingResolutionId` reste actif et la carte reste en zone stack ; aucun commit ni trigger ETB n'est émis avant la décision finale.
+- La commande `resolve-zone-change-replacement` vérifie le joueur décideur, le pending ID, l'ID candidat et la révision attendue. Les décisions successives mettent à jour la révision de session.
+- `GameView` ne révèle l'identifiant de décision et les candidats qu'au joueur autorisé ; les autres sièges ne voient que le compteur.
+- Les sessions sont incluses dans le snapshot de partie et le journal accepté permet le rejeu/restauration ; les closures d'effets ne sont jamais sérialisées et sont reconstruites via le résolveur serveur.
+- Limites explicites : la première implémentation couvre un permanent entrant et un décideur (contrôleur du permanent) ; elle ne réalise pas le choix APNAP simultané de plusieurs joueurs, 616.1g, ni l'énumération réelle de remplacements de permanents globaux. Les effets supplémentaires sont fournis par le registre injectable `EntryReplacementResolver`.

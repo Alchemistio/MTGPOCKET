@@ -20,3 +20,13 @@
 - `resumeZoneChangeWithReplacements` reprend une session existante sans reconstruire la proposition ; les choix successifs conservent les effets déjà appliqués et la trace.
 - Test moteur : deux points de choix successifs (catégorie copy puis general), état inchangé avant commit, destination et marqueurs validés dans l'événement final.
 - Les sessions restent gardées par `state.revision` ; le protocole GameRoom, la persistance et l'authentification des décisions restent non implémentés.
+
+
+## ETB — suspension serveur des choix de remplacement (2026-11-18)
+- `GameRoom` : un sort permanent est suspendu si le pipeline retourne `choice-required` ; la carte source reste en zone stack et l'objet reste en attente de résolution.
+- `resolve-zone-change-replacement` : validation du joueur décideur, du pending ID et du candidat ; un choix successif garde la même session et met à jour sa révision.
+- Confidentialité : `toPlayerView` n'expose le pending ID et les candidats qu'au contrôleur du permanent entrant.
+- Rejeu/restauration : le checkpoint sérialise `pendingZoneChangeChoice` et le journal rejoue les commandes acceptées ; le même `EntryReplacementResolver` doit être fourni à `GameRoom.restore`/`RoomRegistry`.
+- Test d'intégration `apps/server/test/game-room.test.ts` : deux décisions successives, rejet d'un autre siège, source et stack item conservés pendant la suspension, commit final, snapshot d'entrée et restauration/rejeu.
+- Limites : un événement/permanent et un décideur ; APNAP simultané, événements imbriqués 616.1g et registre complet des remplacements globaux non couverts.
+- CI verte : run 44252301628 sur `881592facfb69504ac1f6290a672fe78d28a95b9` ; typecheck, Vitest et python-data réussis.

@@ -69,3 +69,20 @@ Ces projets tiers ne sont ni des règles officielles ni une preuve de correction
 Le PDF Comprehensive Rules fourni (édition 2026-09-25) confirme les points normatifs vérifiés pour cette tranche : 614.5 (un remplacement ne s'applique pas répétitivement au même événement), 614.6 (l'événement original n'a pas lieu si remplacé), 616.1 (le joueur concerné choisit selon les catégories), 616.1f (répéter le processus en tenant compte des effets désormais applicables) et 616.1g (les événements contenus dans un événement remplacé ne sont traités qu'après le choix de l'événement englobant). Les règles 614.12 et 614.12a imposent en outre de déterminer les remplacements d'entrée à partir des caractéristiques pertinentes et de faire les choix requis avant l'entrée.
 
 La fonction `resumeZoneChangeWithReplacements` permet au moteur de poursuivre la même session et sa trace après un choix, y compris si une nouvelle catégorie exige un second choix. La révision de partie reste le garde-fou contre une session devenue périmée. Cette tranche ne traite pas les choix imbriqués de 616.1g ni leur transport réseau.
+
+
+## 8. Suspension serveur et protocole de décision — 2026-11-18
+
+Le protocole de la salle ajoute `resolve-zone-change-replacement` avec `{ pendingId, effectId }`. Le client ne transmet jamais la proposition, la session, le contrôleur ou les fonctions d'effet : ces éléments restent autoritatifs côté serveur.
+
+Pour un sort permanent dont les remplacements concurrents demandent un choix, la résolution est suspendue après le passage de priorité :
+- `awaitingResolutionId` et le stack item restent actifs ;
+- la carte source reste en zone `stack` ;
+- aucun événement de changement de zone n'est commis et aucun trigger ETB n'est créé ;
+- `GameState.pendingZoneChangeChoice` conserve les données sérialisables nécessaires à la reprise ;
+- les fonctions de remplacement sont réhydratées depuis le résolveur serveur, pas stockées dans l'état ;
+- la vue du choix et des candidats n'est envoyée qu'au contrôleur du permanent entrant ;
+- chaque réponse successive incrémente la révision et réécrit `session.stateRevision` avant de pouvoir reprendre ;
+- le journal des commandes acceptées permet de rejouer une partie et de restaurer une décision encore en attente.
+
+Cette implémentation est un contrat mono-événement/mono-décideur. Elle ne prétend pas implémenter les choix APNAP simultanés de 616.1, les événements imbriqués de 616.1g, ni un moteur de détection des remplacements globaux. Le registre injectable `EntryReplacementResolver` fournit un point d'intégration testable pour les futurs effets de permanents.
