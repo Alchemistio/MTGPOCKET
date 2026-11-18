@@ -30,3 +30,5 @@
 - Test d'intégration `apps/server/test/game-room.test.ts` : deux décisions successives, rejet d'un autre siège, source et stack item conservés pendant la suspension, commit final, snapshot d'entrée et restauration/rejeu.
 - Limites : un événement/permanent et un décideur ; APNAP simultané, événements imbriqués 616.1g et registre complet des remplacements globaux non couverts.
 - CI verte : run 44252301628 sur `881592facfb69504ac1f6290a672fe78d28a95b9` ; typecheck, Vitest et python-data réussis.
+
+- Cas CR 608.3e : si l'événement d'entrée du permanent est prévenu, le sort permanent rejoint le cimetière de son propriétaire via un événement de zone distinct ; il ne reste pas en zone stack. Test `puts a permanent spell into its owner's graveyard when battlefield entry is prevented`.

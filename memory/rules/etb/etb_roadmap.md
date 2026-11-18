@@ -108,3 +108,6 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - `GameView` ne révèle l'identifiant de décision et les candidats qu'au joueur autorisé ; les autres sièges ne voient que le compteur.
 - Les sessions sont incluses dans le snapshot de partie et le journal accepté permet le rejeu/restauration ; les closures d'effets ne sont jamais sérialisées et sont reconstruites via le résolveur serveur.
 - Limites explicites : la première implémentation couvre un permanent entrant et un décideur (contrôleur du permanent) ; elle ne réalise pas le choix APNAP simultané de plusieurs joueurs, 616.1g, ni l'énumération réelle de remplacements de permanents globaux. Les effets supplémentaires sont fournis par le registre injectable `EntryReplacementResolver`.
+
+
+- Précision CR 608.3e (2026-11-18) : lorsqu'un sort permanent ne peut pas entrer sur le champ de bataille, sa carte est déplacée au cimetière de son propriétaire ; ce chemin ne doit jamais laisser la carte en zone `stack`. Le serveur crée un événement de zone distinct pour cette destination de repli. Le remplacement éventuel de ce second événement reste hors de la portée de cette tranche (événements imbriqués/616.1g).

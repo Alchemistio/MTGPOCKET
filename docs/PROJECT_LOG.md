@@ -34,3 +34,5 @@
 - Test d'intégration couvre deux choix, refus d'un autre siège, carte/stack conservés pendant la suspension, commit final, confidentialité, rejeu et restauration.
 - Limites : un événement/permanent et un décideur ; pas encore de choix APNAP simultanés, de 616.1g, ni de registre complet des effets de remplacement globaux.
 - CI verte : run 44252301628 sur `881592facfb69504ac1f6290a672fe78d28a95b9` ; typecheck, Vitest et python-data réussis.
+
+- Complément CR 608.3e : une entrée prévenue ne laisse pas le sort permanent bloqué en zone stack ; un changement de zone distinct l'envoie au cimetière de son propriétaire. Les remplacements du mouvement secondaire restent à traiter dans la tranche des événements imbriqués.

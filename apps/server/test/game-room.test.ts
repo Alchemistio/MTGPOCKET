@@ -496,6 +496,55 @@ describe("GameRoom", () => {
     expect(restored.state).toEqual(room.state);
   });
 
+  it("puts a permanent spell into its owner's graveyard when battlefield entry is prevented", () => {
+    const definition: CardDefinition = {
+      provider: "scryfall", providerId: "prevented-creature", oracleId: "prevented-creature-oracle",
+      name: "Prevented Creature", layout: "normal", manaCost: "{W}", manaValue: 1,
+      typeLine: "Creature — Soldier", oracleText: "", colors: ["W"], colorIdentity: ["W"],
+      legalities: { commander: "legal" }, faces: [],
+      raw: {
+        id: "prevented-creature", name: "Prevented Creature", layout: "normal", mana_cost: "{W}", cmc: 1,
+        type_line: "Creature — Soldier", oracle_text: "", colors: ["W"], color_identity: ["W"],
+        legalities: { commander: "legal" }, set: "tst", collector_number: "71"
+      }
+    };
+    const initialGame = advanceAutomaticStep(createGame("room-1", players));
+    const base: GameState = {
+      ...initialGame, deckSetupComplete: true, phase: "precombat-main", step: "main-1",
+      players: initialGame.players.map(player => player.id === "p1" ? { ...player, manaPool: { W: 1 } } : player)
+    };
+    const initial = addCardInstance(base, {
+      instance_id: "prevented-creature-instance", card_id: definition.providerId, owner_id: "p1", zone: "hand"
+    });
+    const cardResolver = (cardId: string) => cardId === definition.providerId ? definition : undefined;
+    const preventEntry = () => [{
+      id: "prevent-battlefield-entry", kind: "general" as const, controllerId: "p2",
+      applies: (proposal: import("@commander-pocket/game-engine").ZoneChangeProposal) =>
+        proposal.toZone === "battlefield",
+      replace: () => null
+    }];
+    const room = new GameRoom("room-1", players, initial, resolveBasicSpellEffect, cardResolver,
+      supportsBasicSpell, preventEntry);
+    const cast = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "cast-prevented-creature",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "cast-spell", payload: { instanceId: "prevented-creature-instance" }
+    });
+    expect(cast).toMatchObject({ accepted: true, outcome: "spell-cast" });
+    let result;
+    for (const playerId of ["p1", "p2", "p3", "p4"]) {
+      result = room.apply(command(playerId, room.state.revision, "prevent-entry-pass-" + playerId));
+    }
+    expect(result).toMatchObject({ accepted: true, outcome: "stack-resolved" });
+    expect(room.state.cards["prevented-creature-instance"]?.zone).toBe("graveyard");
+    expect(room.state.players[0]?.graveyard).toContain("prevented-creature-instance");
+    expect(room.state.players[0]?.battlefield).not.toContain("prevented-creature-instance");
+    expect(room.state.stack).toHaveLength(0);
+    expect(room.state.awaitingResolutionId).toBeNull();
+    expect(room.state.pendingZoneChangeChoice).toBeNull();
+    expect(room.replay()).toEqual(room.state);
+  });
+
   it("puts a supported ETB draw trigger on the stack after its permanent resolves", () => {
     const definition: CardDefinition = {
       provider: "scryfall", providerId: "wall-of-omens-fixture", oracleId: "wall-of-omens-oracle",

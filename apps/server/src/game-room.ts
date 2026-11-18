@@ -306,7 +306,9 @@ export class GameRoom {
       };
       return { state: { ...state, pendingZoneChangeChoice: pending }, outcome: "decision-required" };
     }
-    let nextState = transition.status === "committed" ? transition.state : state;
+    let nextState = transition.status === "committed"
+      ? transition.state
+      : this.movePreventedPermanentSpellToGraveyard(state, item, eventId);
     nextState = applyStateBasedActions(completeStackResolution({
       ...nextState, pendingZoneChangeChoice: null
     }, item.id));
@@ -318,6 +320,22 @@ export class GameRoom {
       if (trigger) nextState = pushStackItem(nextState, trigger);
     }
     return { state: nextState, outcome: "stack-resolved" };
+  }
+
+  /** CR 608.3e: if a permanent spell cannot enter, its controller puts it into its owner's graveyard. */
+  private movePreventedPermanentSpellToGraveyard(state: GameState, item: StackItem, eventId: string): GameState {
+    if (!item.source_instance_id) throw new Error("INVALID_PERMANENT_SPELL_SOURCE");
+    const failedEntry = processZoneChangeWithReplacements({
+      ...state, pendingZoneChangeChoice: null
+    }, {
+      instanceId: item.source_instance_id,
+      destination: "graveyard"
+    }, [], {
+      eventId: eventId + ":failed-entry",
+      cause: "spell-resolution"
+    });
+    if (failedEntry.status !== "committed") throw new Error("FAILED_PERMANENT_SPELL_GRAVEYARD_MOVE");
+    return failedEntry.state;
   }
 
   private resolveZoneChangeReplacement(command: RoomCommand, cacheKey: string): RoomCommandResult {
@@ -362,7 +380,9 @@ export class GameRoom {
         this.recordEvent(command, accepted);
         return accepted;
       }
-      let nextState = transition.status === "committed" ? transition.state : this.currentState;
+      let nextState = transition.status === "committed"
+        ? transition.state
+        : this.movePreventedPermanentSpellToGraveyard(this.currentState, top, pending.eventId);
       nextState = applyStateBasedActions(completeStackResolution({
         ...nextState, pendingZoneChangeChoice: null
       }, pending.stackItemId));

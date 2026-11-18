@@ -86,3 +86,8 @@ Pour un sort permanent dont les remplacements concurrents demandent un choix, la
 - le journal des commandes acceptées permet de rejouer une partie et de restaurer une décision encore en attente.
 
 Cette implémentation est un contrat mono-événement/mono-décideur. Elle ne prétend pas implémenter les choix APNAP simultanés de 616.1, les événements imbriqués de 616.1g, ni un moteur de détection des remplacements globaux. Le registre injectable `EntryReplacementResolver` fournit un point d'intégration testable pour les futurs effets de permanents.
+
+
+## 9. Résolution d'un sort permanent empêché d'entrer — CR 608.3e
+
+Le PDF fourni (édition 2026-09-25), règle 608.3e, précise que si un sort permanent se résout mais que son contrôleur ne peut pas le mettre sur le champ de bataille, ce joueur le met dans le cimetière de son propriétaire. Ainsi, une prévention de l'événement d'entrée ne peut pas laisser la carte dans la zone `stack` après retrait de l'objet de pile. Le serveur effectue un second changement de zone vers le cimetière, avec un nouvel identifiant d'événement ; le traitement de remplacements applicables à ce second événement et des choix imbriqués reste une limite déclarée.
