@@ -14,3 +14,9 @@
 - Capacités de mana restent immédiates via `tap-for-mana`. Aucune capacité à cible, coût sacrifice/défausse/PV, restrictions, coût hybride/phyrexian/X ou capacités de loyauté n'est couverte.
 
 - CI verte : run 44098476723 sur `38c1340e440de82267bec715286539b17d5b99a6` ; typecheck, Vitest et python-data réussis.
+
+
+## ETB — reprise des choix de remplacement (2026-11-18)
+- `resumeZoneChangeWithReplacements` reprend une session existante sans reconstruire la proposition ; les choix successifs conservent les effets déjà appliqués et la trace.
+- Test moteur : deux points de choix successifs (catégorie copy puis general), état inchangé avant commit, destination et marqueurs validés dans l'événement final.
+- Les sessions restent gardées par `state.revision` ; le protocole GameRoom, la persistance et l'authentification des décisions restent non implémentés.

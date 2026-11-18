@@ -2,7 +2,7 @@
 
 Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique générique plutôt qu'une progression carte par carte.
 
-**Avancement 2026-11-17 :** le pipeline typé est utilisé par la résolution des sorts permanents. Un adaptateur explicite compile deux modèles Oracle auto-référentiels exacts : « {nom} enters the battlefield tapped. » et « {nom} enters the battlefield with N +1/+1 counters on it. » ; les modifications sont appliquées avant la création de l’événement. Les autres effets Oracle, choix 614.12, événements imbriqués et choix APNAP simultanés restent à implémenter.
+**Avancement 2026-11-18 :** le pipeline typé est utilisé par la résolution des sorts permanents. Un adaptateur explicite compile deux modèles Oracle auto-référentiels exacts : « {nom} enters the battlefield tapped. » et « {nom} enters the battlefield with N +1/+1 counters on it. » ; les modifications sont appliquées avant la création de l’événement. Le moteur expose maintenant une API de reprise d'une même session de remplacement après plusieurs points de choix successifs ; le protocole serveur et la persistance de ces décisions restent à implémenter. Les autres effets Oracle, choix 614.12, événements imbriqués et choix APNAP simultanés restent à implémenter.
 
 ## ETB-0 — Contrat d'événement et changements de zone (fondation obligatoire)
 - [ ] Centraliser chaque changement de zone dans un processeur métier (la résolution des sorts permanents utilise maintenant le pipeline proposition → remplacements → commit ; le registre d'effets et les autres chemins restent à migrer).
@@ -11,9 +11,9 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [x] Respecter les catégories 616.1a-e, réévaluer après chaque remplacement et ne pas appliquer deux fois le même effet au même événement (614.5).
 - [x] Suspendre l'évaluation lorsqu'un choix entre plusieurs remplacements concurrents est requis, avec garde de révision pour rejeter les décisions périmées.
 - [x] Une prévention annule le commit et ne produit pas d'événement de changement de zone.
-- [ ] Conserver identité avant/après, owner/controller, cause et informations connues.
+- [x] Conserver identité avant/après, owner/controller, cause, trace des remplacements et informations connues dans ZoneChangeEvent.
 - [x] Brancher au serveur un registre dérivé de la définition Scryfall pour les modèles self « enters tapped » et « enters with N +1/+1 counters » (allowlist exacte, sans parseur Oracle général).
-- [ ] Gérer les choix de remplacement en attente dans le protocole serveur.
+- [ ] Gérer les choix de remplacement en attente dans le protocole serveur (la reprise de session est désormais disponible dans le moteur, mais aucun état de décision n'est encore persisté/exposé par GameRoom).
 - [ ] Brancher les effets concrets et choix pré-entrée (614.12), événements imbriqués (614.13, 616.1f-g) et caractéristiques d'entrée ; distinguer entrée modifiée d'un trigger (603.6d).
 - [x] Tests : mouvements simultanés, groupe partagé, snapshots pré-événement, no-op et requêtes dupliquées.
 - [x] Test du wrapper single-move : snapshot avant/après, transfert de contrôleur et état source immuable.
@@ -89,3 +89,12 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Limites : pas de compilation Oracle, pas de dépendances 613.7 ni de couches 1–3/5–7 ; les effets fournis doivent déjà être applicables et ordonnés par le résolveur de règles.
 
 - Précision d'ordre : timestamp croissant ; les égalités conservent l'ordre pré-résolu fourni par l'appelant. Les listes d'ajout sont dédupliquées et les sélecteurs explicitement vides sont rejetés.
+
+
+## Reprise des sessions de remplacement — moteur (2026-11-18)
+
+- Ajout de `resumeZoneChangeWithReplacements(state, session, effects, context, selectedEffectId?)` : la session de proposition est conservée entre les décisions, puis réévaluée avec la garde de révision existante.
+- `processZoneChangeWithReplacements` crée la session initiale et délègue à cette API ; les deux chemins partagent désormais la même logique d'évaluation/commit.
+- Un choix successif peut être demandé après l'application du choix précédent ; chaque réponse doit reprendre la session retournée la plus récente.
+- Le test vérifie deux checkpoints de choix, la non-mutation avant commit, l'ordre de trace et l'application des marqueurs avant le snapshot d'entrée.
+- Hors périmètre : transport/persistance GameRoom, authentification du joueur qui choisit, expiration/reprise après redémarrage, choix APNAP simultanés et effets imbriqués 616.1g.

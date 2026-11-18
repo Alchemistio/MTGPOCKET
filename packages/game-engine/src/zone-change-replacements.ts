@@ -131,6 +131,28 @@ export type ZoneChangePipelineResult =
  * End-to-end single-event entry point: propose -> evaluate replacements -> commit.
  * A choice-required result is deliberately non-mutating and can be resumed by the caller.
  */
+/**
+ * Resumes an existing proposal after a player has selected one applicable replacement.
+ * The caller must retain the returned session when another choice is required.
+ */
+export function resumeZoneChangeWithReplacements(
+  state: GameState,
+  session: ZoneChangeReplacementSession,
+  effects: readonly ZoneChangeReplacementEffect[],
+  context: CommitReplacedZoneChangeContext,
+  selectedEffectId?: string
+): ZoneChangePipelineResult {
+  const evaluation = evaluateZoneChangeReplacements(state, session, effects, selectedEffectId);
+  if (evaluation.status === "choice-required") {
+    return { status: "choice-required", state, session: evaluation.session, candidates: evaluation.candidates };
+  }
+  return commitReplacedZoneChange(state, evaluation, context);
+}
+
+/**
+ * End-to-end single-event entry point: propose -> evaluate replacements -> commit.
+ * A choice-required result is deliberately non-mutating and can be resumed by the caller.
+ */
 export function processZoneChangeWithReplacements(
   state: GameState,
   request: { instanceId: InstanceId; destination: Zone; destinationControllerId?: PlayerId },
@@ -141,9 +163,5 @@ export function processZoneChangeWithReplacements(
   const session = createZoneChangeReplacementSession(
     state, request.instanceId, request.destination, request.destinationControllerId
   );
-  const evaluation = evaluateZoneChangeReplacements(state, session, effects, selectedEffectId);
-  if (evaluation.status === "choice-required") {
-    return { status: "choice-required", state, session: evaluation.session, candidates: evaluation.candidates };
-  }
-  return commitReplacedZoneChange(state, evaluation, context);
+  return resumeZoneChangeWithReplacements(state, session, effects, context, selectedEffectId);
 }

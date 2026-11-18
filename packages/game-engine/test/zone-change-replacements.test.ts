@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCardInstance, commitReplacedZoneChange, createGame, createZoneChangeReplacementSession, evaluateZoneChangeReplacements, type ZoneChangeReplacementEffect } from "../src/index.js";
+import { addCardInstance, commitReplacedZoneChange, createGame, createZoneChangeReplacementSession, evaluateZoneChangeReplacements, resumeZoneChangeWithReplacements, type ZoneChangeReplacementEffect } from "../src/index.js";
 const players = [
   { id: "p1", name: "Alice", seat: 0 }, { id: "p2", name: "Bob", seat: 1 },
   { id: "p3", name: "Chloé", seat: 2 }, { id: "p4", name: "David", seat: 3 }
@@ -40,6 +40,44 @@ describe("zone-change replacement pipeline", () => {
     expect(resumed.session.proposal.toZone).toBe("exile");
     expect(resumed.session.replacementTrace).toEqual(["copy-a", "copy-b", "general"]);
   });
+  it("resumes the same proposal across multiple replacement-choice checkpoints", () => {
+    const state = fixture();
+    const effects = [
+      effect("copy-a", "copy", proposal => ({ ...proposal, toZone: "battlefield" })),
+      effect("copy-b", "copy", proposal => ({ ...proposal, toZone: "exile" })),
+      effect("general-a", "general", proposal => ({ ...proposal, entersTapped: true })),
+      effect("general-b", "general", proposal => ({ ...proposal, entersWithP1P1Counters: 2 }))
+    ];
+    const context = { eventId: "resumed-entry", cause: "spell-resolution" as const };
+    const first = resumeZoneChangeWithReplacements(
+      state, createZoneChangeReplacementSession(state, "entrant", "graveyard"), effects, context
+    );
+    expect(first.status).toBe("choice-required");
+    if (first.status !== "choice-required") throw new Error("EXPECTED_FIRST_CHOICE");
+    expect(first.candidates.map(candidate => candidate.id)).toEqual(["copy-a", "copy-b"]);
+    expect(first.state).toBe(state);
+    expect(state.cards.entrant?.zone).toBe("hand");
+
+    const second = resumeZoneChangeWithReplacements(
+      state, first.session, effects, context, "copy-a"
+    );
+    expect(second.status).toBe("choice-required");
+    if (second.status !== "choice-required") throw new Error("EXPECTED_SECOND_CHOICE");
+    expect(second.candidates.map(candidate => candidate.id)).toEqual(["general-a", "general-b"]);
+    expect(second.session.appliedEffectIds).toEqual(["copy-a"]);
+
+    const committed = resumeZoneChangeWithReplacements(
+      state, second.session, effects, context, "general-b"
+    );
+    expect(committed.status).toBe("committed");
+    if (committed.status !== "committed") throw new Error("EXPECTED_COMMIT");
+    expect(committed.state.cards.entrant).toMatchObject({
+      zone: "battlefield", is_tapped: false, counters: { p1p1: 2 }
+    });
+    expect(committed.event?.replacementTrace).toEqual(["copy-a", "general-b"]);
+    expect(committed.event?.instanceAfter.counters.p1p1).toBe(2);
+  });
+
   it("applies each replacement at most once to one proposed event", () => {
     const state = fixture(), once = effect("once", "general", proposal => ({ ...proposal, toZone: "graveyard" }));
     const result = evaluateZoneChangeReplacements(state, createZoneChangeReplacementSession(state, "entrant", "battlefield"), [once]);

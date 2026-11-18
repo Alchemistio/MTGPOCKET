@@ -62,3 +62,10 @@ Ces types sont des propositions, pas des types déjà présents dans le code.
 - Argentum : https://github.com/ITC-MSM/commander/blob/main/docs/architecture-principles.md — AST/IR, effets composables et transitions fonctionnelles.
 - Majik : https://github.com/bg9m9r/majik — event bus, événements métier, gestion des zones et registre de capacités.
 Ces projets tiers ne sont ni des règles officielles ni une preuve de correction. Wizards CR prime.
+
+
+## Reprise d'un choix de remplacement — tranche moteur (2026-11-18)
+
+Le PDF Comprehensive Rules fourni (édition 2026-09-25) confirme les points normatifs vérifiés pour cette tranche : 614.5 (un remplacement ne s'applique pas répétitivement au même événement), 614.6 (l'événement original n'a pas lieu si remplacé), 616.1 (le joueur concerné choisit selon les catégories), 616.1f (répéter le processus en tenant compte des effets désormais applicables) et 616.1g (les événements contenus dans un événement remplacé ne sont traités qu'après le choix de l'événement englobant). Les règles 614.12 et 614.12a imposent en outre de déterminer les remplacements d'entrée à partir des caractéristiques pertinentes et de faire les choix requis avant l'entrée.
+
+La fonction `resumeZoneChangeWithReplacements` permet au moteur de poursuivre la même session et sa trace après un choix, y compris si une nouvelle catégorie exige un second choix. La révision de partie reste le garde-fou contre une session devenue périmée. Cette tranche ne traite pas les choix imbriqués de 616.1g ni leur transport réseau.

@@ -15,3 +15,10 @@
 - L'objet rejoint la pile et se résout via le registre typé ; le coordinateur conserve le cycle de vie. La commande acceptée est journalisée et rejouable.
 - Les capacités de créature avec {T} sont refusées faute de suivi de contrôle depuis le début du tour/célérité (CR 602.5a). Les capacités de mana restent sur leur chemin immédiat (CR 605.3b).
 - CI verte : run 44098476723 sur `38c1340e440de82267bec715286539b17d5b99a6` ; typecheck, Vitest et python-data réussis.
+
+
+## 2026-11-18 — ETB : reprise des sessions de remplacement dans le moteur
+- Ajout de `resumeZoneChangeWithReplacements` pour poursuivre une proposition après un choix de remplacement sans perdre les remplacements déjà appliqués.
+- Le point d'entrée initial `processZoneChangeWithReplacements` délègue à la même primitive de reprise ; une nouvelle décision peut être demandée après chaque réévaluation.
+- Test moteur ajouté pour deux choix successifs, non-mutation avant commit, trace déterministe et modification d'entrée incluse dans le snapshot final.
+- Le protocole serveur et la persistance des choix ne sont pas inclus dans cette tranche ; GameRoom ne doit pas encore exposer ce mécanisme comme une fonctionnalité utilisable en partie.
