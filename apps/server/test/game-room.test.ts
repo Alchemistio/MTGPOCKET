@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { GameRoom } from "../src/game-room.js";
 import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
-import type { GameState } from "@commander-pocket/game-engine";
-import { basicLandManaOptions, createBasicPermanentEntryReplacements, resolveBasicSpellEffect, supportsBasicSpell } from "../src/basic-spell-effects.js";
+import type { GameState, ZoneChangeEvent } from "@commander-pocket/game-engine";
+import { basicLandManaOptions, createBasicPermanentEntryReplacements, resolveBasicSpellEffect, scanBasicZoneChangeTriggers, supportsBasicSpell } from "../src/basic-spell-effects.js";
 import { toPlayerView } from "../src/player-view.js";
 
 const players = [
@@ -38,6 +38,65 @@ describe("GameRoom", () => {
     expect(createBasicPermanentEntryReplacements({
       ...definition, oracleText: "Counter Adept enters the battlefield with X +1/+1 counters on it."
     }, "p1")).toEqual([]);
+  });
+
+  it("scans every battlefield permanent for matching entry triggers and captures source controllers", () => {
+    const definitions: Record<string, CardDefinition> = {
+      "global-creature-trigger": {
+        provider: "scryfall", providerId: "global-creature-trigger", oracleId: "global-creature-trigger-oracle",
+        name: "Watcher Enchantment", layout: "normal", manaCost: "{2}{W}", manaValue: 3,
+        typeLine: "Enchantment", oracleText: "Whenever another creature enters the battlefield, draw a card.",
+        colors: ["W"], colorIdentity: ["W"], legalities: { commander: "legal" }, faces: [],
+        raw: { id: "global-creature-trigger", name: "Watcher Enchantment", layout: "normal", mana_cost: "{2}{W}", cmc: 3, type_line: "Enchantment", oracle_text: "Whenever another creature enters the battlefield, draw a card.", colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" }, set: "tst", collector_number: "81" }
+      },
+      "global-permanent-trigger": {
+        provider: "scryfall", providerId: "global-permanent-trigger", oracleId: "global-permanent-trigger-oracle",
+        name: "Welcome Shrine", layout: "normal", manaCost: "{3}", manaValue: 3,
+        typeLine: "Artifact", oracleText: "Whenever a permanent enters the battlefield, you gain 2 life.",
+        colors: [], colorIdentity: [], legalities: { commander: "legal" }, faces: [],
+        raw: { id: "global-permanent-trigger", name: "Welcome Shrine", layout: "normal", mana_cost: "{3}", cmc: 3, type_line: "Artifact", oracle_text: "Whenever a permanent enters the battlefield, you gain 2 life.", colors: [], color_identity: [], legalities: { commander: "legal" }, set: "tst", collector_number: "82" }
+      },
+      "entrant-trigger": {
+        provider: "scryfall", providerId: "entrant-trigger", oracleId: "entrant-trigger-oracle",
+        name: "New Recruit", layout: "normal", manaCost: "{W}", manaValue: 1,
+        typeLine: "Creature — Soldier", oracleText: "When New Recruit enters the battlefield, draw a card.",
+        colors: ["W"], colorIdentity: ["W"], legalities: { commander: "legal" }, faces: [],
+        raw: { id: "entrant-trigger", name: "New Recruit", layout: "normal", mana_cost: "{W}", cmc: 1, type_line: "Creature — Soldier", oracle_text: "When New Recruit enters the battlefield, draw a card.", colors: ["W"], color_identity: ["W"], legalities: { commander: "legal" }, set: "tst", collector_number: "83" }
+      }
+    };
+    let state = advanceAutomaticStep(createGame("room-1", players));
+    state = addCardInstance(state, {
+      instance_id: "watcher-instance", card_id: "global-creature-trigger", owner_id: "p2", zone: "battlefield"
+    });
+    state = addCardInstance(state, {
+      instance_id: "shrine-instance", card_id: "global-permanent-trigger", owner_id: "p3", zone: "battlefield"
+    });
+    state = addCardInstance(state, {
+      instance_id: "recruit-instance", card_id: "entrant-trigger", owner_id: "p1", zone: "battlefield"
+    });
+    const after = state.cards["recruit-instance"]!;
+    const before = { ...after, zone: "hand" as const };
+    const event: ZoneChangeEvent = {
+      eventId: "entry-event-1", simultaneousGroupId: null,
+      instanceBefore: before, instanceAfter: after,
+      fromZone: "hand", toZone: "battlefield", ownerId: "p1",
+      controllerBefore: "p1", controllerAfter: "p1",
+      cause: "spell-resolution", replacementTrace: [], lastKnownInfo: before
+    };
+    const candidates = scanBasicZoneChangeTriggers(
+      state, event, cardId => definitions[cardId], state.revision
+    );
+    expect(candidates.map(candidate => ({
+      source: candidate.sourceInstanceId,
+      controller: candidate.controllerAtTrigger,
+      effect: (candidate.stackItem.payload as { effect: string }).effect,
+      eventId: candidate.eventId
+    }))).toEqual([
+      { source: "watcher-instance", controller: "p2", effect: "etb-draw-one", eventId: "entry-event-1" },
+      { source: "shrine-instance", controller: "p3", effect: "etb-gain-life", eventId: "entry-event-1" },
+      { source: "recruit-instance", controller: "p1", effect: "etb-draw-one", eventId: "entry-event-1" }
+    ]);
+    expect(new Set(candidates.map(candidate => candidate.stackItem.id)).size).toBe(3);
   });
 
   it("starts at upkeep and advances only after all four seats pass", () => {

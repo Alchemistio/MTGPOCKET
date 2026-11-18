@@ -36,3 +36,12 @@
 - CI verte pour la suspension serveur : run 44252301628 sur `881592facfb69504ac1f6290a672fe78d28a95b9`. Après le correctif CR 608.3e, run 44252738631 sur `68fb73ca63fa0a2588facb408d46f458bfcef738` passe aussi : typecheck, Vitest et python-data.
 
 - Complément CR 608.3e : une entrée prévenue ne laisse pas le sort permanent bloqué en zone stack ; un changement de zone distinct l'envoie au cimetière de son propriétaire. Les remplacements du mouvement secondaire restent à traiter dans la tranche des événements imbriqués.
+
+
+## 2026-11-18 — ETB-1 : scanner initial de candidats
+
+- Ajout de `scanBasicZoneChangeTriggers`, qui parcourt tous les permanents du champ de bataille, entrant compris, pour chaque événement d'entrée commis.
+- Compilation allowlist de motifs ETB exacts : self `When {name} enters`, `Whenever [another] creature/permanent enters`, avec pioche d'une carte ou gain de N points de vie.
+- Chaque candidat conserve l'instance source, le contrôleur capturé au moment du trigger, l'événement et l'index de ligne ; identifiants déterministes pour rejeu.
+- Test couvrant trois sources et trois contrôleurs (p2, p3, p1) et la détection des triggers globaux + self.
+- Le scanner retourne des candidats uniquement : le placement sur la pile est différé au chantier APNAP/priority checkpoint. Le chemin de résolution live n'est pas encore migré ; pas de types/capacités calculés par couches, événements multi-entrants ou sources hors battlefield.

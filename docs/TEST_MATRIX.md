@@ -32,3 +32,11 @@
 - CI verte : run 44252301628 sur `881592facfb69504ac1f6290a672fe78d28a95b9` pour la suspension serveur, puis run 44252738631 sur `68fb73ca63fa0a2588facb408d46f458bfcef738` après l'ajout du cas CR 608.3e ; typecheck, Vitest et python-data réussis.
 
 - Cas CR 608.3e : si l'événement d'entrée du permanent est prévenu, le sort permanent rejoint le cimetière de son propriétaire via un événement de zone distinct ; il ne reste pas en zone stack. Test `puts a permanent spell into its owner's graveyard when battlefield entry is prevented`.
+
+
+## ETB-1 — scanner de candidats (2026-11-18)
+- `scanBasicZoneChangeTriggers` examine tous les permanents présents sur le battlefield, y compris l'entrant, pour un événement d'entrée commis (base CR 603.6a).
+- Motifs stricts : `When {name} enters ... draw a card`, `Whenever [another] creature/permanent enters ... draw a card`, et variantes `you gain N life`.
+- Les candidats conservent source, contrôleur au moment du trigger, ID d'événement et index de ligne ; les IDs de StackItem sont déterministes.
+- Test `scans every battlefield permanent for matching entry triggers and captures source controllers` : trigger global contrôlé par p2, trigger permanent contrôlé par p3, trigger self de l'entrant p1.
+- Scanner de découverte seulement : pas encore de placement sur pile, APNAP, choix d'ordre, batch multi-entrants ni recalcul couche 603.6b ; le chemin live self-ETB historique reste actif en attendant l'intégration au checkpoint.

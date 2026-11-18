@@ -21,9 +21,10 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - [ ] Tests : événement remplacé, token et nouvelle identité.
 
 ## ETB-1 — Détection générique (toutes sources pertinentes)
-- [ ] Compiler « When this enters », « Whenever a creature enters », « Whenever another permanent enters », etc. vers TriggerSpec.
-- [ ] Scanner toutes les sources pertinentes, entrants compris ; appliquer les zones de fonctionnement de 113.6, y compris les exceptions hors battlefield.
-- [ ] Capturer le contrôleur au moment du trigger.
+- [x] Prototype de compilation allowlist exacte pour « When {name} enters », « Whenever [another] creature enters » et « Whenever [another] permanent enters », avec pioche d'une carte ou gain de N points de vie.
+- [x] Scanner chaque permanent du battlefield, entrants compris, pour un événement d'entrée commis ; ignorer les scopes « another » lorsque la source est l'entrant.
+- [x] Capturer le contrôleur de chaque source au moment du scan et produire des candidats déterministes liés à l'événement.
+- [ ] Étendre le scan aux zones de fonctionnement hors battlefield (113.6), aux types/capacités résultant des effets continus (603.6b) et aux capacités non-normal/multi-face.
 - [ ] Conditions simples et occurrences multiples.
 - [ ] Tests : source elle-même, autre permanent, plusieurs entrants, types modifiés par effets continus.
 
@@ -111,3 +112,12 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 
 
 - Précision CR 608.3e (2026-11-18) : lorsqu'un sort permanent ne peut pas entrer sur le champ de bataille, sa carte est déplacée au cimetière de son propriétaire ; ce chemin ne doit jamais laisser la carte en zone `stack`. Le serveur crée un événement de zone distinct pour cette destination de repli. Le remplacement éventuel de ce second événement reste hors de la portée de cette tranche (événements imbriqués/616.1g).
+
+
+## ETB-1 — premier scanner de candidats (2026-11-18)
+
+- `scanBasicZoneChangeTriggers` parcourt les permanents du battlefield à partir de l'état commis et examine les lignes Oracle des définitions Scryfall normales.
+- Motifs stricts pris en charge : `When {name} enters the battlefield, draw a card.`, `Whenever [another] creature enters the battlefield, draw a card.`, `Whenever [another] permanent enters the battlefield, draw a card.` et leurs variantes `you gain N life.`
+- Le scope `another` exclut l'instance source lorsqu'elle est l'entrant ; les triggers non-self sont aussi détectés depuis des permanents déjà présents.
+- Chaque candidat capture `controllerAtTrigger`, `sourceInstanceId`, `eventId` et l'index de ligne Oracle ; son ID de StackItem est déterministe.
+- Cette tranche ne place pas encore le batch sur la pile : elle retourne des candidats. APNAP/ordre choisi, intégration au checkpoint de priorité, événements simultanés multi-entrants, types/abilities modifiés par couches et sources hors battlefield restent à faire. Le chemin live historique du self-ETB n'est pas encore remplacé par ce scanner.

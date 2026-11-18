@@ -91,3 +91,12 @@ Cette implémentation est un contrat mono-événement/mono-décideur. Elle ne pr
 ## 9. Résolution d'un sort permanent empêché d'entrer — CR 608.3e
 
 Le PDF fourni (édition 2026-09-25), règle 608.3e, précise que si un sort permanent se résout mais que son contrôleur ne peut pas le mettre sur le champ de bataille, ce joueur le met dans le cimetière de son propriétaire. Ainsi, une prévention de l'événement d'entrée ne peut pas laisser la carte dans la zone `stack` après retrait de l'objet de pile. Le serveur effectue un second changement de zone vers le cimetière, avec un nouvel identifiant d'événement ; le traitement de remplacements applicables à ce second événement et des choix imbriqués reste une limite déclarée.
+
+
+## 10. Scanner générique — première tranche ETB-1
+
+La règle 603.6a du PDF fourni (25 septembre 2026, p. 73 dans le PDF) dit que chaque fois qu'un événement met un ou plusieurs permanents sur le champ de bataille, tous les permanents présents sur le champ de bataille, entrants compris, sont examinés pour les triggers ETB qui correspondent à l'événement. La règle 603.6b précise que les effets continus modifient les caractéristiques dès que le permanent est sur le champ de bataille ; les types et capacités pertinents peuvent donc différer du texte/type imprimé.
+
+Le prototype `scanBasicZoneChangeTriggers` applique la première moitié de ce contrat à un événement commis : il parcourt les permanents de tous les joueurs, entrants inclus, et compile une petite allowlist de lignes Oracle normales. Il capture le contrôleur de source au moment du scan et lie le candidat à l'eventId. Les types sont encore évalués depuis `CardDefinition.typeLine` imprimé ; l'intégration des couches/effets continus est donc explicitement incomplète au regard de 603.6b.
+
+Le scanner ne place pas les candidats sur la pile. Le placement attendra le pipeline de checkpoint et APNAP de 603.3/603.3b afin de ne pas imposer un ordre arbitraire entre contrôleurs. Les événements de simultanéité multi-entrants et les capacités fonctionnant hors battlefield ne sont pas encore traités.

@@ -1,5 +1,5 @@
 import type { CardDefinition } from "@commander-pocket/card-data";
-import { changeLife, drawCards, type GameState, type StackItem, type StackHandlerRegistry, type ZoneChangeReplacementEffect } from "@commander-pocket/game-engine";
+import { changeLife, drawCards, type GameState, type StackItem, type StackHandlerRegistry, type ZoneChangeReplacementEffect, type ZoneChangeEvent } from "@commander-pocket/game-engine";
 
 function hasSimpleManaCost(manaCost: string | null): boolean {
   if (manaCost === null) return false;
@@ -80,6 +80,133 @@ export function supportsBasicSpell(definition: CardDefinition): boolean {
     return /^Draw (?:a|two|three) cards\.$/.test(text) || /^You gain \d+ life\.$/.test(text);
   }
   return supportsBasicPermanent(definition);
+}
+
+export type BasicZoneChangeTriggerEffect =
+  | { effect: "etb-draw-one" }
+  | { effect: "etb-gain-life"; amount: number };
+
+type BasicZoneChangeTriggerScope =
+  | "self"
+  | "creature"
+  | "another-creature"
+  | "permanent"
+  | "another-permanent";
+
+interface BasicZoneChangeTriggerSpec {
+  scope: BasicZoneChangeTriggerScope;
+  effect: BasicZoneChangeTriggerEffect;
+}
+
+export interface BasicZoneChangeTriggerCandidate {
+  stackItem: StackItem;
+  sourceInstanceId: string;
+  controllerAtTrigger: string;
+  eventId: string;
+  abilityLineIndex: number;
+}
+
+function compileBasicZoneChangeTriggerLine(
+  definition: CardDefinition,
+  line: string
+): BasicZoneChangeTriggerSpec | null {
+  const selfPrefix = `When ${definition.name} enters the battlefield, `;
+  if (line.startsWith(selfPrefix)) {
+    const effectText = line.slice(selfPrefix.length);
+    if (effectText === "draw a card.") return { scope: "self", effect: { effect: "etb-draw-one" } };
+    const life = /^you gain ([1-9]\\d*) life\\.$/.exec(effectText);
+    if (life) {
+      const amount = Number(life[1]);
+      if (Number.isSafeInteger(amount)) return { scope: "self", effect: { effect: "etb-gain-life", amount } };
+    }
+    return null;
+  }
+
+  const match = /^Whenever (another )?(creature|permanent) enters the battlefield, (draw a card|you gain ([1-9]\\d*) life)\\.$/.exec(line);
+  if (!match) return null;
+  const another = match[1] !== undefined;
+  const type = match[2];
+  const scope: BasicZoneChangeTriggerScope = type === "creature"
+    ? (another ? "another-creature" : "creature")
+    : (another ? "another-permanent" : "permanent");
+  if (match[3] === "draw a card") return { scope, effect: { effect: "etb-draw-one" } };
+  const amount = Number(match[4]);
+  return Number.isSafeInteger(amount) && amount > 0
+    ? { scope, effect: { effect: "etb-gain-life", amount } }
+    : null;
+}
+
+function isPermanentDefinition(definition: CardDefinition): boolean {
+  return /\\b(?:Artifact|Battle|Creature|Enchantment|Land|Planeswalker)\\b/.test(definition.typeLine);
+}
+
+/**
+ * Scans every battlefield permanent, including entrants, for this committed
+ * battlefield-entry event. It captures each source's controller at trigger time.
+ *
+ * This function only discovers candidates. APNAP ordering and stack placement
+ * are deliberately owned by the later priority-checkpoint pipeline.
+ */
+export function scanBasicZoneChangeTriggers(
+  state: GameState,
+  event: ZoneChangeEvent,
+  resolveCard: (cardId: string) => CardDefinition | undefined,
+  revision: number
+): BasicZoneChangeTriggerCandidate[] {
+  if (event.toZone !== "battlefield" || event.fromZone === "battlefield") return [];
+  const entrantDefinition = resolveCard(event.instanceAfter.card_id);
+  if (!entrantDefinition) return [];
+  const entrantIsCreature = /\\bCreature\\b/.test(entrantDefinition.typeLine);
+  const entrantIsPermanent = isPermanentDefinition(entrantDefinition);
+  const candidates: BasicZoneChangeTriggerCandidate[] = [];
+  const visited = new Set<string>();
+
+  for (const player of state.players) {
+    for (const sourceInstanceId of player.battlefield) {
+      if (visited.has(sourceInstanceId)) continue;
+      visited.add(sourceInstanceId);
+      const source = state.cards[sourceInstanceId];
+      if (!source || source.zone !== "battlefield") continue;
+      const definition = resolveCard(source.card_id);
+      if (!definition || definition.layout !== "normal") continue;
+
+      const lines = definition.oracleText.split(/\\r?\\n/);
+      for (let abilityLineIndex = 0; abilityLineIndex < lines.length; abilityLineIndex += 1) {
+        const spec = compileBasicZoneChangeTriggerLine(definition, lines[abilityLineIndex]!.trim());
+        if (!spec) continue;
+        const isSelf = sourceInstanceId === event.instanceAfter.instance_id;
+        let matches = false;
+        switch (spec.scope) {
+          case "self": matches = isSelf; break;
+          case "creature": matches = entrantIsCreature; break;
+          case "another-creature": matches = entrantIsCreature && !isSelf; break;
+          case "permanent": matches = entrantIsPermanent; break;
+          case "another-permanent": matches = entrantIsPermanent && !isSelf; break;
+        }
+        if (!matches) continue;
+
+        const stackItem: StackItem = {
+          id: `trigger:etb:${event.eventId}:${sourceInstanceId}:${abilityLineIndex}:${revision}`,
+          controller_id: source.controller_id,
+          source_instance_id: sourceInstanceId,
+          kind: "triggered-ability",
+          payload: {
+            ...spec.effect,
+            sourceName: definition.name,
+            zoneChangeEventId: event.eventId
+          }
+        };
+        candidates.push({
+          stackItem,
+          sourceInstanceId,
+          controllerAtTrigger: source.controller_id,
+          eventId: event.eventId,
+          abilityLineIndex
+        });
+      }
+    }
+  }
+  return candidates;
 }
 
 /** Creates the server-known stack object for an allowlisted ETB ability. */
