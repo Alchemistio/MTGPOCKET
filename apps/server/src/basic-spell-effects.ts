@@ -122,15 +122,15 @@ function compileBasicZoneChangeTriggerLine(
     return null;
   }
 
-  const match = /^Whenever (another )?(creature|permanent) enters the battlefield, (draw a card|you gain ([1-9]\d*) life)\.$/.exec(line);
+  const match = /^Whenever (?:another |a )(creature|permanent) enters the battlefield, (draw a card|you gain ([1-9]\d*) life)\.$/.exec(line);
   if (!match) return null;
-  const another = match[1] !== undefined;
+  const another = line.startsWith("Whenever another ");
   const type = match[2];
   const scope: BasicZoneChangeTriggerScope = type === "creature"
     ? (another ? "another-creature" : "creature")
     : (another ? "another-permanent" : "permanent");
-  if (match[3] === "draw a card") return { scope, effect: { effect: "etb-draw-one" } };
-  const amount = Number(match[4]);
+  if (match[2] === "draw a card") return { scope, effect: { effect: "etb-draw-one" } };
+  const amount = Number(match[3]);
   return Number.isSafeInteger(amount) && amount > 0
     ? { scope, effect: { effect: "etb-gain-life", amount } }
     : null;
