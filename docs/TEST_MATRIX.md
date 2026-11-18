@@ -48,3 +48,12 @@
 - L'API expose l'ordre d'insertion sur la pile (bottom-to-top) une fois tous les groupes ordonnés ; le dernier élément est le sommet et résout en premier.
 - Tests : APNAP à quatre sièges avec joueur actif non-p1, plusieurs triggers par contrôleur, contrôleur hors tour, permutation invalide, contrôleur inconnu/éliminé, batch vide et conservation du snapshot candidat.
 - Limite : contrat pur et sérialisable uniquement. Pas encore de champ dans GameState, de commande réseau, de placement effectif sur la pile, de checkpoint de priorité ni de boucle SBA/trigger.
+
+
+## ETB-2 — état serveur, décision APNAP et projection privée (2026-11-18)
+- `GameState.pendingTriggerBatch` conserve le batch APNAP ; les anciennes sauvegardes migrent vers `null`.
+- Commande `order-etb-triggers` : authentification par contrôleur APNAP courant, ID de batch et permutation exacte des IDs candidats ; chaque décision incrémente la révision et est journalisée.
+- `GameView` n'expose les IDs candidats qu'au contrôleur actuellement autorisé ; les autres sièges ne reçoivent que le nombre de groupes encore en attente.
+- Tests GameRoom : mauvais contrôleur, mauvais batch, permutation dupliquée/étrangère, séquence APNAP, groupe singleton auto-ordonné, vue privée, snapshot/checkpoint, rejeu et restauration.
+- Le batch bloque `pass-priority` afin qu'une décision d'ordre ne puisse pas être contournée.
+- Limite : aucun branchement du scanner ETB, aucun placement effectif sur la pile ; même après le dernier ordre, le batch reste présent et bloque la progression jusqu'à la prochaine tranche de finalisation/checkpoint.

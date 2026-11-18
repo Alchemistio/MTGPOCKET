@@ -1,4 +1,4 @@
-import type { GameState, RuntimeCardState } from "@commander-pocket/game-engine";
+import { getNextTriggerOrderControllerId, type GameState, type RuntimeCardState } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
 import { basicLandManaOptions } from "./basic-spell-effects.js";
 
@@ -70,6 +70,8 @@ export interface GameView {
   pendingCommanderChoices: readonly { instanceId: string; fromZone: "graveyard" | "exile" }[];
   pendingZoneChangeChoiceCount: number;
   pendingZoneChangeChoice: { id: string; stackItemId: string; candidateEffectIds: readonly string[] } | null;
+  pendingTriggerOrderCount: number;
+  pendingTriggerOrder: { id: string; candidateStackItemIds: readonly string[] } | null;
   players: readonly PlayerGameView[];
   visibleCards: Readonly<Record<string, RuntimeCardState>>;
 }
@@ -160,6 +162,13 @@ export function toPlayerView(state: GameState, viewerId: string, resolveCard?: (
     pendingCommanderChoiceCount: state.pendingCommanderChoices.length,
     pendingCommanderChoices: state.pendingCommanderChoices.filter(choice => choice.ownerId === viewerId).map(({ instanceId, fromZone }) => ({ instanceId, fromZone })),
     pendingZoneChangeChoiceCount: state.pendingZoneChangeChoice ? 1 : 0,
+    pendingTriggerOrderCount: state.pendingTriggerBatch?.groups.filter(group => group.orderedStackItemIds === null).length ?? 0,
+    pendingTriggerOrder: state.pendingTriggerBatch && getNextTriggerOrderControllerId(state.pendingTriggerBatch) === viewerId
+      ? (() => {
+          const group = state.pendingTriggerBatch!.groups.find(item => item.controllerId === viewerId && item.orderedStackItemIds === null);
+          return group ? { id: state.pendingTriggerBatch!.id, candidateStackItemIds: group.candidateStackItems.map(item => item.id) } : null;
+        })()
+      : null,
     pendingZoneChangeChoice: state.pendingZoneChangeChoice?.chooserPlayerId === viewerId ? {
       id: state.pendingZoneChangeChoice.id,
       stackItemId: state.pendingZoneChangeChoice.stackItemId,

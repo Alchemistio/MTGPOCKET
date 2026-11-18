@@ -35,3 +35,10 @@ export interface PregameServerMessage {
 export type CommandRejectionCode =
   | "UNAUTHENTICATED" | "UNKNOWN_SEAT" | "STALE_REVISION"
   | "ILLEGAL_ACTION" | "DUPLICATE_COMMAND" | "GAME_FINISHED";
+
+/** Client payload for the server-authorized APNAP trigger-order decision. */
+export interface OrderEtbTriggersPayload {
+  pendingId: string;
+  /** Exact permutation of the current controller's candidate StackItem IDs. */
+  orderedStackItemIds: string[];
+}

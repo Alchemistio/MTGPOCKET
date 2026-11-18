@@ -1,5 +1,5 @@
 import {
-  activateStackAbility, advanceAfterAllPass, advanceAutomaticStep, applyStateBasedActions, completeStackResolution, createGame, createZoneChangeReplacementSession, discardCards, EngineError, executeStackItemHandler, moveCardToZone, passPriority, processZoneChangeWithReplacements, pushStackItem, resumeZoneChangeWithReplacements, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
+  activateStackAbility, getNextTriggerOrderControllerId, recordPendingTriggerOrder, advanceAfterAllPass, advanceAutomaticStep, applyStateBasedActions, completeStackResolution, createGame, createZoneChangeReplacementSession, discardCards, EngineError, executeStackItemHandler, moveCardToZone, passPriority, processZoneChangeWithReplacements, pushStackItem, resumeZoneChangeWithReplacements, resolveCommanderReturnChoice, resolveStackItem, tapPermanentForMana,
   type GameState, type PendingZoneChangeChoice, type PlayerSetup, type StackItem, type ZoneChangeReplacementEffect, type ZoneChangeEvent
 } from "@commander-pocket/game-engine";
 import type { GameCommandEnvelope, GameEventEnvelope } from "@commander-pocket/protocol";
@@ -14,7 +14,7 @@ export type EntryReplacementResolver = (state: GameState, item: StackItem, defin
 export type RoomCommand = GameCommandEnvelope<unknown>;
 
 export type RoomCommandResult =
-  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-required" | "decision-resolved" | "spell-cast" | "mana-added" | "land-played" | "ability-activated" }
+  | { accepted: true; revision: number; outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-required" | "decision-resolved" | "trigger-order-recorded" | "spell-cast" | "mana-added" | "land-played" | "ability-activated" }
   | { accepted: false; revision: number; code: string };
 
 type AcceptedRoomCommandResult = Extract<RoomCommandResult, { accepted: true }>;
@@ -92,6 +92,7 @@ export class GameRoom {
     const snapshot = cloneGameState(checkpoint.snapshot);
     // Backward-compatible migration for persisted rooms created before land-play tracking.
     snapshot.pendingZoneChangeChoice ??= null;
+    snapshot.pendingTriggerBatch ??= null;
     snapshot.players = snapshot.players.map(player => ({
       ...player, landsPlayedThisTurn: player.landsPlayedThisTurn ?? 0
     }));
@@ -192,6 +193,7 @@ export class GameRoom {
       }
     }
     if (command.type === "resolve-zone-change-replacement") return this.resolveZoneChangeReplacement(command, cacheKey);
+    if (command.type === "order-etb-triggers") return this.orderEtbTriggers(command, cacheKey);
     if (command.type === "cast-spell") return this.castSpell(command, cacheKey);
     if (command.type === "play-land") return this.playLand(command, cacheKey);
     if (command.type === "discard-cards") return this.discardPendingCards(command, cacheKey);
@@ -336,6 +338,30 @@ export class GameRoom {
     });
     if (failedEntry.status !== "committed") throw new Error("FAILED_PERMANENT_SPELL_GRAVEYARD_MOVE");
     return failedEntry.state;
+  }
+
+  private orderEtbTriggers(command: RoomCommand, cacheKey: string): RoomCommandResult {
+    const batch = this.currentState.pendingTriggerBatch;
+    if (!batch) return this.reject(cacheKey, "NO_PENDING_TRIGGER_BATCH");
+    if (!isRecord(command.payload) || command.payload.pendingId !== batch.id ||
+        !Array.isArray(command.payload.orderedStackItemIds) ||
+        !command.payload.orderedStackItemIds.every(id => typeof id === "string")) {
+      return this.reject(cacheKey, "INVALID_TRIGGER_ORDER");
+    }
+    if (getNextTriggerOrderControllerId(batch) !== command.playerId) {
+      return this.reject(cacheKey, "NOT_NEXT_TRIGGER_ORDER_CONTROLLER");
+    }
+    try {
+      const nextBatch = recordPendingTriggerOrder(batch, command.playerId, command.payload.orderedStackItemIds as string[]);
+      this.currentState = { ...this.currentState, revision: this.currentState.revision + 1, pendingTriggerBatch: nextBatch };
+      const accepted: AcceptedRoomCommandResult = { accepted: true, revision: this.currentState.revision, outcome: "trigger-order-recorded" };
+      this.commandResults.set(cacheKey, accepted);
+      this.recordEvent(command, accepted);
+      return accepted;
+    } catch (error) {
+      const code = error instanceof EngineError ? error.code : "ENGINE_ERROR";
+      return this.reject(cacheKey, code);
+    }
   }
 
   private resolveZoneChangeReplacement(command: RoomCommand, cacheKey: string): RoomCommandResult {

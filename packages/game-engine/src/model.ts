@@ -100,6 +100,7 @@ export interface GameState {
   pendingDiscardCount: number;
   pendingCommanderChoices: Array<{ instanceId: InstanceId; ownerId: PlayerId; fromZone: "graveyard" | "exile" }>;
   pendingZoneChangeChoice: PendingZoneChangeChoice | null;
+  pendingTriggerBatch: PendingTriggerBatch | null;
   turnNumber: number;
   phase: Phase;
   step: Step;

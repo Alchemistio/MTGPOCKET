@@ -129,3 +129,12 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Les groupes à un candidat sont auto-ordonnés ; pour les autres, le prochain contrôleur APNAP fournit une permutation exacte de ses IDs.
 - La sortie `getPendingTriggerStackItemsBottomToTop` définit sans ambiguïté l'ordre d'insertion : le dernier item est au sommet de la pile.
 - Le contrat est sérialisable et testé à quatre sièges. Il n'est pas encore stocké dans `GameState`, exposé via le protocole, ni branché au checkpoint de priorité/SBA ; le scanner candidat-only et le chemin live historique restent inchangés.
+
+
+## ETB-2 — intégration serveur des choix APNAP (2026-11-18)
+- `GameState.pendingTriggerBatch` conserve le batch sérialisable ; migration rétrocompatible des checkpoints.
+- `order-etb-triggers` authentifie le prochain contrôleur APNAP, valide l'ID de batch et la permutation exacte de ses candidats ; une décision par contrôleur, dans l'ordre APNAP.
+- Les groupes singleton sont pré-ordonnés ; la vue privée révèle les IDs candidats uniquement au contrôleur actif pour cette décision.
+- Le journal de commandes et le snapshot restaurent le batch et les choix.
+- Le batch empêche le passage de priorité. Même complètement ordonné, il n'est pas encore consommé : le prochain chantier doit orchestrer SBA → triggers induits → stabilisation, puis insérer le batch sur la pile et vider le champ.
+- Non intégré au scanner live : aucun nouveau trigger générique n'est encore ajouté à ce batch pendant une partie.

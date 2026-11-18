@@ -54,3 +54,12 @@
 - L'ordre retourné est explicitement l'ordre d'insertion bottom-to-top : le dernier objet ajouté est le sommet et résout en premier.
 - Les StackItems candidats sont conservés comme snapshots ; le batch ne re-vérifie pas la présence de leur source sur le champ de bataille après le déclenchement.
 - Cette tranche est un contrat moteur pur : aucune mutation GameState, commande GameRoom, projection privée, insertion dans la pile ou intégration au checkpoint de priorité. Les SBA et les triggers qui en résultent restent à orchestrer.
+
+
+## 2026-11-18 — ETB-2 : décisions APNAP persistées côté serveur
+- Ajout de `GameState.pendingTriggerBatch` avec migration des checkpoints plus anciens vers `null`.
+- Nouvelle commande `order-etb-triggers` : seul le prochain contrôleur APNAP peut fournir l'ordre exact de ses triggers ; le serveur conserve les StackItems candidats et n'accepte que les IDs.
+- Projection privée : seul le contrôleur autorisé reçoit les IDs du groupe à ordonner ; les autres sièges ne voient qu'un compteur de groupes restants.
+- Chaque choix incrémente la révision et est enregistré dans le journal ; tests de rejet, rejeu et restauration.
+- `pass-priority` est bloqué tant qu'un batch est présent, y compris une fois tous les groupes ordonnés : la tranche suivante doit appliquer les SBA/trigger loop, puis insérer les objets ordonnés sur la pile et vider le batch.
+- Le scanner candidat-only et le chemin live historique restent inchangés ; cette intégration n'active donc pas encore les triggers ETB génériques en partie.

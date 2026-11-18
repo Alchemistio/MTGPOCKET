@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GameRoom } from "../src/game-room.js";
-import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
+import { addCardInstance, advanceAutomaticStep, applyStateBasedActions, changeLife, createGame, createPendingTriggerBatch, moveCardToZone, pushStackItem } from "@commander-pocket/game-engine";
 import type { CardDefinition } from "@commander-pocket/card-data";
 import type { GameState, ZoneChangeEvent } from "@commander-pocket/game-engine";
 import { basicLandManaOptions, createBasicPermanentEntryReplacements, resolveBasicSpellEffect, scanBasicZoneChangeTriggers, supportsBasicSpell } from "../src/basic-spell-effects.js";
@@ -1095,5 +1095,89 @@ describe("GameRoom", () => {
     });
     expect(accepted).toMatchObject({ accepted: true, outcome: "decision-resolved" });
     expect(room.state.cards.cmd1?.zone).toBe("command");
+  });
+});
+
+
+describe("GameRoom ETB trigger-order decisions", () => {
+  const triggerItem = (id: string, controllerId: string) => ({
+    id, controller_id: controllerId, source_instance_id: "source-" + id,
+    kind: "triggered-ability" as const, payload: { effect: "fixture" }
+  });
+
+  it("authenticates APNAP choices, projects them privately, and replays the pending batch", () => {
+    let state = advanceAutomaticStep(createGame("room-1", players));
+    const batch = createPendingTriggerBatch(state, "etb-batch-1", [
+      triggerItem("p1-a", "p1"), triggerItem("p1-b", "p1"),
+      triggerItem("p2-only", "p2"),
+      triggerItem("p3-a", "p3"), triggerItem("p3-b", "p3")
+    ]);
+    expect(batch).not.toBeNull();
+    state = { ...state, pendingTriggerBatch: batch };
+    const room = new GameRoom("room-1", players, state);
+
+    expect(toPlayerView(room.state, "p1").pendingTriggerOrder).toEqual({
+      id: "etb-batch-1", candidateStackItemIds: ["p1-a", "p1-b"]
+    });
+    expect(toPlayerView(room.state, "p2").pendingTriggerOrder).toBeNull();
+    expect(toPlayerView(room.state, "p2").pendingTriggerOrderCount).toBe(2);
+
+    const wrongSeat = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "p3-too-early",
+      playerId: "p3", expectedRevision: room.state.revision,
+      type: "order-etb-triggers", payload: { pendingId: "etb-batch-1", orderedStackItemIds: ["p3-a", "p3-b"] }
+    });
+    expect(wrongSeat).toMatchObject({ accepted: false, code: "NOT_NEXT_TRIGGER_ORDER_CONTROLLER" });
+
+    const p1Order = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "p1-order",
+      playerId: "p1", expectedRevision: room.state.revision,
+      type: "order-etb-triggers", payload: { pendingId: "etb-batch-1", orderedStackItemIds: ["p1-b", "p1-a"] }
+    });
+    expect(p1Order).toMatchObject({ accepted: true, outcome: "trigger-order-recorded" });
+    expect(toPlayerView(room.state, "p1").pendingTriggerOrder).toBeNull();
+    expect(toPlayerView(room.state, "p3").pendingTriggerOrder).toEqual({
+      id: "etb-batch-1", candidateStackItemIds: ["p3-a", "p3-b"]
+    });
+
+    const p3Order = room.apply({
+      protocolVersion: 1, gameId: "room-1", commandId: "p3-order",
+      playerId: "p3", expectedRevision: room.state.revision,
+      type: "order-etb-triggers", payload: { pendingId: "etb-batch-1", orderedStackItemIds: ["p3-a", "p3-b"] }
+    });
+    expect(p3Order).toMatchObject({ accepted: true, outcome: "trigger-order-recorded" });
+    expect(room.state.pendingTriggerBatch?.groups.map(group => group.orderedStackItemIds)).toEqual([
+      ["p1-b", "p1-a"], ["p2-only"], ["p3-a", "p3-b"]
+    ]);
+    expect(toPlayerView(room.state, "p1").pendingTriggerOrderCount).toBe(0);
+    expect(room.replay()).toEqual(room.state);
+    expect(GameRoom.restore(room.checkpoint).state).toEqual(room.state);
+  });
+
+  it("rejects malformed, stale, foreign and non-permutation decisions", () => {
+    let state = advanceAutomaticStep(createGame("room-1", players));
+    state = { ...state, pendingTriggerBatch: createPendingTriggerBatch(state, "etb-batch-2", [
+      triggerItem("p1-a", "p1"), triggerItem("p1-b", "p1")
+    ]) };
+    const room = new GameRoom("room-1", players, state);
+    const base = {
+      protocolVersion: 1 as const, gameId: "room-1", playerId: "p1",
+      expectedRevision: room.state.revision, type: "order-etb-triggers"
+    };
+    expect(room.apply({
+      ...base, commandId: "bad-id", payload: { pendingId: "wrong", orderedStackItemIds: ["p1-a", "p1-b"] }
+    })).toMatchObject({ accepted: false, code: "INVALID_TRIGGER_ORDER" });
+    expect(room.apply({
+      ...base, commandId: "bad-permutation", payload: { pendingId: "etb-batch-2", orderedStackItemIds: ["p1-a", "p1-a"] }
+    })).toMatchObject({ accepted: false, code: "INVALID_TRIGGER_ORDER" });
+    expect(room.apply({
+      ...base, commandId: "foreign", payload: { pendingId: "etb-batch-2", orderedStackItemIds: ["p1-a", "p3-a"] }
+    })).toMatchObject({ accepted: false, code: "INVALID_TRIGGER_ORDER" });
+    expect(room.apply({
+      ...base, commandId: "valid", payload: { pendingId: "etb-batch-2", orderedStackItemIds: ["p1-a", "p1-b"] }
+    })).toMatchObject({ accepted: true });
+    expect(room.apply({
+      ...base, commandId: "stale-after-valid", payload: { pendingId: "etb-batch-2", orderedStackItemIds: ["p1-a", "p1-b"] }
+    })).toMatchObject({ accepted: false, code: "STALE_REVISION" });
   });
 });
