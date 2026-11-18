@@ -44,7 +44,7 @@ describe("zone-change replacement pipeline", () => {
     const state = fixture();
     const effects = [
       effect("copy-a", "copy", proposal => ({ ...proposal, toZone: "battlefield" })),
-      effect("copy-b", "copy", proposal => ({ ...proposal, toZone: "exile" })),
+      effect("copy-b", "copy", proposal => ({ ...proposal, toZone: "exile" }), proposal => proposal.toZone === "graveyard"),
       effect("general-a", "general", proposal => ({ ...proposal, entersTapped: true })),
       effect("general-b", "general", proposal => ({ ...proposal, entersWithP1P1Counters: 2 }))
     ];
