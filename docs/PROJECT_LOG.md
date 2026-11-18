@@ -70,3 +70,10 @@
 - Insertion atomique des snapshots en ordre APNAP bottom-to-top, consommation du batch et incrément de révision unique. La source du trigger n'a pas à être encore présente sur le battlefield.
 - Tests positifs/négatifs pour ordre LIFO, batch incomplet/périmé, collision et absence de mutation partielle.
 - La primitive ne fait ni SBA ni attribution de priorité et n'est pas appelée depuis GameRoom. Elle ne rend donc pas les triggers ETB génériques actifs en partie ; le checkpoint de stabilisation reste à concevoir.
+
+
+## 2026-11-18 — ETB-3B : primitive de stabilisation SBA
+- Ajout de `runStateBasedActionCheckpoint`, orchestrateur pur qui répète des passes SBA atomiques rapportées par un adaptateur jusqu'à stabilisation.
+- Les snapshots de triggers générés pendant les passes sont accumulés dans deux classes séparées, sans empilement ni attribution de priorité ; cela conserve la distinction des deux vagues APNAP de CR 603.3b.
+- Validation stricte des transitions/révisions, IDs de triggers uniques, et garde de sécurité configurable.
+- Limite explicite : `applyStateBasedActions` ne retourne pas encore de trace d'événements ni de triggers SBA ; GameRoom n'appelle donc pas cette primitive. Aucun changement n'active les ETB génériques en partie.

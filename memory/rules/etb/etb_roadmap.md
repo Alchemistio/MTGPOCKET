@@ -146,3 +146,11 @@ Cette roadmap complète `docs/ROADMAP.md`. Elle privilégie une mécanique gén�
 - Le batch est vidé dans la même mutation, la révision augmente une fois et les passes de priorité sont réinitialisées.
 - Refus d'un batch absent/périmé, d'un groupe non ordonné, d'un état en résolution ou d'un identifiant de pile collisionnant ; aucun ajout partiel en cas d'échec.
 - Cette primitive ne lance pas les SBA, n'accorde pas la priorité et ne constitue pas un checkpoint de règles. Elle n'est pas appelée par GameRoom : l'orchestration SBA → triggers induits → stabilisation reste le prérequis à l'intégration live.
+
+
+## ETB-3B — boucle de stabilisation SBA (2026-11-18)
+- Ajout d'une primitive pure `runStateBasedActionCheckpoint` : l'adaptateur de règles exécute une SBA atomique (704), rapporte l'état résultant et les triggers provoqués par cette passe ; le runner répète jusqu'à une passe sans action.
+- Les triggers sont conservés en deux classes séparées : conditions ordinaires et conditions déclenchées par un objet sur la pile, afin de préserver les deux séquences APNAP de 603.3b.
+- Validation des états/révisions, des snapshots de trigger et des IDs uniques ; garde de sécurité configurable (256 passes par défaut).
+- La primitive ne met aucun trigger sur la pile, ne lance pas les SBA elle-même et n'accorde pas la priorité. L'adaptateur actuel `applyStateBasedActions` ne retourne pas encore les événements/triggers générés ; aucune intégration GameRoom/live n'est donc activée.
+- La suite doit brancher les producteurs d'événements SBA, puis ordonner et placer les deux classes de triggers conformément à 603.3b avant de rendre la priorité (117.5).

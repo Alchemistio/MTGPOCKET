@@ -17,3 +17,5 @@ export * from "./stack-engine.js";
 export * from "./stack-handlers.js";
 export * from "./activated-abilities.js";
 export * from "./trigger-ordering.js";
+
+export * from "./priority-checkpoint.js";

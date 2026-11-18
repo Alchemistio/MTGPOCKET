@@ -64,3 +64,9 @@
 - Test de l'ordre APNAP bottom-to-top, du sommet LIFO, du snapshot lorsque la source a quitté le battlefield, de la révision unique et de la consommation atomique.
 - Tests négatifs : groupe incomplet, ID de batch périmé et collision avec un objet de pile existant ; aucune insertion partielle.
 - Non couvert : checkpoint CR, SBA, triggers générés par SBA, décision du moment d'appel, intégration GameRoom et transport client.
+
+
+## ETB-3B — stabilisation des SBA et collecte de triggers
+- `runStateBasedActionCheckpoint` : répétition d'événements SBA atomiques jusqu'à une passe stable ; accumulation distincte des triggers ordinaires et des triggers dont la condition est un objet de pile (deux vagues APNAP 603.3b).
+- Tests : plusieurs passes, collecte inter-passes, arrêt sur état stable, immutabilité du snapshot initial, absence de placement sur pile, rapports incohérents, IDs dupliqués et dépassement de la garde de sécurité.
+- Non couvert : traduction des SBA actuelles en événements déclencheurs, application effective des SBA par cette primitive, décisions APNAP des deux vagues, intégration GameRoom, triggers générés par la mise sur pile et priorité 117.5.
