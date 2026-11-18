@@ -114,7 +114,7 @@ function compileBasicZoneChangeTriggerLine(
   if (line.startsWith(selfPrefix)) {
     const effectText = line.slice(selfPrefix.length);
     if (effectText === "draw a card.") return { scope: "self", effect: { effect: "etb-draw-one" } };
-    const life = /^you gain ([1-9]\\d*) life\\.$/.exec(effectText);
+    const life = /^you gain ([1-9]\d*) life\.$/.exec(effectText);
     if (life) {
       const amount = Number(life[1]);
       if (Number.isSafeInteger(amount)) return { scope: "self", effect: { effect: "etb-gain-life", amount } };
@@ -122,7 +122,7 @@ function compileBasicZoneChangeTriggerLine(
     return null;
   }
 
-  const match = /^Whenever (another )?(creature|permanent) enters the battlefield, (draw a card|you gain ([1-9]\\d*) life)\\.$/.exec(line);
+  const match = /^Whenever (another )?(creature|permanent) enters the battlefield, (draw a card|you gain ([1-9]\d*) life)\.$/.exec(line);
   if (!match) return null;
   const another = match[1] !== undefined;
   const type = match[2];
@@ -137,7 +137,7 @@ function compileBasicZoneChangeTriggerLine(
 }
 
 function isPermanentDefinition(definition: CardDefinition): boolean {
-  return /\\b(?:Artifact|Battle|Creature|Enchantment|Land|Planeswalker)\\b/.test(definition.typeLine);
+  return /\b(?:Artifact|Battle|Creature|Enchantment|Land|Planeswalker)\b/.test(definition.typeLine);
 }
 
 /**
@@ -156,7 +156,7 @@ export function scanBasicZoneChangeTriggers(
   if (event.toZone !== "battlefield" || event.fromZone === "battlefield") return [];
   const entrantDefinition = resolveCard(event.instanceAfter.card_id);
   if (!entrantDefinition) return [];
-  const entrantIsCreature = /\\bCreature\\b/.test(entrantDefinition.typeLine);
+  const entrantIsCreature = /\bCreature\b/.test(entrantDefinition.typeLine);
   const entrantIsPermanent = isPermanentDefinition(entrantDefinition);
   const candidates: BasicZoneChangeTriggerCandidate[] = [];
   const visited = new Set<string>();
@@ -170,7 +170,7 @@ export function scanBasicZoneChangeTriggers(
       const definition = resolveCard(source.card_id);
       if (!definition || definition.layout !== "normal") continue;
 
-      const lines = definition.oracleText.split(/\\r?\\n/);
+      const lines = definition.oracleText.split(/\r?\n/);
       for (let abilityLineIndex = 0; abilityLineIndex < lines.length; abilityLineIndex += 1) {
         const spec = compileBasicZoneChangeTriggerLine(definition, lines[abilityLineIndex]!.trim());
         if (!spec) continue;
