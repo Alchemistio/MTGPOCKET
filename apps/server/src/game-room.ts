@@ -202,7 +202,7 @@ export class GameRoom {
     try {
       const result = passPriority(this.currentState, command.playerId);
       let nextState = result.state;
-      let outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved";
+      let outcome: "passed" | "step-advanced" | "resolution-required" | "stack-resolved" | "decision-required";
       if (result.outcome === "step-advance") {
         nextState = advanceAfterAllPass(nextState);
         if (nextState.step === "cleanup" && nextState.pendingDiscardCount === 0) {
